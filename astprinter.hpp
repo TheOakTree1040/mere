@@ -18,11 +18,14 @@ class ASTPrinter final{
 	public:
 		ASTPrinter(Stmts stmts):
 		text(""){
+			LFn;
 			for (int i = 0; i != stmts.size(); i++)
 				print(0,stmts[i]);
+			Log << "end ASTPrinter()";
 		}
 
 		QString AST(){
+			Log << "Getting AST";
 			return text;
 		}
 	private:
@@ -45,7 +48,7 @@ class ASTPrinter final{
 		void print_literal(int lvls, Expr expr){
 			CHKTY(ExprTy::Literal);
 			QString head = "[";
-			head.append(expr->lit->trait.id).append("] Literal:");
+			head.append(expr->lit->trait.id()).append("] Literal:");
 			write_ln(lvls,head);
 			write_ln(lvls+1,expr->lit->to_string());
 		}
@@ -54,18 +57,12 @@ class ASTPrinter final{
 			QString head = "[Array]";
 			write_ln(lvls,head);
 		}
-		void print_set(int lvls, Expr expr){
-			CHKTY(ExprTy::Set);
-			QString head = "[Set]";
-			write_ln(lvls,head);
-		}
 		void print_lval(int lvls, Expr expr){
 			CHKTY(ExprTy::LValue);
 			QString head = "Asserted_LValue:";
 			write_ln(lvls,head);
 			print(lvls+1,expr->lval_expr);
 		}
-
 		void print_group(int lvls, Expr expr){
 			CHKTY(ExprTy::Group);
 			QString head = "GroupExpr:";
@@ -87,14 +84,14 @@ class ASTPrinter final{
 			print(lvls+1,expr->expr);
 		}
 		void print_var(int lvls, Expr expr){
-			CHKTY(ExprTy::Variable);
+			CHKTY(ExprTy::VarAcsr);
 			QString head = "[Variable ";
-			head.append(expr->var_name->lexeme).append("]");
+			head.append(expr->var_acsr->lexeme).append("]");
 			write_ln(lvls,head);
 		}
 
 		void print_expr_stmt(int lvls, Stmt stmt){
-			S_CHKTY(StmtTy::ExprStmt);
+			S_CHKTY(StmtTy::Expr);
 			QString head = "ExprStmt";
 			write_ln(lvls,head);
 			print(lvls+1,stmt->expr);
@@ -108,7 +105,7 @@ class ASTPrinter final{
 				case ExprTy::Literal:
 					print_literal(lvls,expr);
 					break;
-				case ExprTy::Variable:
+				case ExprTy::VarAcsr:
 					print_var(lvls,expr);
 					break;
 				case ExprTy::Array:
@@ -119,9 +116,6 @@ class ASTPrinter final{
 					break;
 				case ExprTy::Postfix:
 					print_pstfx(lvls,expr);
-					break;
-				case ExprTy::Set:
-					print_set(lvls,expr);
 					break;
 				case ExprTy::Group:
 					print_group(lvls,expr);
@@ -137,7 +131,7 @@ class ASTPrinter final{
 
 		void print(int lvls, Stmt stmt){
 			switch(stmt->type()){
-				case StmtTy::ExprStmt:
+				case StmtTy::Expr:
 					print_expr_stmt(lvls,stmt);
 					break;
 				default:

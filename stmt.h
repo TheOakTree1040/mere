@@ -5,28 +5,35 @@ enum class StmtTy{
 	Invalid,
 	Empty,
 	Expr,
-	Decl,
-	Block
-//	IfStmt,
-//	ValuedBlockStmt,
-//	BlockStmt,
-//	WhileStmt,
-//	ForStmt
+	VarDecl,
+	Block,
+	If,
+	While
 };
 
 #define SIPtr StmtImpl*
 
-struct StmtImpl final
+class StmtImpl final
 {
 	public:
 		StmtTy ty;
 		union{
-			Expr expr;//for ExprStmt
-			struct{
+			Expr expr;// ExprStmt
+			struct{// var_decl
 					Expr init;
+					Expr var_type; // nullptr or ScopeAcsr
 					Token* var_name;
 			};
 			QVector<SIPtr>* block;
+			struct{//if
+				Expr condition;
+				SIPtr if_block;
+				SIPtr else_block;
+			};
+			struct {//while
+				Expr cont_condit;
+				SIPtr while_block;
+			};
 			bool _inv;
 			bool empty;
 		};
@@ -43,11 +50,12 @@ struct StmtImpl final
 			return ptr;
 		}
 
-		static SIPtr decl_stmt(const Token& tok, Expr exp){
-			EIPtr ptr = create();
-			ptr->ty = StmtTy::Decl;
+		static SIPtr var_decl_stmt(const Token& tok, Expr exp, Expr ty){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::VarDecl;
 			ptr->var_name = new Token(tok);
-			ptr->expr = exp;
+			ptr->init = exp;
+			ptr->var_type = ty;
 			return ptr;
 		}
 
@@ -56,13 +64,29 @@ struct StmtImpl final
 			ptr->ty = StmtTy::Empty;
 			ptr->empty = true;
 			return ptr;
-
 		}
 
 		static SIPtr block_stmt(const QVector<SIPtr>& blk){
 			SIPtr ptr = create();
 			ptr->ty = StmtTy::Block;
 			ptr->block = new QVector<SIPtr>(blk);
+			return ptr;
+		}
+
+		static SIPtr if_stmt(Expr condit, SIPtr i_blk, SIPtr e_blk){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::If;
+			ptr->condition = condit;
+			ptr->if_block = i_blk;
+			ptr->else_block = e_blk;
+			return ptr;
+		}
+
+		static SIPtr while_stmt(Expr condit, SIPtr w_blk){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::While;
+			ptr->cont_condit = condit;
+			ptr->while_block = w_blk;
 			return ptr;
 		}
 
@@ -74,18 +98,17 @@ struct StmtImpl final
 		}
 
 		StmtImpl();
-		~StmtImpl(){
-			ty = StmtTy::Invalid;
-			_inv = true;
-		}
+		~StmtImpl();
 
 };
 typedef SIPtr Stmt;
 typedef QVector<Stmt> Stmts;
 
 #define ExprStmt	StmtImpl::expr_stmt
-#define DeclStmt	StmtImpl::decl_stmt
+#define VarDeclStmt	StmtImpl::var_decl_stmt
 #define NullStmt	StmtImpl::null_stmt
 #define BlockStmt	StmtImpl::block_stmt
+#define IfStmt		StmtImpl::if_stmt
+#define WhileStmt	StmtImpl::while_stmt
 
 #endif // STMT_H

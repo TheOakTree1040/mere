@@ -14,8 +14,7 @@
 
 Interpreter* MereMath::interpreter = new Interpreter();
 
-bool MereMath::has_error = false;
-bool MereMath::has_runtime_error = false;
+QVector<MereMath::Error> MereMath::errors{};
 
 void MereMath::run(const QString& src){
 //	Token* tok = new Token();
@@ -29,24 +28,32 @@ void MereMath::run(const QString& src){
 		}
 		QMessageBox::information(nullptr,"",str);
 	}
-	if (has_error){
-		MereMath::error(0,"Tokenizer Error");
+	if (errors.size()){
+		show_errors();
+		errors.clear();
 		return;
 	}
 	Stmts stmts = Parser(tokens).parse();
 
-	if (has_error){
-		MereMath::error(0,"Parser Error.");
+	if (errors.size()){
+		show_errors();
+		errors.clear();
+		return;
 	}
+
 	QString str = ASTPrinter(stmts).AST();
 	QMessageBox::information(nullptr,"AST Printer",str);
-	interpreter->interpret(stmts);
-	delete stmts;
+	//interpreter->interpret(stmts);
+	for (int i = 0; i != stmts.size(); i++){
+		delete stmts[i];
+	}
+	Log << "Clearing";
+	errors.clear();
+	Log << "End of run";
 }
 
 void MereMath::run_file(QFile & file){
 	run(QString(file.readAll()));
-	has_error = false;
 }
 
 void MereMath::error(int ln, const QString& msg){
@@ -63,22 +70,45 @@ void MereMath::error(const Token& tok, const QString& msg){
 }
 
 void MereMath::report(int ln, const QString& loc, const QString& msg, bool is_idx){
-	has_error = true;
 	if (is_idx)
 		ln++;
-	QString p = QString("[Ln ");
-	p.append(QString::number(ln)).append("] ").append(loc).append(": ").append(msg);
+	QString p = QString("[Ln ").append(QString::number(ln))
+				.append("] ").append(loc)
+				.append(": ").append(msg);
 	if (!p.endsWith("."))
 		p.append(".");
+	errors.append(Error(ln,p));
 	QMessageBox::critical(nullptr,"Error",p);
 }
 
 void MereMath::runtime_error(const RuntimeError &re){
-	QString str = re.msg;
-	str.append("\n[Ln ").append(QString::number(re.tok.ln)).append("]");
+	QString str = "";
+	str.append("[Ln ").append(QString::number(re.tok.ln)).append("]").append(re.msg);
+	errors.append(Error(re.tok.ln,re.msg));
 	QMessageBox::critical(nullptr,"Runtime Error",str);
-	has_runtime_error = true;
 }
 
+void MereMath::show_errors(){
+	if (!errors.size()){
+		QMessageBox::information(nullptr,"Info","0 error recorded.");
+	}
+
+	QString error_text = "";
+	for (int i = 0; i != errors.size(); i++){
+		error_text.append("<============Error============>\n");
+		error_text.append(errors.at(i).msg);
+		error_text.append("\n");
+	}
+
+	QWidget* wind = new QWidget();
+	QTextEdit* edt = new QTextEdit();
+	QVBoxLayout* vlay = new QVBoxLayout();
+
+	edt->setPlainText(error_text);
+	vlay->addWidget(edt);
+	wind->setLayout(vlay);
+	wind->setAttribute(Qt::WA_DeleteOnClose);
+	wind->show();
+}
 
 #endif // MERE_MATH_H

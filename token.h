@@ -2,7 +2,6 @@
 #define TOKEN_H
 
 #include "object.h"
-#include <QDebug>
 enum class Tok{
 	INVALID,
 
@@ -34,7 +33,7 @@ enum class Tok{
 	RETURN, TRUE, FALSE, DO,
 	WHILE, CASE, SWITCH, BREAK,
 	DEFAULT, ARRAY, SET,
-	ENUM, ASSERT, DEFINE, VALUED, VAR,
+	ENUM, ASSERT, DEFINE, VALUED, VAR, NULL_LIT,
 
 	END
 };
@@ -46,7 +45,7 @@ class Token{
 		Object* literal;
 		int ln;
 	public:
-		Token(){ln =0;lexeme("");literal=nullptr;ty=Tok::INVALID;}
+		Token(){ln =0;lexeme = "";literal=nullptr;ty=Tok::INVALID;}
 		Token(Tok type,
 			  const QString& lex,
 			  const Object& lit,
@@ -77,7 +76,7 @@ class Token{
 			QString str("[Tok ");
 			str.append(QString::number(static_cast<int>(ty)));
 			if (literal->trait.is("real"))
-				str.append(" : ").append(QString::number(literal->dat.toDouble()));
+				str.append(" : ").append(QString::number(literal->dat().toDouble()));
 			else if (literal->trait.is("string"))
 				str.append(" : \"").append(literal->to_string()).append("\"");
 			else if (lexeme.size()){
@@ -92,7 +91,7 @@ class Token{
 
 		bool is_bin_op(){
 			int i = static_cast<int>(ty);
-			return Tok::ARROW <= i && i <= Tok::VERT_ASGN;
+			return (int)Tok::ARROW <= i && i <= (int)Tok::VERT_ASGN;
 		}
 
 };

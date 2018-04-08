@@ -5,6 +5,7 @@
 #include <QTextEdit>
 #include <QLayout>
 #include <QPushButton>
+#include "interpreter.h"
 
 class SourceEditor : public QWidget{
 		Q_OBJECT
@@ -20,7 +21,10 @@ class SourceEditor : public QWidget{
 			this->setLayout(layout);
 			connect(exec_button,&QPushButton::clicked,this,&SourceEditor::exec_clicked);
 		}
-		~SourceEditor(){}
+		~SourceEditor(){
+			delete MereMath::interpreter;
+			MereMath::interpreter = 0;
+		}
 	public slots:
 		void exec_clicked(){
 			MereMath::run(editor->toPlainText());

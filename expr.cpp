@@ -1,5 +1,5 @@
 #include "expr.h"
-
+#include "stmt.h"
 ExprImpl::~ExprImpl(){
 	switch(this->ty){
 		case ExprTy::Binary:
@@ -12,9 +12,6 @@ ExprImpl::~ExprImpl(){
 			break;
 		case ExprTy::Literal:
 			delete this->lit;
-			break;
-		case ExprTy::Variable:
-			delete this->var_name;
 			break;
 		case ExprTy::Hash:
 			for (int i = hash_data->size() - 1; i >= 0; i--){
@@ -36,17 +33,9 @@ ExprImpl::~ExprImpl(){
 			}
 			delete this->array_data;
 			break;
-		case ExprTy::MemberAccessor:
-			for (int i = member_accessor->size() - 1; i >= 0; i--){
-				delete member_accessor->takeAt(i);
-			}
-			delete member_accessor;
-		case ExprTy::ScopeAccessor:
-			delete scope_accessor;
-			break;
 		case ExprTy::FuncCall:
 			delete func_args_list;
-			delete func_name;
+			delete callee;
 			break;
 		case ExprTy::ArgsList:
 			for (int i = args_list->size() - 1; i >= 0; i--){
@@ -65,17 +54,30 @@ ExprImpl::~ExprImpl(){
 			break;
 		case ExprTy::Invalid:
 			break;
-		case ExprTy::AccessorItem:
-			delete accessor_item;
-			break;
 		case ExprTy::Conditional:
 			delete condition;
 			delete l_branch;
 			delete r_branch;
 			break;
-		case ExprTy::AssignExpr:
-			delete asgn_mem_acsr;
-			delete asgn_mem_acsr;
+		case ExprTy::Assign:
+			delete asgn_left;
+			delete asgn_right;
 			break;
+		case ExprTy::Lambda:
+			for (int i = param_ty->size() - 1; i >= 0; i--){
+				delete param_ty->takeAt(i);
+			}
+			for (int i = param_names->size() - 1; i >= 0; i--){
+				delete param_ty->takeAt(i);
+			}
+			delete param_ty;
+			delete param_names;
+			delete fn_block;
+			break;
+		case ExprTy::VarAcsr:
+			delete var_acsr;
+			break;
+		//case ExprTy::MemAccessor:
+
 	}
 }

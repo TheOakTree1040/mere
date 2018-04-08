@@ -1,8 +1,14 @@
+
 #include "tokenizer.h"
-#include <QDebug>
+#include "logger.h"
 Tokenizer::Tokenizer(const QString& src):source(src)
 {
-
+	Logger() << "Source: " << source;
+	Logger::indent++;
+}
+Tokenizer::~Tokenizer(){
+	Logger::indent--;
+	Logger() << "~Tokenizer()";
 }
 
 bool Tokenizer::is_at_end(){
@@ -10,7 +16,7 @@ bool Tokenizer::is_at_end(){
 }
 
 char Tokenizer::advance(){
-	current++;
+	Logger() << "  adv:" << QString::number(current++) << peek(-1);
 	return source[current-1].toLatin1();
 }
 
@@ -19,10 +25,11 @@ void Tokenizer::add_token(Tok ty){
 }
 
 void Tokenizer::add_token(Tok ty, Object lit){
+	LFn;
 	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
-	//  " a b c d e f g "
-	//	^
-	//	^
+	Log << "Added Token: Lexeme: " << tokens.last().lexeme;
+	Log << "             Type  : " << (int)tokens.last().ty;
+	Logger::indent--;
 }
 
 char Tokenizer::peek(int i) {
@@ -36,14 +43,17 @@ char Tokenizer::peek(int i) {
 		return '\0';
 	return source[current + i].toLatin1();
 }
-
+//var i = 0;
+//0123456789
 void Tokenizer::deprecate(){
 	if (!is_at_end())
 		source.remove(current,1);
 }
 
 bool Tokenizer::match(char expct) {
-	return !is_at_end() && source[current] == expct && current++;
+	return !is_at_end() && source[current] == expct?
+				current++, Logger() << "  matched " << expct, true:
+									   false;
 }
 
 bool Tokenizer::match(QString expct){
@@ -175,10 +185,15 @@ void Tokenizer::number() {
 		return;
 	}
 	bool stat = false;
+	int n = num.toInt(&stat,base);
 	add_token(Tok::REAL,
 			 Object(Trait("real"),num.toInt(&stat,base)));
-	if (!stat)
+	Logger() << "  Numeral: String:" << num;
+	Logger() << "           Number:" << n;
+	if (!stat){
 		MereMath::error(line, QString("Invalid base-").append(QString::number(base)).append(" numeral."));
+		Logger() << "  Numeral Lexing Error.";
+	}
 }
 
 bool Tokenizer::is_alpha(char c) {
@@ -200,21 +215,29 @@ bool Tokenizer::is_base_8(char c){
 }
 
 void Tokenizer::identifier(){
+	Logger::indent++;
+	Log;
 	current--;
 	QString val = "";
 	val.append(peek());
-	if (val == "R" && peek() == "\"" && peek("[")){
+	if ((val == "R" || val == "r") && peek(1) == '"' && peek(2) == '['){
 		deprecate();
 		deprecate();
 		deprecate();
 		raw_string();
+		Logger() << "End of identifier()";
+		Logger::indent--;
 		return;
 	}
+	advance();
 	while (is_alpha_numeric(peek()))
 		val.append(advance());
-	QString val = source.mid(start, current - start);
 	Tok ty = keywords.value(val, Tok::IDENTIFIER);
 	add_token(ty,Object(val));
+	Logger() << (QString)"End of identifier() :\"" + val + "\"";
+	Logger::indent--;
+	//var i = 0;
+	//0123456789
 }
 
 void Tokenizer::raw_string(){
@@ -223,6 +246,7 @@ void Tokenizer::raw_string(){
 
 void Tokenizer::scan_token(){
 	char c = advance();
+	Logger() << c;
 	switch (c) {
 		case '@': add_token(Tok::AT_SYMB); break;
 		case '(': add_token(Tok::LPAREN); break;
@@ -298,13 +322,12 @@ void Tokenizer::scan_token(){
 					add_token(Tok::SLASH);
 			}
 			break;
+		case '\n':
+			line++;
 		case ' ':
 		case '\r':
 		case '\t':
 			// Ignore whitespace.
-			break;
-		case '\n':
-			line++;
 			break;
 		case '"':
 			string();
@@ -329,8 +352,7 @@ Tokens Tokenizer::scan_tokens(){
 		start = current;
 		scan_token();
 	}
-	tokens.append(Token(Tok::END," ",Object("void",0),line));
-	qDebug() << "Done tokenizing";
+	tokens.append(Token(Tok::END," ",Object(),line));
 	return tokens;
 }
 
@@ -356,7 +378,8 @@ QHash<QString, Tok> Tokenizer::keywords{
 	{"set"		,	Tok::SET		},
 	{"valued"	,	Tok::VALUED		},
 	{"global"	,	Tok::GLOBAL		},
-	{"var"		,	Tok::VAR		}
+	{"var"		,	Tok::VAR		},
+	{"null"		,	Tok::NULL_LIT	}
 };
 QHash<QChar,QChar> Tokenizer::escaped{
 	{'0'	,	'\0'},

@@ -24,11 +24,14 @@ class Parser
 		ParseError error(const Token&, const QString&);
 		void synchronize();
 		//Parse Grammar Rules
-		Stmt stmt			(		);
+		Stmt stmt			(bool=F_);
 		Stmt block			(bool=F_);
 		Stmt decl_stmt		(		);
 		Stmt var_decl_stmt	(bool=T_);
 		Stmt expr_stmt		(		);
+		Stmt if_stmt		(		);
+		Stmt while_stmt		(		);
+		Stmt for_stmt		(		);
 
 		Expr expression	(bool=F_);
 		Expr conditional(	    );
@@ -45,17 +48,16 @@ class Parser
 		Expr spec_data	(		);
 		Expr array		(		);
 		Expr assoc		(		);
+		Expr map		(		);
 		Expr rvalue		(		);
 		Expr lvalue		(bool=F_);
-		Expr scope_acs	(bool=F_) throw(ParseUnwind);
-		Expr member_acs	(bool=F_) throw(ParseUnwind);
+		Expr accessor	(bool=F_) throw(ParseUnwind);
 		Expr args_list	(bool=F_);
 		Expr group		(		);
 	public:
 		Parser(QVector<Token>&);
+		~Parser();
 		Stmts parse();
-
-
 };
 
 #endif // PARSER_H

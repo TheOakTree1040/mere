@@ -6,7 +6,7 @@
 #include <QVariant>
 #include <QVector>
 
-#include <QDebug>
+#include "logger.h"
 #define EIPtr ExprImpl*
 
 using std::pair;
@@ -17,21 +17,20 @@ enum class ExprTy {
 	Invalid,
 	Group,
 	Literal,
-	Variable,
+//	Variable,
 	Binary,
 	Prefix,
 	Postfix,
 	Map,
 	Hash,
 	Array,
-	MemberAccessor,
-	ScopeAccessor,
 	ArgsList,
 	FuncCall,
 	LValue,
 	CommaEx,
-	AccessorItem,
-	AssignExpr,
+	VarAcsr,
+	MemAccessor,
+	Assign,
 	Conditional,
 	Lambda
 	//Change destr if you want to add any.
@@ -49,27 +48,15 @@ struct ExprImpl final{
 				QVector<EIPtr>* array_data;//array
 				QVector<std::pair<EIPtr,EIPtr>>* map_data;//map
 				QVector<std::pair<EIPtr,EIPtr>>* hash_data;//hash
-
+				Token* var_acsr;
 				Object* lit;//
 				struct{
-						bool at_global;
-						union{
-								struct{
-										QVector<Token>* scope_accessor;
-										QVector<EIPtr>* member_accessor;
-								};
-								struct{
-										Token* var_name;
-								};
-						};
-				};
-				struct{
-						EIPtr func_name;
+						EIPtr callee;
 						EIPtr func_args_list;
 				};
 				struct{
-						EIPtr asgn_mem_acsr;
-						Object* asgn_val;
+						EIPtr asgn_left;
+						EIPtr asgn_right;
 				};
 				struct{
 						EIPtr condition;
@@ -79,10 +66,11 @@ struct ExprImpl final{
 				QVector<EIPtr>* args_list;
 				EIPtr lval_expr;
 				QVector<EIPtr>* comma_exprs;
-				Token* accessor_item;
+				QVector<Token*>* acsr;
 				struct{//temp. function
-						QVector<Token>* param_names;
-						QVector<StmtImpl*>* stmts;
+						QVector<Token*>* param_names;
+						QVector<EIPtr>* param_ty;//accessors
+						StmtImpl* fn_block;
 				};
 				bool _invalid;
 		};
@@ -133,7 +121,7 @@ struct ExprImpl final{
 			ptr->right = nullptr;
 			return ptr;
 		}
-
+/*
 		static EIPtr variable(const Token& n, bool at_glob = false){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Variable;
@@ -141,7 +129,7 @@ struct ExprImpl final{
 			ptr->var_name = new Token(n);
 			return ptr;
 		}
-
+*/
 		static EIPtr literal(const Object& raw){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
@@ -177,23 +165,6 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr member(EIPtr scope, const QVector<EIPtr>& accessor){
-			EIPtr ptr = create();
-			ptr->ty = ExprTy::MemberAccessor;
-			ptr->member_accessor = new QVector<EIPtr>(accessor);
-			ptr->scope_accessor = scope->scope_accessor;
-			return ptr;
-		}
-
-		static EIPtr scope(const QVector<Token>& accessor, bool at_glob = false){
-			EIPtr ptr = create();
-			ptr->ty = ExprTy::ScopeAccessor;
-			ptr->scope_accessor = new QVector<Token>(accessor);
-			ptr->member_accessor = nullptr;
-			ptr->at_global = at_glob;
-			return ptr;
-		}
-
 		static EIPtr args(const QVector<EIPtr>& list){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::ArgsList;
@@ -201,13 +172,10 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr func_call(EIPtr fn_name, EIPtr args_li){
+		static EIPtr func_call(EIPtr callee, EIPtr args_li){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::FuncCall;
-			if (fn_name->is(ExprTy::MemberAccessor))
-				ptr->func_name = fn_name;
-			else
-				ptr->func_name = nullptr;
+			ptr->callee = callee;
 			if (args_li->is(ExprTy::ArgsList))
 				ptr->args_list = args_li->args_list;
 			else
@@ -218,7 +186,7 @@ struct ExprImpl final{
 		static EIPtr lvalue(EIPtr expr){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::LValue;
-			if (expr->is(ExprTy::Variable) || expr->is(ExprTy::MemberAccessor) || true)
+			if (expr->is(ExprTy::VarAcsr) || expr->is(ExprTy::MemAccessor) || true)
 				ptr->lval_expr = expr;
 			return ptr;
 		}
@@ -227,6 +195,15 @@ struct ExprImpl final{
 			return create();
 		}
 
+		static EIPtr var_accessor(const Token& v_name){
+			EIPtr ptr = create();
+			ptr->ty = ExprTy::VarAcsr;
+			ptr->var_acsr = new Token(v_name);
+			return ptr;
+		}
+
+		static EIPtr mem_accessor();
+
 		static EIPtr comma_ex(const QVector<EIPtr>& cex){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::CommaEx;
@@ -234,26 +211,23 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr acsr_item(const Token& tok){
+		static EIPtr assignment(EIPtr l, EIPtr r){
 			EIPtr ptr = create();
-			ptr->ty = ExprTy::AccessorItem;
-			ptr->accessor_item = new Token(tok);
+			ptr->ty = ExprTy::Assign;
+			ptr->asgn_left = l;
+			ptr->asgn_right = r;
 			return ptr;
 		}
 
-		static EIPtr assignment(EIPtr mem_ascr, const Object& ro){
-			EIPtr ptr = create();
-			ptr->ty = ExprTy::AssignExpr;
-			ptr->asgn_mem_acsr = mem_ascr;
-			ptr->asgn_val = ro;
-			return ptr;
-		}
-
-		static EIPtr lambda(const QVector<Token>& pn,const QVector<StmtImpl*>& s){
+		static EIPtr lambda(const QVector<Token>& pn, const QVector<EIPtr>& t, StmtImpl* fnb){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Lambda;
-			ptr->param_names = new QVector<Token>(pn);
-			ptr->stmts = new QVector<StmtImpl*>(s);
+			ptr->param_names = new QVector<Token*>();
+			int s = pn.size();
+			for (int i = 0; i != s; i++)
+				ptr->param_names->push_back(new Token(pn.at(i)));
+			ptr->param_ty = new QVector<EIPtr>(t);
+			ptr->fn_block = fnb;
 			return ptr;
 		}
 
@@ -277,24 +251,26 @@ struct ExprImpl final{
 
 typedef EIPtr Expr;
 
-#define BinExpr			ExprImpl::binary
-#define GroupExpr		ExprImpl::group
-#define VarExpr			ExprImpl::variable
+#define InvalidExpr		ExprImpl::invalid
+
 #define LitExpr			ExprImpl::literal
+#define BinExpr			ExprImpl::binary
+#define AssignExpr		ExprImpl::assignment
+#define GroupExpr		ExprImpl::group
 #define PstfxExpr		ExprImpl::postfix
 #define PrefxExpr		ExprImpl::prefix
-#define ArrayExpr		ExprImpl::array
-#define SetExpr			ExprImpl::set
-#define ScopeAcsExpr	ExprImpl::scope
-#define MemberAcsExpr	ExprImpl::member
+#define CSExpr			ExprImpl::comma_ex
+#define CndtnlExpr		ExprImpl::conditional
+
+#define VarAcsrExpr		ExprImpl::var_accessor
+#define MemberAcsrExpr	ExprImpl::mem_accessor
+
 #define ArgsLiExpr		ExprImpl::args
 #define FnCallExpr		ExprImpl::func_call
+
 #define LValExpr		ExprImpl::lvalue
-#define InvalidExpr		ExprImpl::invalid
-#define CSExpr			ExprImpl::comma_ex
-#define AItemExpr		ExprImpl::acsr_item
-#define AssignExpr		ExprImpl::assignment
-#define CndtnlExpr		ExprImpl::conditional
+
+#define ArrayExpr		ExprImpl::array
 #define AssocExpr		ExprImpl::assoc
 #define HashExpr		ExprImpl::hash
 

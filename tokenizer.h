@@ -44,6 +44,7 @@ class Tokenizer
 		void scan_token();
 	public:
 		Tokenizer(const QString&);
+		~Tokenizer();
 		Tokens scan_tokens();
 };
 

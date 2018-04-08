@@ -18,7 +18,7 @@ class ObjectAssoc final{
 		}
 		bool contains(const Object& k){
 			for (int i = 0; i != m_data.size(); i++){
-				if (m_data.at(i).first == key_)
+				if (m_data.at(i).first == k)
 					return true;
 			}
 			return false;
@@ -30,8 +30,8 @@ class ObjectAssoc final{
 			}
 			return Object();
 		}
-		Object append(const Object& k, const Object& val){
-			m_data.append(pair(k,val));
+		void append(const Object& k, const Object& val){
+			m_data.append(pair<Object,Object>(k,val));
 		}
 		int size(){
 			return m_data.size();
@@ -46,7 +46,7 @@ class HashMap final{
 	public:
 		HashMap():map(){}
 		HashMap(QHash<Key,Object> m):map(m){}
-		QHash<Key,Object>::iterator insert(const Key& k, const Object& o){
+		auto insert(const Key& k, const Object& o){
 			return map.insert(k,o);
 		}
 		bool contains(const Key& k){

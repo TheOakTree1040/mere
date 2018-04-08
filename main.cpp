@@ -7,8 +7,8 @@ int main(int argc, char *argv[])
 		qDebug() << "Failed registering comparators.";
 		return a.exec();
 	}
-	SourceEditor editor;
-	editor.show();
-
+	SourceEditor* editor = new SourceEditor();
+	editor->show();
+	delete editor;
 	return a.exec();
 }

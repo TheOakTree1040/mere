@@ -1,12 +1,10 @@
+
 #include "interpreter.h"
 #include <cmath>
 #include "mere_math.h"
 #include <QMessageBox>
-#define RET(VAL) return VAL
-Interpreter::Interpreter()
-{
 
-}
+Interpreter::Interpreter(){}
 
 
 Object Interpreter::evaluate(Expr expr) throw(RuntimeError){
@@ -58,7 +56,7 @@ Object Interpreter::evaluate(Expr expr) throw(RuntimeError){
 						}
 						break;
 					case Tok::EQUAL:
-						return r.dat == l.dat;
+						return r.dat() == l.dat();
 					//case Tok::AMP:
 					case Tok::AMPAMP:
 						if (ARE_NUM)
@@ -75,8 +73,12 @@ Object Interpreter::evaluate(Expr expr) throw(RuntimeError){
 			}
 		case ExprTy::Postfix:
 			{
-				Object l = evaluate(expr->expr);
+				Object r = evaluate(expr->expr);
 				Token op(*(expr->op));
+				delete expr;
+				if (!r.trait.is(TyTrait::Ref)){
+					throw RuntimeError(op,"Expected a lvalue.");
+				}
 				switch(op.ty){
 					case Tok::INCR:
 						if(IS_NUM && r.trait.is(TyTrait::Ref))
@@ -86,14 +88,16 @@ Object Interpreter::evaluate(Expr expr) throw(RuntimeError){
 						if(IS_NUM && r.trait.is(TyTrait::Ref))
 							return r.prefix(-1);
 						break;
+					default:;
 				}
 				QString errmsg = "Operand type mismatch: '";
-				errmsg.append(r.trait.id()).append("' [").append(op.lexeme).append("].").;
+				errmsg.append(r.trait.id()).append("' [");
+				errmsg += op.lexeme + "].";
 				throw RuntimeError(op,errmsg);
 			}
 		case ExprTy::Prefix:
 			{
-				Object r = expr->expr;
+				Object r = evaluate(expr->expr);
 				Token op(*(expr->op));
 				delete expr;
 				if (!r.trait.is(TyTrait::Ref)){
@@ -116,21 +120,22 @@ Object Interpreter::evaluate(Expr expr) throw(RuntimeError){
 						if(IS_NUM && r.trait.is(TyTrait::Ref))
 							return r.prefix(-1);
 						break;
+					default:;
 				}
 				QString errmsg = "Operand type mismatch: [";
 				errmsg.append(op.lexeme).append("] '").append(r.trait.id()).append("'.");
 				throw RuntimeError(op,errmsg);
 			}
-
 		default:
 			throw RuntimeError(Token(Tok::INVALID,"",Object(),0),
 							   "Failed to evaluate expr.");
 	}
 }
-
-void Interpreter::interpret(Expr expr){
+void Interpreter::execute(Stmt) throw (RuntimeError){}
+void Interpreter::interpret(Stmts stmts){
 	try{
-		QMessageBox::information(nullptr,"Value",evaluate(expr).to_string());
+		Q_UNUSED(stmts);
+		//QMessageBox::information(nullptr,"Value",evaluate(expr).to_string());
 	}
 	catch(RuntimeError& re){
 		MereMath::runtime_error(re);

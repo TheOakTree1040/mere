@@ -3,8 +3,8 @@
 #include "stmt.h"
 #include "runtimeerror.h"
 #include "environment.h"
-#define ARE(TY) l.is(TY) && r.is(TY)
-#define IS(TY) r.is(TY)
+#define ARE(TY) l.trait.is(TY) && r.trait.is(TY)
+#define IS(TY) r.trait.is(TY)
 #define ARE_NUM l.is_number() && r.is_number()
 #define IS_NUM r.is_number()
 #define OP(TY,OP) l.value<TY>() OP r.value<TY>()
@@ -37,9 +37,9 @@ class Interpreter final{
 		Environment* environment = new Environment();
 	public:
 		Interpreter();
-		Object evaluate(Expr expr) throw(RuntimeError);
-
-		void interpret(Expr expr);
+		Object evaluate(Expr) throw(RuntimeError);
+		void execute(Stmt) throw(RuntimeError);
+		void interpret(Stmts);
 
 };
 

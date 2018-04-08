@@ -5,6 +5,7 @@
 QVector<Trait> Trait::_nat_lookup{
 	{
 		DECL("void"										)),	Ty::Void	),//void
+		DECL("null"										)),	Ty::Null	),
 		DECL("real"										)),	Ty::Real	),//real
 		DECL("char"										)),	Ty::Char	),
 		DECL("string"									)),	Ty::String	),//string
@@ -21,9 +22,7 @@ QVector<Trait> Trait::_nat_lookup{
 Ty Trait::type_of(const QString& str){
 	for (int i = 0; i != _nat_lookup.size(); i++){
 		if (_nat_lookup.at(i).match(str))
-			return _nat_lookup[i].id();
-		void i;
-
+			return _nat_lookup[i].ty;
 	}
 	return Ty::Struct;
 }
