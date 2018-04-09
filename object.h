@@ -93,7 +93,7 @@ struct Trait{
 		bool match(const QString& str) const{
 			if (!is(TyTrait::Regex))
 				return false;
-			return exp?exp->exactMatch(str):false;
+			return exp&&!str.isEmpty()?exp->exactMatch(str):false;
 		}
 		bool is_typed()const{
 			return !is(TyTrait::Regex) && !is("void") && id_.size();
