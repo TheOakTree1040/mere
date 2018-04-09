@@ -5,11 +5,11 @@
 
 Version Fmt.	| Description
 -------------	|--------------------------------
-vM 				| Major version
-vM.m 			| Minor version (release)
-vM.m.C			| Major changes
-vM.m.C.c		| Minor changes
-vM.m.C.cw		| Commits w/ working code
+vV 				| Major version
+vV.v 			| Minor version (release)
+vV.v.C			| Major changes
+vV.v.C.c		| Minor changes
+vV.v.C.cw		| Commits w/ functioning code
 
 ###v0.0.0 Foundations
 **************************
