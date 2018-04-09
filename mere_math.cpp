@@ -19,22 +19,24 @@ QVector<MereMath::Error> MereMath::errors{};
 void MereMath::run(const QString& src){
 //	Token* tok = new Token();
 //	delete tok;
-	Tokens tokens = Tokenizer(src).scan_tokens();
+	Stmts stmts;
 	{
-		QString str = "";
-		int size = tokens.size();
-		for (int i = 0; i != size; i++){
-			str.append(tokens.at(i).to_string());
+		Tokens tokens = Tokenizer(src).scan_tokens();
+		{
+			QString str = "";
+			int size = tokens.size();
+			for (int i = 0; i != size; i++){
+				str.append(tokens.at(i).to_string());
+			}
+			QMessageBox::information(nullptr,"",str);
 		}
-		QMessageBox::information(nullptr,"",str);
+		if (errors.size()){
+			show_errors();
+			errors.clear();
+			return;
+		}
+		stmts = Parser(tokens).parse();
 	}
-	if (errors.size()){
-		show_errors();
-		errors.clear();
-		return;
-	}
-	Stmts stmts = Parser(tokens).parse();
-
 	if (errors.size()){
 		show_errors();
 		errors.clear();

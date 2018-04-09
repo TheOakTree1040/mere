@@ -24,7 +24,7 @@ void Tokenizer::add_token(Tok ty){
 	add_token(ty, Object());
 }
 
-void Tokenizer::add_token(Tok ty, Object lit){
+void Tokenizer::add_token(Tok ty, const Object& lit){
 	LFn;
 	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
 	Log << "Added Token: Lexeme: " << tokens.last().lexeme;
@@ -352,7 +352,8 @@ Tokens Tokenizer::scan_tokens(){
 		start = current;
 		scan_token();
 	}
-	tokens.append(Token(Tok::END," ",Object(),line));
+	start = current = 0;
+	add_token(Tok::END);
 	return tokens;
 }
 
@@ -381,6 +382,7 @@ QHash<QString, Tok> Tokenizer::keywords{
 	{"var"		,	Tok::VAR		},
 	{"null"		,	Tok::NULL_LIT	}
 };
+
 QHash<QChar,QChar> Tokenizer::escaped{
 	{'0'	,	'\0'},
 	{'"'	,	'"'	},
@@ -390,6 +392,3 @@ QHash<QChar,QChar> Tokenizer::escaped{
 	{'v'	,	'\v'},
 	{'\\'	,	'\\'}
 };
-
-
-

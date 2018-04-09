@@ -1,3 +1,4 @@
+
 #include "environment.h"
 EnvImpl::EnvImpl():enclosing(nullptr)
 {}
@@ -30,4 +31,3 @@ Object& EnvImpl::assign(const Token& t, const Object& o)throw(RuntimeError){
 		return enclosing->assign(t,o);
 	throw RuntimeError(t,QString("Variable '").append(t.lexeme).append("' undefined."));
 }
-

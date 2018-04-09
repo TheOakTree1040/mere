@@ -28,7 +28,7 @@ class Tokenizer
 		void deprecate();
 
 		void add_token(Tok);
-		void add_token(Tok, Object);
+		void add_token(Tok, const Object&);
 
 		void raw_string();
 		void string();

@@ -96,6 +96,12 @@ class ASTPrinter final{
 			write_ln(lvls,head);
 			print(lvls+1,stmt->expr);
 		}
+		void print_var_decl_stmt(int lvls, Stmt stmt){
+			S_CHKTY(StmtTy::VarDecl);
+			QString head = "var " + stmt->var_name->lexeme + " equals:";
+			write_ln(lvls,head);
+			print(lvls+1,stmt->init);
+		}
 
 		void print(int lvls, Expr expr){
 			switch (expr->type()) {
@@ -133,6 +139,9 @@ class ASTPrinter final{
 			switch(stmt->type()){
 				case StmtTy::Expr:
 					print_expr_stmt(lvls,stmt);
+					break;
+				case StmtTy::VarDecl:
+					print_var_decl_stmt(lvls,stmt);
 					break;
 				default:
 					write_ln(lvls,QString("[UNPRINTABLE_STMT_").append(QString::number((int)stmt->type())).append("]"));

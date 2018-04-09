@@ -3,6 +3,7 @@
 #include "mere_math.h"
 #include "data_storage.h"
 #include <QVector>
+
 Parser::Parser(QVector<Token>& toks):tokens(toks){
 	Logger() << "Parser()";
 	Logger::indent++;
@@ -120,6 +121,9 @@ Stmt Parser::stmt(bool expected_block){
 		else if (match(Tok::WHILE)){
 			s = while_stmt();
 		}
+		else if (match(Tok::FOR)){
+			s = for_stmt();
+		}
 		else {
 			s = (peek().ty == Tok::DOLLAR && peek(1).ty == Tok::LBRACE)?block(true):decl_stmt();
 		}
@@ -159,11 +163,9 @@ Stmt Parser::var_decl_stmt(bool eaten){
 		expect(Tok::VAR,"Expected keyword 'var'.");
 	Token& name = expect(Tok::IDENTIFIER,"Expected an identifier.");
 	Expr initializer = nullptr;
-	Log << "Next token is" << QString::number((int) peek().ty);
 	if (match(Tok::ASSIGN))
 		initializer = expression();
-	else
-		expect(Tok::SCOLON, "Expected a ';' after declaration.");
+	expect(Tok::SCOLON, "Expected a ';' after declaration.");
 	LRet VarDeclStmt(name,initializer,nullptr);
 }
 
@@ -194,8 +196,11 @@ Stmt Parser::expr_stmt(){
 Stmt Parser::for_stmt(){
 	LFn;
 	expect(Tok::LPAREN, "Expected a parenthesis.");
-	Stmt for_init = match(Tok::SCOLON)?nullptr:match(Tok::VAR)?var_decl_stmt(): expr_stmt();
-	Expr for_cond = check(Tok::SCOLON)?LitExpr(Object("bool",true)):expression();
+	Stmt for_init = match(Tok::SCOLON)?nullptr:
+									   match(Tok::VAR)?var_decl_stmt():
+													   expr_stmt();
+	Expr for_cond = check(Tok::SCOLON)?LitExpr(Object("bool",true)):
+									   expression();
 	expect(Tok::SCOLON,"Expected a ';'.");
 	Expr for_act = check(Tok::RPAREN)?nullptr:expression();
 	expect(Tok::RPAREN,"Expected a ')'.");
@@ -213,6 +218,7 @@ Expr Parser::expression(bool disable){
 	LFn;
 	Expr exp = conditional();//goto next precedence
 	if (!disable && check(Tok::COMMA)){
+		Log << "parsing CSExpr";
 		QVector<Expr> cex;
 		cex.append(exp);
 		while(match(Tok::COMMA)){
@@ -361,7 +367,12 @@ Expr Parser::rvalue(){
 	LFn;
 	int tmp_curr = current;
 	try{
-		LRet lvalue(true);
+		Expr ex = nullptr;
+		if (check(Tok::LPAREN))
+			ex = group();
+		else
+			ex = primary();
+		LRet ex;
 	}
 	catch(ParseUnwind&){
 		current = tmp_curr;
@@ -384,7 +395,7 @@ Expr Parser::primary(){
 		LRet LitExpr(Object("null",0));
 	}
 	else if	(check(Tok::IDENTIFIER			)){
-		ex = accessor();
+		ex = VarAcsrExpr(advance());
 		LRet ex;
 	}
 	else if (match(Tok::TRUE				)){
@@ -398,7 +409,7 @@ Expr Parser::primary(){
 		LRet ex;
 	}
 	else if (match({Tok::STRING,Tok::REAL}	)){
-		LRet LitExpr(prev().literal);
+		LRet LitExpr(*(prev().literal));
 	}
 	else if (match(Tok::DOLLAR				)){
 		ex = spec_data();
@@ -415,11 +426,6 @@ Expr Parser::primary(){
 }
 
 //Primary Helpers
-
-//just a constexpr wrapper around qHash
-//uint constexpr h(const QString& str){
-//	return qHash(str,0xAF);
-//}
 constexpr long long
 h(const char* string)
 {
@@ -497,9 +503,10 @@ Expr Parser::array(){
 
 Expr Parser::accessor(bool unwind) throw(ParseUnwind){
 	LFn;
-	if (unwind && peek().ty != Tok::IDENTIFIER)
+	Log << "current:" << QString::number(current) << "type:" << QString::number((int)peek().ty);
+	if (((int)(peek().ty)!=44) && unwind)
 		LThw ParseUnwind();
-	LRet VarAcsrExpr(advance());
+	LRet VarAcsrExpr(expect(Tok::IDENTIFIER,"Expected an identifier."));
 }
 
 Expr Parser::args_list(bool eaten){

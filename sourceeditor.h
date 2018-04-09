@@ -9,25 +9,26 @@
 
 class SourceEditor : public QWidget{
 		Q_OBJECT
-
 		QTextEdit* editor = nullptr;
 	public:
 		SourceEditor(QWidget* parent = nullptr):QWidget(parent){
+			LFn;
 			editor = new QTextEdit();
 			auto exec_button = new QPushButton("Execute");
 			auto layout = new QVBoxLayout();
 			layout->addWidget(editor);
 			layout->addWidget(exec_button);
-			this->setLayout(layout);
+			setLayout(layout);
+
 			connect(exec_button,&QPushButton::clicked,this,&SourceEditor::exec_clicked);
-		}
-		~SourceEditor(){
-			delete MereMath::interpreter;
-			MereMath::interpreter = 0;
+			Log << "SourceEditor()";
+			Logger::indent--;
+
 		}
 	public slots:
 		void exec_clicked(){
 			MereMath::run(editor->toPlainText());
+			Log << "clicked";
 		}
 
 };

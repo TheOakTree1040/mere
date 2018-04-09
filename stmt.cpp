@@ -10,9 +10,15 @@ StmtImpl::~StmtImpl(){
 			delete expr;
 			break;
 		case StmtTy::VarDecl:
-			delete var_name;
-			delete init;
-			delete var_type;
+			{
+				Log << "del_var";
+				delete var_name;
+				Log << "del_init";
+				delete init;
+				Log << "del_type";
+				delete var_type;
+				Log << "del_done";
+			}
 			break;
 		case StmtTy::If:
 			delete if_block;

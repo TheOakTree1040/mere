@@ -45,7 +45,14 @@ class Token{
 		Object* literal;
 		int ln;
 	public:
-		Token(){ln =0;lexeme = "";literal=nullptr;ty=Tok::INVALID;}
+
+		Token(){
+			ln = 0;
+			lexeme = "";
+			literal = new Object();
+			ty = Tok::END;
+		}
+
 		Token(Tok type,
 			  const QString& lex,
 			  const Object& lit,
@@ -54,16 +61,27 @@ class Token{
 		lexeme(QString(lex)),
 		literal(new Object(lit)),
 		ln(line){}
+
+//		Token(Tok type,
+//			  const QString& lex,
+//			  Object* lit,
+//			  int line):
+//		ty(type),
+//		lexeme(QString(lex)),
+//		literal(lit),
+//		ln(line){}
+
 		Token(const Token& tok){
 			ty = tok.ty;
 			lexeme = tok.lexeme;
-			literal = new Object(*(tok.literal));
+			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
 		}
+
 		Token& operator=(const Token& tok){
 			ty = tok.ty;
 			lexeme = tok.lexeme;
-			literal = new Object(*(tok.literal));
+			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
 			return *this;
 		}
@@ -85,11 +103,11 @@ class Token{
 			return str.append(" ]");
 		}
 
-		operator QString(){
+		operator QString() const{
 			return to_string();
 		}
 
-		bool is_bin_op(){
+		bool is_bin_op()const{
 			int i = static_cast<int>(ty);
 			return (int)Tok::ARROW <= i && i <= (int)Tok::VERT_ASGN;
 		}
