@@ -14,6 +14,14 @@ class SourceEditor : public QWidget{
 		SourceEditor(QWidget* parent = nullptr):QWidget(parent){
 			LFn;
 			editor = new QTextEdit();
+			QFont font;
+
+			font.setFamily("Courier");
+			font.setStyleHint(QFont::Monospace);
+			font.setFixedPitch(true);
+			font.setPointSize(16);
+			editor->setFont(font);
+			editor->setTabStopWidth(4*QFontMetrics(font).width(" "));
 			auto exec_button = new QPushButton("Execute");
 			auto layout = new QVBoxLayout();
 			layout->addWidget(editor);

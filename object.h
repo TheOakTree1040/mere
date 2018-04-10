@@ -150,7 +150,7 @@ class Object{
 	public:
 		Object(){
 			trait = Trait("void");
-			dat_ = new QVariant();
+			dat_ = new QVariant(0);
 		}
 
 		Object(const Object& other){

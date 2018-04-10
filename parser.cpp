@@ -72,9 +72,10 @@ Token& Parser::advance(){
 }
 
 Token& Parser::expect(Tok ty, const QString& errmsg) throw(ParseError){
+	LFn;
 	if (peek().ty == ty)
-		return advance();
-	throw error(peek(),errmsg);
+		LRet advance();
+	LThw error(peek(),errmsg);
 }
 
 ParseError Parser::error(const Token& tok, const QString& errmsg){
@@ -165,6 +166,8 @@ Stmt Parser::var_decl_stmt(bool eaten){
 	Expr initializer = nullptr;
 	if (match(Tok::ASSIGN))
 		initializer = expression();
+	else
+		initializer = LitExpr(Object());
 	expect(Tok::SCOLON, "Expected a ';' after declaration.");
 	LRet VarDeclStmt(name,initializer,nullptr);
 }
@@ -233,7 +236,7 @@ Expr Parser::expression(bool disable){
 Expr Parser::conditional(){
 	LFn;
 	Expr expr = logical_or();
-	if (match(Tok::EQUAL)){
+	if (match(Tok::ASSIGN)){
 		Expr right = conditional();
 		expr = AssignExpr(expr,right);
 	}
@@ -334,9 +337,9 @@ Expr Parser::unary(){
 		Expr right = unary();
 		LRet PrefxExpr(op,right);
 	}
-	else if (match({Tok::INCR,Tok::DECR, Tok::MOD}	)){
+	else if (match({Tok::INCR,Tok::DECR}			)){
 		Token& op = prev();
-		Expr right = lvalue();
+		Expr right = unary();
 		LRet PrefxExpr(op,right);
 	}
 	else if (peek().is_bin_op(						)){
@@ -350,9 +353,11 @@ Expr Parser::unary(){
 	if		(!rval->is(ExprTy::LValue) && !rval->is(ExprTy::VarAcsr	)){
 		LRet rval;
 	}
-	if		(match({Tok::INCR,Tok::DECR}							)){
-		Token& op = prev();
-		rval = PstfxExpr(rval, op);
+	if (check(Tok::INCR)||check(Tok::DECR)){
+		while	(match({Tok::INCR,Tok::DECR}							)){
+			Token& op = prev();
+			rval = PstfxExpr(rval, op);
+		}
 	}
 	else if (rval->is(ExprTy::LValue								)){
 		Expr cpy = rval->lval_expr;
@@ -392,17 +397,17 @@ Expr Parser::primary(){
 	LFn;
 	Expr ex = nullptr;
 	if		(match(Tok::NULL_LIT			)){
-		LRet LitExpr(Object("null",0));
+		LRet LitExpr(Object(Trait("null"),QVariant(0)));
 	}
 	else if	(check(Tok::IDENTIFIER			)){
 		ex = VarAcsrExpr(advance());
 		LRet ex;
 	}
 	else if (match(Tok::TRUE				)){
-		LRet LitExpr(Object("bool",true));
+		LRet LitExpr(Object(Trait("bool"),QVariant(true)));
 	}
 	else if (match(Tok::FALSE				)){
-		LRet LitExpr(Object("bool",false));
+		LRet LitExpr(Object(Trait("bool"),QVariant(false)));
 	}
 	else if (match(Tok::LBRACE				)){
 		ex = array();

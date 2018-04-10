@@ -131,17 +131,23 @@ struct ExprImpl final{
 		}
 */
 		static EIPtr literal(const Object& raw){
+			LFn;
+			Log << ":::by ref";
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
 			ptr->lit = new Object(raw);
-			return ptr;
+			Log << ":::" << raw.trait.id();
+			LRet ptr;
 		}
 
 		static EIPtr literal(Object* raw){
+			LFn;
+			Log << "by ptr";
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
 			ptr->lit = raw;
-			return ptr;
+			Log << raw->trait.id();
+			LRet ptr;
 		}
 
 		static EIPtr array(const QVector<EIPtr>& initializers){

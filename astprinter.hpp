@@ -4,20 +4,20 @@
 
 #define CHKTY(TY)\
 	if (!(expr->type() == TY)){\
-		print(lvls,expr);\
-		return;\
+	print(lvls,expr);\
+	return;\
 	}
 #define S_CHKTY(TY)\
 	if (!(stmt->type() == TY)){\
-		print(lvls,stmt);\
-		return;\
+	print(lvls,stmt);\
+	return;\
 	}
 class ASTPrinter final{
 	private:
 		QString text;
 	public:
 		ASTPrinter(Stmts stmts):
-		text(""){
+			text(""){
 			LFn;
 			for (int i = 0; i != stmts.size(); i++)
 				print(0,stmts[i]);
@@ -31,13 +31,29 @@ class ASTPrinter final{
 	private:
 		void write_ln(int lvls, const QString& ln){
 			for (int i = lvls; i != 0; i--)
-				text.append("  ");
+				text.append("\t");
 			text.append(ln).append("\n");
+		}
+		void print_conditional(int lvls, Expr expr){
+			CHKTY(ExprTy::Conditional);
+			write_ln(lvls,"Conditional:");
+			print(lvls+1,expr->condition);
+			write_ln(lvls,"If True  :");
+			print(lvls+1,expr->l_branch);
+			write_ln(lvls,"If False :");
+			print(lvls+1,expr->r_branch);
+		}
+		void print_assign(int lvls, Expr expr){
+			CHKTY(ExprTy::Assign);
+			write_ln(lvls,"Assign value:");
+			print(++lvls,expr->asgn_right);
+			write_ln(lvls,"To:");
+			print(lvls,expr->asgn_left);
 		}
 
 		void print_binary(int lvls, Expr expr){
-			CHKTY(ExprTy::Binary)
-					QString head = "BinExpr ";
+			CHKTY(ExprTy::Binary);
+			QString head = "BinExpr ";
 			head.append(expr->op->lexeme)./*append(" [Ln ").append(expr->op.ln).*/append(":");
 			write_ln(lvls,head);
 			write_ln(lvls+1,"Left:");
@@ -102,6 +118,36 @@ class ASTPrinter final{
 			write_ln(lvls,head);
 			print(lvls+1,stmt->init);
 		}
+		void print_block_stmt(int lvls, Stmt stmt){
+			S_CHKTY(StmtTy::Block);
+			QString head = "{";
+			write_ln(lvls++,head);
+			int sz = stmt->block->size();
+			for (int i = 0; i != sz; i++){
+				print(lvls,stmt->block->at(i));
+			}
+			write_ln(--lvls,"}");
+		}
+		void print_while_stmt(int lvls, Stmt stmt){
+			S_CHKTY(StmtTy::While);
+			QString head = "{\n   While:";
+			write_ln(lvls,head);
+			print(lvls+2,stmt->cont_condit);
+			write_ln(lvls+1,"Do:");
+			print(lvls+2,stmt->while_block);
+			write_ln(lvls, "}");
+		}
+		void print_if_stmt(int lvls, Stmt stmt){
+			S_CHKTY(StmtTy::If);
+			write_ln(lvls,"if:");
+			print(lvls+1,stmt->condition);
+			write_ln(lvls,"[then]");
+			print(lvls+1,stmt->if_block);
+			if (stmt->else_block){
+				write_ln(lvls,"[else]");
+				print(lvls+1,stmt->else_block);
+			}
+		}
 
 		void print(int lvls, Expr expr){
 			switch (expr->type()) {
@@ -129,8 +175,14 @@ class ASTPrinter final{
 				case ExprTy::LValue:
 					print_lval(lvls,expr);
 					break;
+				case ExprTy::Assign:
+					print_assign(lvls,expr);
+					break;
+				case ExprTy::Conditional:
+					print_conditional(lvls,expr);
+					break;
 				default:
-					write_ln(lvls,QString("[UNPRINTABLE_EXPR_").append(QString::number((int)expr->type())).append("]"));
+					write_ln(lvls,QString("[EXPR-").append(QString::number((int)expr->type())).append("]"));
 					break;
 			}
 		}
@@ -143,8 +195,23 @@ class ASTPrinter final{
 				case StmtTy::VarDecl:
 					print_var_decl_stmt(lvls,stmt);
 					break;
+				case StmtTy::Block:
+					print_block_stmt(lvls,stmt);
+					break;
+				case StmtTy::While:
+					print_while_stmt(lvls,stmt);
+					break;
+				case StmtTy::Empty:
+					write_ln(lvls,"[No-op]");
+					break;
+				case StmtTy::Invalid:
+					write_ln(lvls,"[!! Invalid !!]");
+					break;
+				case StmtTy::If:
+					print_if_stmt(lvls,stmt);
+					break;
 				default:
-					write_ln(lvls,QString("[UNPRINTABLE_STMT_").append(QString::number((int)stmt->type())).append("]"));
+					write_ln(lvls,QString("[STMT-").append(QString::number((int)stmt->type())).append("]"));
 					break;
 			}
 		}

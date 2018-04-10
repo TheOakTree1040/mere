@@ -42,9 +42,24 @@ void MereMath::run(const QString& src){
 		errors.clear();
 		return;
 	}
-
 	QString str = ASTPrinter(stmts).AST();
-	QMessageBox::information(nullptr,"AST Printer",str);
+	QWidget* wnd = new QWidget();
+	QTextEdit* edt = new QTextEdit();
+	QVBoxLayout* layout = new QVBoxLayout();
+
+	QFont font;
+
+	font.setFamily("Courier");
+	font.setStyleHint(QFont::Monospace);
+	font.setFixedPitch(true);
+	font.setPointSize(16);
+	edt->setText(str);
+	edt->setFont(font);
+	edt->setTabStopWidth(4*QFontMetrics(font).width(" "));
+	layout->addWidget(edt);
+	wnd->setLayout(layout);
+	wnd->setAttribute(Qt::WA_DeleteOnClose);
+	wnd->show();
 	//interpreter->interpret(stmts);
 	for (int i = 0; i != stmts.size(); i++){
 		delete stmts[i];

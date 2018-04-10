@@ -39,3 +39,8 @@ Thumbs.db
 # Autosave #
 ############
 *.autosave
+
+#Qt Stuff#
+##########
+*.pro.user
+*.pro.user.*
