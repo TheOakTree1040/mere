@@ -16,6 +16,7 @@ class Logger
 			return *this;
 		}
 		void put(const QString& str){
+			//Q_UNUSED(str)
 			strs.append(str);
 		}
 
@@ -37,12 +38,10 @@ class Logger
 		~Logger(){
 			if (!strs.isEmpty()){
 				QDebug deb = qDebug().noquote();
-				for (uint i = 0; i != indent; i++)
+				for (uint i = 0; i < indent; i++)
 					deb << "   ";
 				for (int i = 0; i != strs.size(); i++){
 					deb << strs.at(i);
-					//				if (!(strs.last() == "\n"))
-					//					deb << strs.last();
 				}
 			}
 		}
@@ -51,6 +50,8 @@ class Logger
 #define LFn_ Log << __PRETTY_FUNCTION__ << "\n"
 #define LFn LFn_; Logger::indent++; Log
 #define LRet return Logger::indent--, Log << __PRETTY_FUNCTION__ << "returned",
+#define LVoid Logger::indent--; Log << __PRETTY_FUNCTION__ << "returned";
+#define LVd LVoid
 #define LThw Logger::indent--; Log << __PRETTY_FUNCTION__ << "threw"; throw
 #define LCThw(STMTS,TY) \
 	try{\

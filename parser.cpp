@@ -140,13 +140,15 @@ Stmt Parser::stmt(bool expected_block){
 
 Stmt Parser::block(bool is_unexpected){
 	LFn;
-	if (is_unexpected)
+	if (is_unexpected){
 		expect(Tok::DOLLAR,"Expected a '$'.");
+	}
 	expect(Tok::LBRACE, "Expected a '{'");
 	Stmts blk;
 	for(;!is_at_end();){
-		if (match(Tok::RBRACE))
+		if (match(Tok::RBRACE)){
 			LRet BlockStmt(blk);
+		}
 		blk.append(stmt());
 	}
 	LThw error(prev(),"Expected a statement.");
@@ -160,14 +162,17 @@ Stmt Parser::decl_stmt(){
 
 Stmt Parser::var_decl_stmt(bool eaten){
 	LFn;
-	if (!eaten)
+	if (!eaten){
 		expect(Tok::VAR,"Expected keyword 'var'.");
+	}
 	Token& name = expect(Tok::IDENTIFIER,"Expected an identifier.");
 	Expr initializer = nullptr;
-	if (match(Tok::ASSIGN))
+	if (match(Tok::ASSIGN)){
 		initializer = expression();
-	else
+	}
+	else{
 		initializer = LitExpr(Object());
+	}
 	expect(Tok::SCOLON, "Expected a ';' after declaration.");
 	LRet VarDeclStmt(name,initializer,nullptr);
 }
@@ -177,8 +182,9 @@ Stmt Parser::if_stmt(){
 	Expr condit = expression();
 	Stmt i_blk = stmt(true);
 	Stmt e_blk = nullptr;
-	if (match(Tok::ELSE))
+	if (match(Tok::ELSE)){
 		e_blk = stmt(true);
+	}
 	LRet IfStmt(condit,i_blk,e_blk);
 }
 
@@ -208,11 +214,13 @@ Stmt Parser::for_stmt(){
 	Expr for_act = check(Tok::RPAREN)?nullptr:expression();
 	expect(Tok::RPAREN,"Expected a ')'.");
 	Stmt body = stmt(true);
-	if (for_act)
+	if (for_act){
 		body = BlockStmt({body,ExprStmt(for_act)});
+	}
 	body = WhileStmt(for_cond,body);
-	if (for_init)
+	if (for_init){
 		body = BlockStmt({for_init,body});
+	}
 	LRet body;
 }
 
@@ -236,9 +244,10 @@ Expr Parser::expression(bool disable){
 Expr Parser::conditional(){
 	LFn;
 	Expr expr = logical_or();
-	if (match(Tok::ASSIGN)){
+	if (match({Tok::ASSIGN,Tok::MULT_ASGN,Tok::DIV_ASGN,Tok::PLUS_ASGN,Tok::MINUS_ASGN})){
+		Token& op = prev();
 		Expr right = conditional();
-		expr = AssignExpr(expr,right);
+		expr = AssignExpr(expr,op,right);
 	}
 	else if (match(Tok::QUES_MK)){
 		Expr l = logical_or();
@@ -255,7 +264,7 @@ Expr Parser::logical_or(){
 	while (match(Tok::VERTVERT)){
 		Token& op = prev();
 		Expr right = logical_and();
-		expr = BinExpr(expr,op,right);
+		expr = LogicalExpr(expr,op,right);
 	}
 	LRet expr;
 }
@@ -266,7 +275,7 @@ Expr Parser::logical_and(){
 	while (match(Tok::AMPAMP)){
 		Token& op = prev();
 		Expr right = equality();
-		expr = BinExpr(expr,op,right);
+		expr = LogicalExpr(expr,op,right);
 	}
 	LRet expr;
 }

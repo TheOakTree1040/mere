@@ -32,7 +32,8 @@ enum class ExprTy {
 	MemAccessor,
 	Assign,
 	Conditional,
-	Lambda
+	Lambda,
+	Logical
 	//Change destr if you want to add any.
 
 };
@@ -57,6 +58,7 @@ struct ExprImpl final{
 				struct{
 						EIPtr asgn_left;
 						EIPtr asgn_right;
+						Token* asgn_op;
 				};
 				struct{
 						EIPtr condition;
@@ -217,9 +219,10 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr assignment(EIPtr l, EIPtr r){
+		static EIPtr assignment(EIPtr l, const Token& op, EIPtr r){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Assign;
+			ptr->asgn_op = new Token(op);
 			ptr->asgn_left = l;
 			ptr->asgn_right = r;
 			return ptr;
@@ -246,6 +249,12 @@ struct ExprImpl final{
 			return ptr;
 		}
 
+		static EIPtr logical(EIPtr l, const Token& op, EIPtr r){
+			EIPtr ptr = binary(l,op,r);
+			ptr->ty = ExprTy::Logical;
+			return ptr;
+		}
+
 		ExprTy type(){
 			return ty;
 		}
@@ -261,6 +270,7 @@ typedef EIPtr Expr;
 
 #define LitExpr			ExprImpl::literal
 #define BinExpr			ExprImpl::binary
+#define LogicalExpr		ExprImpl::logical
 #define AssignExpr		ExprImpl::assignment
 #define GroupExpr		ExprImpl::group
 #define PstfxExpr		ExprImpl::postfix

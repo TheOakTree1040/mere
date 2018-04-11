@@ -45,10 +45,10 @@ struct Trait{
 		static Ty type_of(const QString&);
 	public:
 		~Trait(){
-			Log << "   ~Trait() start";
+			//Log << "   ~Trait() start";
 			if (is(TyTrait::Regex))
 				delete exp;
-			Log << "   ~Trait() returned";
+			//Log << "   ~Trait() returned";
 		}
 		Trait():
 			ty_trait_(TyTrait::Object),
@@ -96,7 +96,7 @@ struct Trait{
 			return exp&&!str.isEmpty()?exp->exactMatch(str):false;
 		}
 		bool is_typed()const{
-			return !is(TyTrait::Regex) && !is("void") && id_.size();
+			return (!is(TyTrait::Regex)) && (!is("void")) && (!id().isEmpty());
 		}
 		Ty type()const{
 			return ty;
@@ -111,12 +111,12 @@ struct Trait{
 			return type() == t;
 		}
 		bool is(TyTrait tt)const{
-			return ty_trait() == tt;
+			return ty_trait_ == tt;
 		}
 		bool is(bool dynamicness)const{
 			if (is(TyTrait::Regex))
 				return false;
-			return is_dynamic() == dynamicness;
+			return is_dynamic_ == dynamicness;
 		}
 		void set_dynamic(bool d){
 			if (!is(TyTrait::Regex))
@@ -159,14 +159,18 @@ class Object{
 				ref = other.ref;
 			else
 				dat_ = new QVariant(other.dat());
+			Log << "obj_cpy_is_ref?" << QString::number(trait.is(TyTrait::Ref));
 		}
 
 		Object& refer(Object& r){
-			if (!trait.is(TyTrait::Ref))
+			if (!trait.is(TyTrait::Ref)){
 				delete dat_;
+				dat_ = 0;
+			}
 			ref = r;
 			trait = r.trait;
 			trait.set_ty_trait(TyTrait::Ref);
+			Log << "obj_cpy_is_ref?" << QString::number(trait.is(TyTrait::Ref));
 			return *this;
 		}
 		QVariant dat() const{
@@ -201,11 +205,11 @@ class Object{
 		}
 
 		~Object(){
-			LFn << trait.id();
-			if (dat_)
+			//LFn << trait.id();
+			if (!trait.is(TyTrait::Ref) && !trait.is(TyTrait::Regex))
 				delete dat_;
-			Logger::indent--;
-			Log << "~Object() returned";
+			//Log << "~Object() returned";
+			//LVd;
 		}
 
 		template <typename T>
@@ -221,11 +225,9 @@ class Object{
 		}
 
 		QString to_string() const{
-			if (trait.is(TyTrait::Ref))
-				return ref.get().to_string();
-			if (!dat_)
+			if (!dat_ptr())
 				return "[#BROKEN_OBJECT#]";
-			switch(trait.ty){
+			switch(get_trait().ty){
 				case Ty::String:
 					return value<QString>();
 				case Ty::Real:
@@ -251,15 +253,15 @@ class Object{
 			if (!trait.is(TyTrait::Ref) || !is_number())
 				return Object();
 			double val = ref.get().value<double>();
-			Object o(val);
-			ref.get().dat_ptr()->setValue(val+i);
+			Object o(Trait("real"),QVariant(val));
+			*(ref.get().dat_ptr()) = QVariant(val+i);
 			return o;
 		}
 
 		Object prefix(int i) {
 			if (!trait.is(TyTrait::Ref) || !is_number())
 				return Object();
-			ref.get().dat_ptr()->setValue(ref.get().value<double>()+i);
+			*(ref.get().dat_ptr()) = QVariant(ref.get().value<double>()+i);
 			return *this;
 		}
 
@@ -275,14 +277,30 @@ class Object{
 			return *this;
 		}
 
-		bool operator==(const Object& other) const{
-			if (!(trait==other.trait))
-				return false;
+		Object& recv(const Object& obj){
 			if (trait.is(TyTrait::Ref))
-				return ref.get() == other.ref.get();
-			if (!dat_)
-				return !(other.dat_);
-			return dat() == other.dat();
+				ref.get() = obj;
+			else
+				*dat_ptr() = *obj.dat_ptr();
+			return *this;
+		}
+
+		Trait get_trait()const{
+			return trait.is(TyTrait::Ref)?ref.get().get_trait():trait;
+		}
+
+		bool operator==(const Object& other) const{
+			if (!(get_trait()==other.get_trait()))
+				return false;
+			QVariant* dptrt = dat_ptr();
+			QVariant* dptro = other.dat_ptr();
+			if (!dptro||!dptrt)
+				return false;
+//			if ((dptrt && dptro) || (!dptrt && !dptro))
+//				return true;
+//			if (!dptrt || !dptro)
+//				return false;
+			return *dptrt == *dptro;
 		}
 		bool operator>(const Object& other) const{
 			if (is_number()&&other.is_number())

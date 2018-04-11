@@ -62,6 +62,7 @@ ExprImpl::~ExprImpl(){
 		case ExprTy::Assign:
 			delete asgn_left;
 			delete asgn_right;
+			delete asgn_op;
 			break;
 		case ExprTy::Lambda:
 			for (int i = param_ty->size() - 1; i >= 0; i--){

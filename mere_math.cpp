@@ -60,10 +60,7 @@ void MereMath::run(const QString& src){
 	wnd->setLayout(layout);
 	wnd->setAttribute(Qt::WA_DeleteOnClose);
 	wnd->show();
-	//interpreter->interpret(stmts);
-	for (int i = 0; i != stmts.size(); i++){
-		delete stmts[i];
-	}
+	interpreter->interpret(stmts);
 	Log << "Clearing";
 	errors.clear();
 	Log << "End of run";
@@ -100,8 +97,8 @@ void MereMath::report(int ln, const QString& loc, const QString& msg, bool is_id
 
 void MereMath::runtime_error(const RuntimeError &re){
 	QString str = "";
-	str.append("[Ln ").append(QString::number(re.tok.ln)).append("]").append(re.msg);
-	errors.append(Error(re.tok.ln,re.msg));
+	str.append("[Ln ").append(QString::number(re.tok.ln+1)).append("] ").append(re.msg);
+	errors.append(Error(re.tok.ln+1,re.msg));
 	QMessageBox::critical(nullptr,"Runtime Error",str);
 }
 
@@ -112,7 +109,7 @@ void MereMath::show_errors(){
 
 	QString error_text = "";
 	for (int i = 0; i != errors.size(); i++){
-		error_text.append("<============Error============>\n");
+		error_text.append("<===========Error===========>\n");
 		error_text.append(errors.at(i).msg);
 		error_text.append("\n");
 	}

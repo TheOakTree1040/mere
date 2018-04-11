@@ -16,7 +16,7 @@ bool Tokenizer::is_at_end(){
 }
 
 char Tokenizer::advance(){
-	Logger() << "  adv:" << QString::number(current++) << peek(-1);
+	Log << "  adv:" << QString::number(current++) << peek(-1);
 	return source[current-1].toLatin1();
 }
 
@@ -26,10 +26,10 @@ void Tokenizer::add_token(Tok ty){
 
 void Tokenizer::add_token(Tok ty, const Object& lit){
 	LFn;
-	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
-	Log << "Added Token: Lexeme: " << tokens.last().lexeme;
-	Log << "             Type  : " << (int)tokens.last().ty;
-	Logger::indent--;
+	tokens.append(Token(ty,source.mid(start,current-start+1),lit,line));
+	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
+	Log << "             Type  :" << (int)tokens.last().ty;
+	LVd;
 }
 
 char Tokenizer::peek(int i) {
@@ -80,7 +80,7 @@ void Tokenizer::string(){
 			return;
 		}
 		if (peek() == '\\'){
-			QChar ch = escaped.value(QChar(peek(1)),QChar('!'));
+			QChar ch = escaped.value(QChar(peek(1)),QChar('*'));
 			if (ch == QChar('*')){
 				MereMath::error(line,"Undefined escape sequence.");
 			}
@@ -117,7 +117,7 @@ void Tokenizer::string(){
 		MereMath::error(line, "Expected string termination.");
 		return;
 	}
-	add_token(Tok::STRING, Object(Trait("string"),str));
+	add_token(Tok::STRING, Object(Trait("string"),QVariant(str)));
 }
 
 void Tokenizer::character(){
@@ -215,8 +215,7 @@ bool Tokenizer::is_base_8(char c){
 }
 
 void Tokenizer::identifier(){
-	Logger::indent++;
-	Log;
+	LFn;
 	current--;
 	QString val = "";
 	val.append(peek());
@@ -233,11 +232,12 @@ void Tokenizer::identifier(){
 	while (is_alpha_numeric(peek()))
 		val.append(advance());
 	Tok ty = keywords.value(val, Tok::IDENTIFIER);
-	add_token(ty,Object(val));
-	Logger() << (QString)"End of identifier() :\"" + val + "\"";
-	Logger::indent--;
-	//var i = 0;
-	//0123456789
+	tokens.append(Token(ty,val,Object(),line));
+	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
+	Log << "             Type  :" << (int)tokens.last().ty;
+	Log << val;
+	Log << "Done.";
+	LVoid
 }
 
 void Tokenizer::raw_string(){

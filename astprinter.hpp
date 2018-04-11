@@ -150,7 +150,14 @@ class ASTPrinter final{
 		}
 
 		void print(int lvls, Expr expr){
+			if (!expr)
+				return;
 			switch (expr->type()) {
+				case ExprTy::Logical:
+					expr->ty = ExprTy::Binary;
+					print_binary(lvls,expr);
+					expr->ty = ExprTy::Logical;
+					break;
 				case ExprTy::Binary:
 					print_binary(lvls,expr);
 					break;
@@ -188,6 +195,8 @@ class ASTPrinter final{
 		}
 
 		void print(int lvls, Stmt stmt){
+			if (!stmt)
+				return;
 			switch(stmt->type()){
 				case StmtTy::Expr:
 					print_expr_stmt(lvls,stmt);

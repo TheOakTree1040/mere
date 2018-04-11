@@ -3,8 +3,9 @@
 #include "stmt.h"
 #include "runtimeerror.h"
 #include "environment.h"
-#define ARE(TY) l.trait.is(TY) && r.trait.is(TY)
-#define IS(TY) r.trait.is(TY)
+#define STR(ARG) QString(ARG)
+#define ARE(TY) l.trait.is( TY ) && r.trait.is( TY )
+#define IS(TY) r.trait.is( TY )
 #define ARE_NUM l.is_number() && r.is_number()
 #define IS_NUM r.is_number()
 #define OP(TY,OP) l.value<TY>() OP r.value<TY>()
@@ -34,11 +35,25 @@
  */
 class Interpreter final{
 	private:
-		Environment* environment = new Environment();
+		EnvImpl* environment = new EnvImpl();
 	public:
 		Interpreter();
-		Object evaluate(Expr) throw(RuntimeError);
-		void execute(Stmt) throw(RuntimeError);
+		Object eval_group(Expr,bool=true);
+		Object eval_lit(Expr,bool=true);
+		Object eval_binary(Expr,bool=true);
+		Object eval_prefx(Expr,bool=true);
+		Object eval_pstfx(Expr,bool=true);
+		Object eval_logical(Expr,bool=true);
+		Object eval_var_acsr(Expr,bool=true);
+		Object eval_asgn(Expr,bool=true);
+		Object evaluate(Expr,bool=true);
+
+		void exec_expr(Stmt,bool=true);
+		void exec_if(Stmt,bool=true);
+		void exec_block(Stmt,bool=true);
+		void exec_while(Stmt,bool=true);
+		void exec_var_decl(Stmt,bool=true);
+		void execute(Stmt,bool=true);
 		void interpret(Stmts);
 
 };
