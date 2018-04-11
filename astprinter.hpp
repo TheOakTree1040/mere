@@ -73,12 +73,12 @@ class ASTPrinter final{
 			QString head = "[Array]";
 			write_ln(lvls,head);
 		}
-		void print_lval(int lvls, Expr expr){
-			CHKTY(ExprTy::LValue);
-			QString head = "Asserted_LValue:";
-			write_ln(lvls,head);
-			print(lvls+1,expr->lval_expr);
-		}
+//		void print_lval(int lvls, Expr expr){
+//			CHKTY(ExprTy::LValue);
+//			QString head = "Asserted_LValue:";
+//			write_ln(lvls,head);
+//			print(lvls+1,expr->lval_expr);
+//		}
 		void print_group(int lvls, Expr expr){
 			CHKTY(ExprTy::Group);
 			QString head = "GroupExpr:";
@@ -179,9 +179,9 @@ class ASTPrinter final{
 				case ExprTy::Group:
 					print_group(lvls,expr);
 					break;
-				case ExprTy::LValue:
-					print_lval(lvls,expr);
-					break;
+//				case ExprTy::LValue:
+//					print_lval(lvls,expr);
+//					break;
 				case ExprTy::Assign:
 					print_assign(lvls,expr);
 					break;

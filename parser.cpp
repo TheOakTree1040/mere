@@ -227,18 +227,28 @@ Stmt Parser::for_stmt(){
 //expr
 Expr Parser::expression(bool disable){
 	LFn;
-	Expr exp = conditional();//goto next precedence
+	Expr exp = refer();//goto next precedence
 	if (!disable && check(Tok::COMMA)){
 		Log << "parsing CSExpr";
 		QVector<Expr> cex;
 		cex.append(exp);
 		while(match(Tok::COMMA)){
-			Expr expr = conditional();//goto next precedence
+			Expr expr = refer();//goto next precedence
 			cex.append(expr);
 		}
 		exp = CSExpr(cex);
 	}
 	LRet exp;
+}
+
+Expr Parser::refer(){
+	LFn;
+	Expr expr = conditional();
+	if (match({Tok::FAT_ARROW,Tok::REFER})){
+		Token& op = prev();
+		expr = RefExpr(expr, op, refer());
+	}
+	LRet expr;
 }
 
 Expr Parser::conditional(){
@@ -359,7 +369,7 @@ Expr Parser::unary(){
 		LRet PrefxExpr(op,right);
 	}
 	Expr rval = rvalue();
-	if		(!rval->is(ExprTy::LValue) && !rval->is(ExprTy::VarAcsr	)){
+	if		(/*!rval->is(ExprTy::LValue) && */!rval->is(ExprTy::VarAcsr	)){
 		LRet rval;
 	}
 	if (check(Tok::INCR)||check(Tok::DECR)){
@@ -368,12 +378,12 @@ Expr Parser::unary(){
 			rval = PstfxExpr(rval, op);
 		}
 	}
-	else if (rval->is(ExprTy::LValue								)){
-		Expr cpy = rval->lval_expr;
-		rval->lval_expr = 0;
-		delete rval;
-		rval = cpy;
-	}
+//	else if (rval->is(ExprTy::LValue								)){
+//		Expr cpy = rval->lval_expr;
+//		rval->lval_expr = 0;
+//		delete rval;
+//		rval = cpy;
+//	}
 	LRet rval;
 }
 

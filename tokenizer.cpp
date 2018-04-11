@@ -287,7 +287,8 @@ void Tokenizer::scan_token(){
 		case '<': add_token(match('=')?Tok::LESS_EQUAL:
 									   Tok::LESS); break;
 		case '=': add_token(match('=')?Tok::EQUAL:
-									   Tok::ASSIGN); break;
+									   match('>')?Tok::FAT_ARROW:
+												  Tok::ASSIGN); break;
 		case '!': add_token(match('=')?Tok::N_EQUAL:
 									   Tok::EXCL); break;
 		case '/':
@@ -380,7 +381,8 @@ QHash<QString, Tok> Tokenizer::keywords{
 	{"valued"	,	Tok::VALUED		},
 	{"global"	,	Tok::GLOBAL		},
 	{"var"		,	Tok::VAR		},
-	{"null"		,	Tok::NULL_LIT	}
+	{"null"		,	Tok::NULL_LIT	},
+	{"refer"	,	Tok::REFER		}
 };
 
 QHash<QChar,QChar> Tokenizer::escaped{

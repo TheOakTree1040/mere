@@ -38,22 +38,23 @@ class Interpreter final{
 		EnvImpl* environment = new EnvImpl();
 	public:
 		Interpreter();
-		Object eval_group(Expr,bool=true);
-		Object eval_lit(Expr,bool=true);
-		Object eval_binary(Expr,bool=true);
-		Object eval_prefx(Expr,bool=true);
-		Object eval_pstfx(Expr,bool=true);
-		Object eval_logical(Expr,bool=true);
-		Object eval_var_acsr(Expr,bool=true);
-		Object eval_asgn(Expr,bool=true);
-		Object evaluate(Expr,bool=true);
+		Object eval_group(Expr,bool);
+		Object eval_lit(Expr,bool);
+		Object eval_binary(Expr,bool);
+		Object eval_prefx(Expr,bool);
+		Object eval_pstfx(Expr,bool);
+		Object eval_logical(Expr,bool);
+		Object eval_var_acsr(Expr,bool);
+		Object eval_asgn(Expr,bool);
+		Object eval_refer(Expr,bool);
+		Object evaluate(Expr,bool);
 
-		void exec_expr(Stmt,bool=true);
-		void exec_if(Stmt,bool=true);
-		void exec_block(Stmt,bool=true);
-		void exec_while(Stmt,bool=true);
-		void exec_var_decl(Stmt,bool=true);
-		void execute(Stmt,bool=true);
+		void exec_expr(Stmt,bool);
+		void exec_if(Stmt,bool);
+		void exec_block(Stmt,bool);
+		void exec_while(Stmt,bool);
+		void exec_var_decl(Stmt,bool);
+		void execute(Stmt,bool);
 		void interpret(Stmts);
 
 };

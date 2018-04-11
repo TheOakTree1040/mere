@@ -43,9 +43,9 @@ ExprImpl::~ExprImpl(){
 			}
 			delete args_list;
 			break;
-		case ExprTy::LValue:
-			delete lval_expr;
-			break;
+//		case ExprTy::LValue:
+//			delete lval_expr;
+//			break;
 		case ExprTy::CommaEx:
 			for (int i = comma_exprs->size() - 1; i >= 0; i--){
 				delete comma_exprs->takeAt(i);
@@ -77,6 +77,11 @@ ExprImpl::~ExprImpl(){
 			break;
 		case ExprTy::VarAcsr:
 			delete var_acsr;
+			break;
+		case ExprTy::Refer:
+			delete refer_left;
+			delete refer_right;
+			delete refer_op;
 			break;
 		//case ExprTy::MemAccessor:
 

@@ -142,6 +142,26 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 			LRet r==l;
 		case Tok::N_EQUAL:
 			LRet (!(r==l));
+		case Tok::GREATER:
+			if (ARE_NUM){
+				LRet OP(double,>);
+			}
+			break;
+		case Tok::GREATER_EQUAL:
+			if (ARE_NUM){
+				LRet OP(double,>=);
+			}
+			break;
+		case Tok::LESS:
+			if (ARE_NUM){
+				LRet OP(double,<);
+			}
+			break;
+		case Tok::LESS_EQUAL:
+			if (ARE_NUM){
+				LRet OP(double,<=);
+			}
+			break;
 		default:
 			LThw RuntimeError(op,"Undefined Binary Operation.");
 
@@ -174,7 +194,6 @@ Object Interpreter::eval_logical(Expr expr, bool dd){
 	Object r = evaluate(rex,dd);
 	LRet r;
 }
-
 Object Interpreter::eval_var_acsr(Expr expr, bool){
 	LFn;
 	Object o;
@@ -183,7 +202,6 @@ Object Interpreter::eval_var_acsr(Expr expr, bool){
 	Log << "is ref?" << QString::number(o.trait.is(TyTrait::Ref));
 	LRet o;
 }
-
 Object Interpreter::eval_asgn(Expr expr, bool dd){
 	LFn;
 	Expr l = expr->asgn_left, r = expr->asgn_right;
@@ -217,7 +235,25 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 	RET_OP_ASGN:;
 	Expr lex = LitExpr(ref);
 	Expr rex = LitExpr(right);
-	LRet ref.recv(evaluate(BinExpr(lex,Token(right_val_op,op.lexeme,Object(),ln),rex)));
+	LRet ref.recv(evaluate(BinExpr(lex,Token(right_val_op,op.lexeme,Object(),ln),rex),dd));
+}
+Object Interpreter::eval_refer(Expr expr, bool dd){
+	LFn;
+	Expr refl = expr->refer_left;
+	Expr refr = expr->refer_right;
+	if (dd){
+		expr->refer_right = nullptr;
+		expr->refer_left = nullptr;
+	}
+	Object rl = evaluate(refl,dd);
+	Object rr = evaluate(refr,dd);
+	if (!rl.trait.is(TyTrait::Ref)){
+		LThw RuntimeError(*expr->op, "Expected an lvalue.");
+	}
+	if (!rr.trait.is(TyTrait::Ref)){
+		LThw RuntimeError(*expr->op, "Expected an lvalue (...on the right side, I know.)");
+	}
+	LRet rl.refer(rr.ref.get());
 }
 
 Object Interpreter::evaluate(Expr expr, bool dd){
@@ -249,6 +285,9 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 					break;
 				case ExprTy::Assign:
 					o = eval_asgn(expr,dd);
+					break;
+				case ExprTy::Refer:
+					o = eval_refer(expr,dd);
 					break;
 				default:
 					LThw RuntimeError(Token(Tok::INVALID,"",Object(),0),
@@ -370,7 +409,7 @@ void Interpreter::interpret(Stmts stmts){
 	try{
 		int sz = stmts.size();
 		for (int i = 0; i != sz; i++){
-			execute(stmts.takeAt(0));
+			execute(stmts.takeAt(0),true);
 		}
 	}
 	catch(RuntimeError& re){

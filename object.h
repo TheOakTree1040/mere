@@ -163,11 +163,14 @@ class Object{
 		}
 
 		Object& refer(Object& r){
-			if (!trait.is(TyTrait::Ref)){
+			if (trait.is(TyTrait::Ref)){
+				return ref.get().refer(r);
+			}
+			else {
 				delete dat_;
 				dat_ = 0;
 			}
-			ref = r;
+			ref = r.trait.is(TyTrait::Ref)?r.ref.get():r;
 			trait = r.trait;
 			trait.set_ty_trait(TyTrait::Ref);
 			Log << "obj_cpy_is_ref?" << QString::number(trait.is(TyTrait::Ref));
@@ -278,10 +281,10 @@ class Object{
 		}
 
 		Object& recv(const Object& obj){
-			if (trait.is(TyTrait::Ref))
+			/*if (trait.is(TyTrait::Ref))
 				ref.get() = obj;
-			else
-				*dat_ptr() = *obj.dat_ptr();
+			else*/
+			*dat_ptr() = *obj.dat_ptr();
 			return *this;
 		}
 

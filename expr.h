@@ -26,14 +26,15 @@ enum class ExprTy {
 	Array,
 	ArgsList,
 	FuncCall,
-	LValue,
+//	LValue,
 	CommaEx,
 	VarAcsr,
 	MemAccessor,
 	Assign,
 	Conditional,
 	Lambda,
-	Logical
+	Logical,
+	Refer
 	//Change destr if you want to add any.
 
 };
@@ -54,6 +55,11 @@ struct ExprImpl final{
 				struct{
 						EIPtr callee;
 						EIPtr func_args_list;
+				};
+				struct{
+						EIPtr refer_left;
+						EIPtr refer_right;
+						Token* refer_op;
 				};
 				struct{
 						EIPtr asgn_left;
@@ -191,13 +197,13 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr lvalue(EIPtr expr){
-			EIPtr ptr = create();
-			ptr->ty = ExprTy::LValue;
-			if (expr->is(ExprTy::VarAcsr) || expr->is(ExprTy::MemAccessor) || true)
-				ptr->lval_expr = expr;
-			return ptr;
-		}
+//		static EIPtr lvalue(EIPtr expr){
+//			EIPtr ptr = create();
+//			ptr->ty = ExprTy::LValue;
+//			if (expr->is(ExprTy::VarAcsr) || expr->is(ExprTy::MemAccessor) || true)
+//				ptr->lval_expr = expr;
+//			return ptr;
+//		}
 
 		static EIPtr invalid(){
 			return create();
@@ -255,6 +261,15 @@ struct ExprImpl final{
 			return ptr;
 		}
 
+		static EIPtr refer(EIPtr rl, const Token& refop, EIPtr rr){
+			EIPtr ptr = create();
+			ptr->ty = ExprTy::Refer;
+			ptr->refer_left = rl;
+			ptr->refer_right = rr;
+			ptr->refer_op = new Token(refop);
+			return ptr;
+		}
+
 		ExprTy type(){
 			return ty;
 		}
@@ -284,10 +299,12 @@ typedef EIPtr Expr;
 #define ArgsLiExpr		ExprImpl::args
 #define FnCallExpr		ExprImpl::func_call
 
-#define LValExpr		ExprImpl::lvalue
+//#define LValExpr		ExprImpl::lvalue
 
 #define ArrayExpr		ExprImpl::array
 #define AssocExpr		ExprImpl::assoc
 #define HashExpr		ExprImpl::hash
+
+#define RefExpr			ExprImpl::refer
 
 #endif // EXPR_H
