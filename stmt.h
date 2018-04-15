@@ -8,7 +8,8 @@ enum class StmtTy{
 	VarDecl,
 	Block,
 	If,
-	While
+	While,
+	Print
 };
 
 #define SIPtr StmtImpl*
@@ -18,7 +19,7 @@ class StmtImpl final
 	public:
 		StmtTy ty;
 		union{
-			Expr expr;// ExprStmt
+			Expr expr;// ExprStmt, PrintStmt
 			struct{// var_decl
 					Expr init;
 					Expr var_type; // nullptr or ScopeAcsr
@@ -90,6 +91,13 @@ class StmtImpl final
 			return ptr;
 		}
 
+		static SIPtr print_stmt(Expr expr){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::Print;
+			ptr->expr = expr;
+			return ptr;
+		}
+
 		StmtTy type(){
 			return ty;
 		}
@@ -110,5 +118,6 @@ typedef QVector<Stmt> Stmts;
 #define BlockStmt	StmtImpl::block_stmt
 #define IfStmt		StmtImpl::if_stmt
 #define WhileStmt	StmtImpl::while_stmt
+#define PrintStmt	StmtImpl::print_stmt
 
 #endif // STMT_H

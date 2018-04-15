@@ -38,6 +38,7 @@ enum class ExprTy {
 	//Change destr if you want to add any.
 
 };
+
 struct ExprImpl final{
 	public:
 		union{
@@ -144,7 +145,7 @@ struct ExprImpl final{
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
 			ptr->lit = new Object(raw);
-			Log << ":::" << raw.trait.id();
+			Log << ":::" << raw.trait().id();
 			LRet ptr;
 		}
 
@@ -154,7 +155,7 @@ struct ExprImpl final{
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
 			ptr->lit = raw;
-			Log << raw->trait.id();
+			Log << raw->trait().id();
 			LRet ptr;
 		}
 

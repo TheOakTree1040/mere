@@ -35,7 +35,7 @@ enum class Tok{
 	RETURN, TRUE, FALSE, DO,
 	WHILE, CASE, SWITCH, BREAK,
 	DEFAULT, ARRAY, SET,
-	ENUM, ASSERT, DEFINE, VALUED, VAR, NULL_LIT, REFER,
+	ENUM, ASSERT, DEFINE, VALUED, VAR, NULL_LIT, PRINT,
 
 	END
 };
@@ -92,12 +92,12 @@ class Token{
 			delete literal;
 		}
 
-		QString to_string() const{
+		QString to_string() {
 			QString str("[Tok ");
 			str.append(QString::number(static_cast<int>(ty)));
-			if (literal->trait.is("real"))
-				str.append(" : ").append(QString::number(literal->dat().toDouble()));
-			else if (literal->trait.is("string"))
+			if (literal->trait().is("real"))
+				str.append(" : ").append(QString::number(literal->data().toDouble()));
+			else if (literal->trait().is("string"))
 				str.append(" : \"").append(literal->to_string()).append("\"");
 			else if (lexeme.size()){
 				str.append(" : '").append(lexeme).append("'");
@@ -105,7 +105,7 @@ class Token{
 			return str.append(" ]");
 		}
 
-		operator QString() const{
+		operator QString()   {
 			return to_string();
 		}
 

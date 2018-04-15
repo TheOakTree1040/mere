@@ -40,6 +40,7 @@ class Logger
 				QDebug deb = qDebug().noquote();
 				for (uint i = 0; i < indent; i++)
 					deb << "   ";
+				strs.insert(0,QString("|"));
 				for (int i = 0; i != strs.size(); i++){
 					deb << strs.at(i);
 				}
@@ -47,14 +48,14 @@ class Logger
 		}
 };
 #define Log Logger()
-#define LFn_ Log << __PRETTY_FUNCTION__ << "\n"
+#define LFn_ Log << __PRETTY_FUNCTION__
 #define LFn LFn_; Logger::indent++; Log
-#define LRet return Logger::indent--, Log << __PRETTY_FUNCTION__ << "returned",
-#define LVoid Logger::indent--; Log << __PRETTY_FUNCTION__ << "returned";
+#define LRet return Logger::indent--, Log << __PRETTY_FUNCTION__ << "returned on line" << QString::number(__LINE__),
+#define LVoid Logger::indent--; Log << __PRETTY_FUNCTION__ << "returned on line" << QString::number(__LINE__);
 #define LVd LVoid
-#define LThw Logger::indent--; Log << __PRETTY_FUNCTION__ << "threw"; throw
+#define LThw Logger::indent--; Log << __PRETTY_FUNCTION__ << "threw on line" << QString::number(__LINE__); throw
 #define LCThw(STMTS,TY) \
 	try{\
 STMTS\
-} catch(TY & t){LThw t;}
+} catch( TY & t ){LThw t;}
 #endif // LOGGER_H

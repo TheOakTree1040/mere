@@ -43,7 +43,7 @@ class Parser
 		Expr terms		(		);
 		Expr term		(		);
 		Expr unary		(		);
-	  //Expr exponent	(		);//TODO
+		Expr exponent	(		);//TODO
 		Expr primary	(		);
 		//primary helpers.
 		Expr spec_data	(		);

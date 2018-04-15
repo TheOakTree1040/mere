@@ -55,17 +55,17 @@ bool Parser::is_at_end(){
 
 Token& Parser::peek(int i){
 	if ((current + i) > (tokens.size()-1))
-		return const_cast<Token&>(tokens.at(tokens.size()-1));
-	return const_cast<Token&>(tokens.at(current + i));
+		return tokens[tokens.size()-1];
+	return tokens[current + i];
 }
 
 Token& Parser::prev(){
-	return const_cast<Token&>(tokens.at((current - 1)<0?0:current-1));
+	return tokens[(current - 1)<0?0:current-1];
 }
 
 Token& Parser::advance(){
 	if (!is_at_end()){
-		//Logger() << "adv: Type" << (int)peek().ty;
+		Logger() << "adv: Type" << (int)peek().ty;
 		current++;
 	}
 	return prev();
@@ -73,8 +73,11 @@ Token& Parser::advance(){
 
 Token& Parser::expect(Tok ty, const QString& errmsg) throw(ParseError){
 	LFn;
+	Log << "Checking" << errmsg << QString::number(static_cast<int>(ty));
+	Log << QString::number(static_cast<int>(peek().ty));
 	if (peek().ty == ty)
 		LRet advance();
+	Log << "Throwing" << (QString)"\"" + errmsg + "\"";
 	LThw error(peek(),errmsg);
 }
 
@@ -119,20 +122,30 @@ Stmt Parser::stmt(bool expected_block){
 		else if (match(Tok::IF)){
 			s = if_stmt();
 		}
-		else if (match(Tok::WHILE)){
-			s = while_stmt();
-		}
 		else if (match(Tok::FOR)){
 			s = for_stmt();
+		}
+		else if (match(Tok::PRINT)){
+			s = PrintStmt(expression());
+			Log << "matching ; -" << QString::number(static_cast<int>(peek().ty));
+			expect(Tok::SCOLON,"Expected a ';'.");
+		}
+		else if (match(Tok::WHILE)){
+			s = while_stmt();
 		}
 		else {
 			s = (peek().ty == Tok::DOLLAR && peek(1).ty == Tok::LBRACE)?block(true):decl_stmt();
 		}
 		LRet s;
 	}
-	catch(ParseError&){}
+	catch(ParseError& pe){
+		Q_UNUSED(pe)
+	}
 	catch(std::exception& ex){
 		MereMath::error(prev().ln,QString("Exception caught during parsing: ").append(ex.what()));
+	}
+	catch(...){
+		MereMath::error(prev().ln,QString("Unknown Error."));
 	}
 	synchronize();
 	LRet nullptr;
@@ -244,9 +257,9 @@ Expr Parser::expression(bool disable){
 Expr Parser::refer(){
 	LFn;
 	Expr expr = conditional();
-	if (match({Tok::FAT_ARROW,Tok::REFER})){
+	if (match(Tok::FAT_ARROW)){
 		Token& op = prev();
-		expr = RefExpr(expr, op, refer());
+		expr = RefExpr(expr, op, conditional());
 	}
 	LRet expr;
 }
@@ -368,23 +381,28 @@ Expr Parser::unary(){
 		Expr right = expression(true);
 		LRet PrefxExpr(op,right);
 	}
-	Expr rval = rvalue();
-	if		(/*!rval->is(ExprTy::LValue) && */!rval->is(ExprTy::VarAcsr	)){
+	Expr rval = exponent();
+	if		(!rval->is(ExprTy::VarAcsr		)){
 		LRet rval;
 	}
-	if (check(Tok::INCR)||check(Tok::DECR)){
+	if (check(Tok::INCR)||check(Tok::DECR	)){
 		while	(match({Tok::INCR,Tok::DECR}							)){
 			Token& op = prev();
 			rval = PstfxExpr(rval, op);
 		}
 	}
-//	else if (rval->is(ExprTy::LValue								)){
-//		Expr cpy = rval->lval_expr;
-//		rval->lval_expr = 0;
-//		delete rval;
-//		rval = cpy;
-//	}
+
 	LRet rval;
+}
+
+Expr Parser::exponent(){
+	Expr expr = rvalue();
+	while (match(Tok::CARET)){
+		Token& op = prev();
+		Expr right = rvalue();
+		expr = BinExpr(expr,op,right);
+	}
+	return expr;
 }
 
 Expr Parser::rvalue(){
@@ -415,31 +433,31 @@ Expr Parser::lvalue(bool unwind){
 Expr Parser::primary(){
 	LFn;
 	Expr ex = nullptr;
-	if		(match(Tok::NULL_LIT			)){
+	if		(match(Tok::NULL_LIT					)){
 		LRet LitExpr(Object(Trait("null"),QVariant(0)));
 	}
-	else if	(check(Tok::IDENTIFIER			)){
+	else if	(check(Tok::IDENTIFIER					)){
 		ex = VarAcsrExpr(advance());
 		LRet ex;
 	}
-	else if (match(Tok::TRUE				)){
+	else if (match(Tok::TRUE						)){
 		LRet LitExpr(Object(Trait("bool"),QVariant(true)));
 	}
-	else if (match(Tok::FALSE				)){
+	else if (match(Tok::FALSE						)){
 		LRet LitExpr(Object(Trait("bool"),QVariant(false)));
 	}
-	else if (match(Tok::LBRACE				)){
+	else if (match(Tok::LBRACE						)){
 		ex = array();
 		LRet ex;
 	}
-	else if (match({Tok::STRING,Tok::REAL}	)){
+	else if (match({Tok::STRING,Tok::REAL,Tok::CHAR})){
 		LRet LitExpr(*(prev().literal));
 	}
-	else if (match(Tok::DOLLAR				)){
+	else if (match(Tok::DOLLAR						)){
 		ex = spec_data();
 		LRet ex;
 	}
-	else if (check(Tok::LPAREN				)){
+	else if (check(Tok::LPAREN						)){
 		ex = group();
 		LRet ex;
 	}
@@ -528,8 +546,9 @@ Expr Parser::array(){
 Expr Parser::accessor(bool unwind) throw(ParseUnwind){
 	LFn;
 	Log << "current:" << QString::number(current) << "type:" << QString::number((int)peek().ty);
-	if (((int)(peek().ty)!=44) && unwind)
+	if (((int)(peek().ty)!=44) && unwind){
 		LThw ParseUnwind();
+	}
 	LRet VarAcsrExpr(expect(Tok::IDENTIFIER,"Expected an identifier."));
 }
 

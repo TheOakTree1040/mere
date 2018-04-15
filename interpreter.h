@@ -4,12 +4,12 @@
 #include "runtimeerror.h"
 #include "environment.h"
 #define STR(ARG) QString(ARG)
-#define ARE(TY) l.trait.is( TY ) && r.trait.is( TY )
-#define IS(TY) r.trait.is( TY )
-#define ARE_NUM l.is_number() && r.is_number()
-#define IS_NUM r.is_number()
-#define OP(TY,OP) l.value<TY>() OP r.value<TY>()
-#define PRE_OP(TY,OP) (OP r.value<TY>())
+#define ARE(TY) l.trait().is( TY ) && r.trait().is( TY )
+#define IS(TY) r.trait().is( TY )
+#define ARE_NUM l.trait().is_number() && r.trait().is_number()
+#define IS_NUM r.trait().is_number()
+#define OP(TY,OP) l.as<TY>() OP r.as<TY>()
+#define PRE_OP(TY,OP) (OP r.as<TY>())
 /**
  * if the name ends with '__' means it should not be called directly.
  * annotation functions
@@ -50,6 +50,7 @@ class Interpreter final{
 		Object evaluate(Expr,bool);
 
 		void exec_expr(Stmt,bool);
+		void exec_print(Stmt, bool);
 		void exec_if(Stmt,bool);
 		void exec_block(Stmt,bool);
 		void exec_while(Stmt,bool);

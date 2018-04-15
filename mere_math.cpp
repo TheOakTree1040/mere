@@ -26,7 +26,7 @@ void MereMath::run(const QString& src){
 			QString str = "";
 			int size = tokens.size();
 			for (int i = 0; i != size; i++){
-				str.append(tokens.at(i).to_string());
+				str.append(tokens[i].to_string());
 			}
 			QMessageBox::information(nullptr,"",str);
 		}

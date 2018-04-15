@@ -17,24 +17,24 @@ Object Interpreter::eval_pstfx(Expr expr, bool dd){
 	}
 	Object r = evaluate(rex,dd);
 	Token op(*(expr->op));
-	if (!r.trait.is(TyTrait::Ref)){
+	if (!r.trait().is_lvalue()){
 		LThw RuntimeError(op,"Expected a lvalue.");
 	}
 	switch(op.ty){
 		case Tok::INCR:
-			if(IS_NUM && r.trait.is(TyTrait::Ref)){
+			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.postfix(1);
 			}
 			break;
 		case Tok::DECR:
-			if(IS_NUM && r.trait.is(TyTrait::Ref)){
+			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.postfix(-1);
 			}
 			break;
 		default:;
 	}
 	QString errmsg = "Operand type mismatch: '";
-	errmsg.append(r.trait.id()).append("' [");
+	errmsg.append(r.trait().id()).append("' [");
 	errmsg += op.lexeme + "].";
 	LThw RuntimeError(op,errmsg);
 }
@@ -51,7 +51,7 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 	switch(op.ty){
 		case Tok::MINUS:
 			if (IS_NUM){
-				LRet -1*r.value<double>();
+				LRet -(r.as<double>());
 			}
 			break;
 		case Tok::EXCL:
@@ -60,25 +60,25 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 			}
 			break;
 		case Tok::INCR:
-			if (!r.trait.is(TyTrait::Ref)){
+			if (!r.trait().is_lvalue()){
 				LThw RuntimeError(op, "Expected an lvalue.");
 			}
-			if(IS_NUM && r.trait.is(TyTrait::Ref)){
+			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.prefix(1);
 			}
 			break;
 		case Tok::DECR:
-			if (!r.trait.is(TyTrait::Ref)){
+			if (!r.trait().is_lvalue()){
 				LThw RuntimeError(op, "Expected an lvalue.");
 			}
-			if(IS_NUM && r.trait.is(TyTrait::Ref)){
+			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.prefix(-1);
 			}
 			break;
 		default:;
 	}
 	QString errmsg = "Operand type mismatch: [";
-	errmsg.append(op.lexeme).append("] '").append(r.trait.id()).append("'.");
+	errmsg.append(op.lexeme).append("] '").append(r.trait().id()).append("'.");
 	LThw RuntimeError(op,errmsg);
 }
 Object Interpreter::eval_lit(Expr expr, bool){
@@ -122,7 +122,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 			break;
 		case Tok::CARET:
 			if (ARE_NUM){
-				LRet ::pow(l.value<double>(),r.value<double>());
+				LRet ::pow(l.as<double>(),r.as<double>());
 			}
 			break;
 		case Tok::STAR:
@@ -132,7 +132,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 			break;
 		case Tok::SLASH:
 			if (ARE_NUM){
-				if (r.value<double>() == 0){
+				if (r.as<double>() == 0){
 					LThw RuntimeError(op,"Division by 0 Error!");
 				}
 				LRet OP(double,/);
@@ -167,8 +167,8 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 
 	}
 	QString errmsg = "Operand type mismatch: '";
-	errmsg.append(l.trait.id()).append("' ").append(op.lexeme)
-			.append(" '").append(r.trait.id()).append("'.");
+	errmsg.append(l.trait().id()).append("' ").append(op.lexeme)
+			.append(" '").append(r.trait().id()).append("'.");
 	LThw RuntimeError(op,errmsg);
 }
 Object Interpreter::eval_logical(Expr expr, bool dd){
@@ -197,9 +197,8 @@ Object Interpreter::eval_logical(Expr expr, bool dd){
 Object Interpreter::eval_var_acsr(Expr expr, bool){
 	LFn;
 	Object o;
-	Object& obj = environment->access(*(expr->var_acsr));
-	o.refer(obj);
-	Log << "is ref?" << QString::number(o.trait.is(TyTrait::Ref));
+	Object& ref = environment->access(*(expr->var_acsr));//DO NOT TOUCH! Keep this line for catching exceptions
+	o.as_acsr_of(ref);
 	LRet o;
 }
 Object Interpreter::eval_asgn(Expr expr, bool dd){
@@ -214,13 +213,18 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 	}
 	Object ref(evaluate(l,dd));
 	Object right(evaluate(r,dd));
-	if (ref.trait.ty_trait()!=TyTrait::Ref){
+
+	if (!ref.trait().is_lvalue()){
 		LThw RuntimeError(op,"Expected an lvalue.");
+	}
+	if (!ref.trait().is_dynamic() && !ref.trait().has_type_of(right.trait())){
+		LThw RuntimeError(*(expr->op), "Attempting to re-type a fixed-type variable.");
 	}
 	Tok right_val_op = Tok::INVALID;
 	switch(ty){
 		case Tok::ASSIGN:
-			LRet ref.recv(right);
+			ref.recv(right);
+			LRet ref;
 		case Tok::MULT_ASGN:
 			GOTO_OP_ASGN(Tok::STAR);
 		case Tok::DIV_ASGN:
@@ -247,15 +251,14 @@ Object Interpreter::eval_refer(Expr expr, bool dd){
 	}
 	Object rl = evaluate(refl,dd);
 	Object rr = evaluate(refr,dd);
-	if (!rl.trait.is(TyTrait::Ref)){
-		LThw RuntimeError(*expr->op, "Expected an lvalue.");
+	if (!rl.trait().is_lvalue()){
+		LThw RuntimeError(*expr->refer_op, "Expected an lvalue.");
 	}
-	if (!rr.trait.is(TyTrait::Ref)){
-		LThw RuntimeError(*expr->op, "Expected an lvalue (...on the right side, I know.)");
+	if (!rr.trait().is_lvalue()){
+		LThw RuntimeError(*expr->refer_op, "Expected an lvalue (...on the right side, I know.)");
 	}
-	LRet rl.refer(rr.ref.get());
+	LRet rl.as_ref_of(rr);
 }
-
 Object Interpreter::evaluate(Expr expr, bool dd){
 	LFn << "Evaluating expr-" << QString::number((int)expr->type());
 	Object o;
@@ -311,10 +314,18 @@ void Interpreter::exec_expr(Stmt stmt, bool dd){
 	if (dd){
 		stmt->expr = nullptr;
 	}
-	QMessageBox::information(nullptr,"Expr",evaluate(ex,dd).to_string());
+	evaluate(ex,dd);
 	LVoid;
 }
-
+void Interpreter::exec_print(Stmt stmt, bool dd){
+	LFn;
+	Expr ex = stmt->expr;
+	if (dd){
+		stmt->expr = nullptr;
+	}
+	QMessageBox::information(nullptr,"Info",evaluate(ex,dd).to_string());
+	LVd;
+}
 void Interpreter::exec_if(Stmt stmt, bool dd){
 	LFn;
 	Expr cond = stmt->condition;
@@ -337,7 +348,6 @@ void Interpreter::exec_if(Stmt stmt, bool dd){
 	}
 	LVoid;
 }
-
 void Interpreter::exec_block(Stmt stmt, bool){
 	LFn;
 	int sz = stmt->block->size();
@@ -350,7 +360,6 @@ void Interpreter::exec_block(Stmt stmt, bool){
 	environment = outer;
 	LVoid;
 }
-
 void Interpreter::exec_while(Stmt stmt, bool){
 	LFn;
 	while (evaluate(stmt->cont_condit,false).to_bool()){
@@ -358,7 +367,6 @@ void Interpreter::exec_while(Stmt stmt, bool){
 	}
 	LVd;
 }
-
 void Interpreter::exec_var_decl(Stmt stmt, bool dd){
 	LFn;
 	Expr expr = stmt->init;
@@ -369,7 +377,6 @@ void Interpreter::exec_var_decl(Stmt stmt, bool dd){
 	environment->define(*(stmt->var_name),evaluate(expr,dd));
 	LVd;
 }
-
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
 	if (stmt){
@@ -377,6 +384,9 @@ void Interpreter::execute(Stmt stmt, bool dd){
 			switch(stmt->type()){
 				case StmtTy::Expr:
 					exec_expr(stmt,dd);
+					break;
+				case StmtTy::Print:
+					exec_print(stmt,dd);
 					break;
 				case StmtTy::If:
 					exec_if(stmt,dd);

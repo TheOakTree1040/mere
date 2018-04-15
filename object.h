@@ -4,16 +4,11 @@
 #include <QString>
 #include "logger.h"
 #include <functional>
-
+#include <bitset>
 using std::pair;
-enum class TyTrait{
-	Object,
-	Ref,
-	Function,
-	Regex
-};
+typedef QVariant Var;
 
-#define is_regex is(TyTrait::Regex)
+#define VPTR_INIT new Var(0)
 
 enum class Ty{		//storage class in c++
 	Void	= -2,	//"[Empty object]"
@@ -26,293 +21,434 @@ enum class Ty{		//storage class in c++
 	Array,			//QVector<Object>
 	Map,			//QVector<std::pair<Object,Object>>
 	Hash			//QHash<KeyTy(either numeral or string),Object>
-  //Ptr,
-  //Ref,
-  //Set,
 };
 
-struct Trait{
-	public:
-		TyTrait ty_trait_;
-		Ty ty;
-		union{
-				bool is_dynamic_;
-				QRegExp* exp;
-		};
-		QString id_;
-	public:
-		static QVector<Trait> _nat_lookup;
+//defines the trait of the object
+enum class TraitIndex{
+
+	//Type Trait
+	Object = 0,	//1
+	Function,	//0
+	//Object Type
+	Data,		//1
+	Accessor,	//0
+	Reference,	//0
+	Dynamic,	//1
+	OnStack,	//0
+	_			//0
+};
+struct TraitMatcher;
+
+class Trait{
+	private://member fn
+		void _reset_(){
+			set(TraitIndex::Object		,	true	);
+			set(TraitIndex::Function	,	false	);
+			set(TraitIndex::Data		,	true	);
+			set(TraitIndex::Accessor	,	false	);
+			set(TraitIndex::Reference	,	false	);
+			set(TraitIndex::Dynamic		,	true	);
+			set(TraitIndex::OnStack		,	false	);
+			set(Ty::Void);
+			set("void",false);
+		}
+
+	private://fields
+		std::bitset<8> m_traits;
+		Ty m_ty;
+		QString m_id;
+
+	private://static data
+		static QVector<TraitMatcher> type_lookup;
+		static int default_traits;
+
+	public://static fn
 		static Ty type_of(const QString&);
-	public:
-		~Trait(){
-			//Log << "   ~Trait() start";
-			if (is(TyTrait::Regex))
-				delete exp;
-			//Log << "   ~Trait() returned";
-		}
+
+	public://member fn
 		Trait():
-			ty_trait_(TyTrait::Object),
-			ty(Ty::Void),
-			is_dynamic_(false),
-			id_("void"){}
+		m_traits(default_traits),
+		m_ty(Ty::Void),
+		m_id("void"){}
+
 		Trait(const Trait& other):
-			ty_trait_(other.ty_trait_),
-			ty(other.ty),
-			id_(other.id_){
-			if (other.is(TyTrait::Regex)){
-				exp = new QRegExp(*(other.exp));
-			}
-			else {
-				is_dynamic_ = other.is_dynamic_;
-			}
+		m_traits(other.traits()),
+		m_ty(other.type()),
+		m_id(other.id()){}
+
+		Trait(const QString& id):
+			m_traits(default_traits),
+			m_ty(type_of(id)),
+			m_id(id){}
+		//setters
+		Trait& set(TraitIndex i, bool val = true){
+			m_traits.set(static_cast<size_t>(i),val);
+			return *this;
 		}
-		Trait& operator=(const Trait& other){
-			ty_trait_ = other.ty_trait_;
-			id_ = other.id_;
-			ty = other.ty;
-			if (other.is(TyTrait::Regex)){
-				exp = new QRegExp(*(other.exp));
-			}
-			else {
-				is_dynamic_ = other.is_dynamic_;
-			}
+		Trait& set(const QString& id, bool searches = true){
+			m_id = id;
+			return searches?set(type_of(id)):*this;
+		}
+		Trait& set(Ty t) noexcept {
+			m_ty = t;
+			return *this;
+		}
+		Trait& reset() {
+			m_traits = std::bitset<8>(default_traits);
+			set("void",false);
+			set(Ty::Void);
 			return *this;
 		}
 
-		Trait(const QRegExp& ex, Ty t):
-			ty_trait_(TyTrait::Regex),
-			ty(t),
-			exp(new QRegExp(ex)),
-			id_(ex.pattern()){}
-		Trait(const QString& str):
-			ty_trait_(TyTrait::Object),
-			ty(type_of(str)),
-			is_dynamic_(false),
-			id_(str){}
+		//bit getters
+		bool is(TraitIndex i) const {
+			return m_traits.test(static_cast<size_t>(i));
+		}
+		bool is_obj		() const {return is(TraitIndex::Object		);}
+		bool is_fn		() const {return is(TraitIndex::Function	);}
+		bool is_data	() const {return is(TraitIndex::Data		);}
+		bool is_acsr	() const {return is(TraitIndex::Accessor	);}
+		bool is_ref		() const {return is(TraitIndex::Reference	);}
+		bool is_dynamic	() const {return is(TraitIndex::Dynamic	);}
+		bool is_on_stack() const {return is(TraitIndex::OnStack	);}
 
-		bool match(const QString& str) const{
-			if (!is(TyTrait::Regex))
-				return false;
-			return exp&&!str.isEmpty()?exp->exactMatch(str):false;
+		//field getters
+		std::bitset<8> traits() const noexcept {
+			return m_traits;
 		}
-		bool is_typed()const{
-			return (!is(TyTrait::Regex)) && (!is("void")) && (!id().isEmpty());
+		QString id() const noexcept {
+			return m_id;
 		}
-		Ty type()const{
-			return ty;
+		Ty type() const noexcept {
+			return m_ty;
 		}
-		TyTrait ty_trait() const{
-			return ty_trait_;
+		bool is(Ty ty) const noexcept {
+			return m_ty == ty;
 		}
-		bool is(const QString& _id)const{
-			return id_ == _id;
+		bool is(const QString& i) const noexcept {
+			return m_id == i;
 		}
-		bool is(Ty t)const{
-			return type() == t;
+
+		//bit setters
+		Trait& as_obj(){
+			return set(TraitIndex::Function,false)
+					.set(TraitIndex::Object);
 		}
-		bool is(TyTrait tt)const{
-			return ty_trait_ == tt;
+		Trait& as_fn (){
+			return set(TraitIndex::Object,false)
+					.set(TraitIndex::Function);
 		}
-		bool is(bool dynamicness)const{
-			if (is(TyTrait::Regex))
-				return false;
-			return is_dynamic_ == dynamicness;
+		Trait& as_data(){
+			return	 set(TraitIndex::Data)
+					.set(TraitIndex::Accessor,false)
+					.set(TraitIndex::Reference,false);
 		}
-		void set_dynamic(bool d){
-			if (!is(TyTrait::Regex))
-				is_dynamic_ = d;
+		Trait& as_acsr(){
+			return set(TraitIndex::Accessor)
+					.set(TraitIndex::Data,false)
+					.set_on_stack(false);
 		}
-		bool is_dynamic()const{
-			return is_dynamic_;
+		Trait& as_ref(){
+			return set(TraitIndex::Reference)
+					.set(TraitIndex::Data,false);
 		}
-		void set_ty_trait(TyTrait tt){
-			ty_trait_ = tt;
+		Trait& as_temp(){
+			return set_on_stack(false).as_data();
 		}
-		QString id() const{
-			return id_;
+
+		Trait& set_dynamic(bool val = true){
+			return set(TraitIndex::Dynamic,val);
 		}
-		bool operator==(const Trait& other)const{
-			if (!(type() == other.type() &&
-				  ty_trait() == other.ty_trait() &&
-				  id() == other.id()))
-				return false;
-			return (!is(TyTrait::Regex))?is(other.is_dynamic()):true;
+		Trait& set_on_stack(bool val = true){
+			return set(TraitIndex::OnStack,val);
+		}
+
+		Trait& recv(const Trait& other){
+			return set(TraitIndex::Object, other.is_obj())
+					.set(TraitIndex::Function, other.is_fn())
+					.set(other.type())
+					.set(other.id());
+		}
+		Trait& as_ref_of(const Trait& other){
+			return recv(other).as_ref();
+		}
+
+		bool is_number() const {
+			return is(Ty::Real) ||
+					is(Ty::Bool) ||
+					is(Ty::Char) ||
+					is(Ty::Null);
+		}
+		bool is_lvalue() const {
+			return is_acsr() || is_ref() || is_on_stack();
+		}
+		bool has_type_of(const Trait& other) const {
+			return	(other.id() == id()) &&
+					(other.type() == type()) &&
+					(other.is_obj() == is_obj());
+
+		}
+
+		//operator
+		bool operator==(const Trait& other) const {
+			return traits() == other.traits() &&
+					id() == other.id() &&
+					type() == other.type();
+		}
+		bool operator!=(const Trait& other) const {
+			return !(*this == other);
+		}
+};
+
+struct TraitMatcher{
+		QString type_id;
+		Ty type;
+
+		TraitMatcher():
+			type_id("void"),
+			type(Ty::Void){}
+
+		TraitMatcher(const QString& tid, Ty type):
+			type_id(tid),
+			type(type){}
+
+		bool match(const QString& id){
+			return type_id == id;
 		}
 };
 
 class Object{
-	public:
-		union{
-			QVariant* dat_;
-			std::reference_wrapper<Object> ref;
-		};
-		Trait trait;
-	public:
-		Object(){
-			trait = Trait("void");
-			dat_ = new QVariant(0);
-		}
-
-		Object(const Object& other){
-			this->trait = other.trait;
-			if (other.trait.is(TyTrait::Ref))
-				ref = other.ref;
-			else
-				dat_ = new QVariant(other.dat());
-			Log << "obj_cpy_is_ref?" << QString::number(trait.is(TyTrait::Ref));
-		}
-
-		Object& refer(Object& r){
-			if (trait.is(TyTrait::Ref)){
-				return ref.get().refer(r);
+	private://fields
+		Var* m_ptr;
+		std::reference_wrapper<Object> m_onstack;
+		Trait m_trait;
+	private://member fn
+		void delete_ptr(){
+			LFn;
+			if (trait().is_data() && m_ptr){
+				Log << "Deleting...";
+				delete m_ptr;
 			}
-			else {
-				delete dat_;
-				dat_ = 0;
-			}
-			ref = r.trait.is(TyTrait::Ref)?r.ref.get():r;
-			trait = r.trait;
-			trait.set_ty_trait(TyTrait::Ref);
-			Log << "obj_cpy_is_ref?" << QString::number(trait.is(TyTrait::Ref));
-			return *this;
-		}
-		QVariant dat() const{
-			if (dat_)
-				return *dat_;
-			else return QVariant("[VOID]");
+			Log << "Pointing to null...";
+			m_ptr = nullptr;
+			LVd;
 		}
 
-		Object(const Trait& trt, const QVariant& qvar){
-			trait = trt;
-			dat_ = new QVariant(qvar);
+	public:
+		Object():
+		m_ptr(VPTR_INIT),
+		m_onstack(*this),
+		m_trait(){}
+
+		Object(const Object& o):
+		m_ptr(o.trait().is_data()?new Var(o.data()):o.ptr()),
+		m_onstack(o.trait().is_ref()?o.m_onstack.get():*this),
+		m_trait(o.m_trait){
+			LFn;
+			LVd;
 		}
 
-		Object(const QString& trt, const QVariant& qvar){
-			Object(Trait(trt),qvar);
+		//getters
+		Var& data() {
+			return m_ptr?*m_ptr:*(trait().as_data(),m_ptr = VPTR_INIT);
 		}
-		Object(bool b){
-			trait = Trait("bool");
-			dat_ = new QVariant(b);
+		Var& data() const {
+			return *m_ptr;
 		}
-		Object(char c){
-			trait = Trait("char");
-			dat_ = new QVariant(c);
+		Var* ptr() const {
+			return m_ptr;
 		}
-		Object(double d){
-			trait = Trait("real");
-			dat_ = new QVariant(d);
+		Trait& trait() {
+			return m_trait;
 		}
-		Object(const QString& str){
-			trait = Trait("string");
-			dat_ = new QVariant(str);
+		const Trait& trait() const {
+			return m_trait;
 		}
 
+		//setters - pure assignment
+		Object& set(const Trait& t){
+			LFn;
+			m_trait = t;
+			LRet *this;
+		}
+		Object& set(const Var& var){
+			LFn;
+			delete_ptr();
+			m_ptr = new Var(var);
+			LRet *this;
+		}
+
+		//ctor
+		Object(const Trait& trt, const Var& var):
+			m_ptr(nullptr),
+			m_onstack(*this),
+			m_trait(trt){
+			set(var);
+		}
+		Object(const QString& id, const Var& var):
+			m_ptr(nullptr),
+			m_onstack(*this),
+			m_trait(Trait(id))
+		{
+			set(var);
+		}
+		//ctor from literals
+		Object(bool b):
+			m_ptr(nullptr),
+			m_onstack(*this),
+			m_trait(Trait("bool")){
+			set(Var(b));
+		}
+		Object(char c):
+			m_ptr(nullptr),
+			m_onstack(*this),
+			m_trait(Trait("char")){
+			set(Var(c));
+		}
+		Object(double d):
+			m_ptr(nullptr),
+			m_onstack(*this),
+			m_trait(Trait("real")){
+			LFn;
+			set(Var(d));
+			LVd;
+		}
+		Object(const QString& str):
+			m_ptr(nullptr),
+			m_onstack(*this),
+			m_trait(Trait("string")){
+			set(Var(str));
+		}
+
+		static Object null(){
+			Object ret;
+			ret.trait().set(Ty::Null);
+			return ret;
+		}
+
+		//dtor
 		~Object(){
-			//LFn << trait.id();
-			if (!trait.is(TyTrait::Ref) && !trait.is(TyTrait::Regex))
-				delete dat_;
-			//Log << "~Object() returned";
-			//LVd;
+			delete_ptr();
 		}
 
 		template <typename T>
-		T value() const{
-			return (trait.is(TyTrait::Ref)?ref.get().value<T>():dat().value<T>());
+		T as() {
+			return data().value<T>();
 		}
 
-		bool is_number() const{
-			return trait.is(Ty::Real) ||
-					trait.is(Ty::Bool) ||
-					trait.is(Ty::Char) ||
-					trait.is(Ty::Null);
+		template <typename T>
+		T as() const {
+			return m_ptr->value<T>();
 		}
 
-		QString to_string() const{
-			if (!dat_ptr())
-				return "[#BROKEN_OBJECT#]";
-			switch(get_trait().ty){
+		QString to_string() {
+			LFn;
+			if (!m_ptr)
+				LRet "[UNALLOCATED_OBJECT]";
+			switch(trait().type()){
 				case Ty::String:
-					return value<QString>();
+					LRet as<QString>();
 				case Ty::Real:
-					return QString::number(value<double>());
+					LRet QString::number(as<double>());
 				case Ty::Bool:
-					return value<bool>()?"true":"false";
+					LRet as<bool>()?"true":"false";
 				case Ty::Null:
-					return "null";
+					LRet "null";
 				case Ty::Char:
-					return QString(value<char>());
+					LRet QString(as<char>());
 				case Ty::Void:
-					return "[#VOID#]";
+					LRet "[Void]";
 				default:
-					return QString("[#").append(trait.id()).append(" instance]");
+					LRet QString("[").append(trait().id()).append(" instance]");
 			}
+
 		}
 
-		bool to_bool() const{
-			return is_number()?value<bool>():true;
+		bool to_bool() {
+			return trait().is_number()?
+						as<bool>():
+						trait().is(Ty::String)?
+							as<QString>().size():
+							true;
 		}
 
 		Object postfix(int i){
-			if (!trait.is(TyTrait::Ref) || !is_number())
-				return Object();
-			double val = ref.get().value<double>();
-			Object o(Trait("real"),QVariant(val));
-			*(ref.get().dat_ptr()) = QVariant(val+i);
-			return o;
+			if (!trait().is_lvalue() || !trait().is_number())
+				return *this;
+			double old = as<double>();
+			Object copy(Trait(trait()).as_temp(),Var(old));
+			data() = Var(old+i);
+			return copy;
 		}
 
 		Object prefix(int i) {
-			if (!trait.is(TyTrait::Ref) || !is_number())
-				return Object();
-			*(ref.get().dat_ptr()) = QVariant(ref.get().value<double>()+i);
+			if (!trait().is_number() || !trait().is_lvalue())
+				return *this;
+			data() = Var(as<double>()+i);
 			return *this;
 		}
 
-		QVariant* dat_ptr() const{
-			return trait.is(TyTrait::Ref)?ref.get().dat_ptr():dat_;
-		}
+		//copy
 		Object& operator=(const Object& other){
-			this->trait = other.trait;
-			if (other.trait.is(TyTrait::Ref))
-				ref = other.ref;
-			else
-				dat_ = new QVariant(other.dat());
+			set(other.trait());
+
+			if (other.trait().is_data()){
+				set(other.data());
+			}
+			else{
+				delete_ptr();
+				m_ptr = other.ptr();
+			}
+			m_onstack = other.trait().is_ref()?other.m_onstack.get():*this;
 			return *this;
 		}
 
 		Object& recv(const Object& obj){
-			/*if (trait.is(TyTrait::Ref))
-				ref.get() = obj;
-			else*/
-			*dat_ptr() = *obj.dat_ptr();
+			LFn;
+			data() = obj.data();
+			trait().recv(obj.trait());
+			if (trait().is_ref()){
+				referenced().trait().recv(trait());
+			}
+			LRet *this;
+		}
+		Object& referenced(){
+			return trait().is_on_stack()?*this:m_onstack.get().referenced();
+		}
+
+		Object& as_ref_of(Object& dest){
+			delete_ptr();//if acsr, deletes the stackvar's ptr, else deletes
+									//this->ptr (as m_onstack is init'd w/ *this)
+			(trait().is_acsr()?referenced():*this).trait().as_ref_of(dest.trait());
+			(trait().is_acsr()?referenced().m_onstack:m_onstack) = dest.referenced();
+			m_ptr = dest.ptr();
+			if (trait().is_acsr()){
+				referenced().delete_ptr();
+				trait() = referenced().trait();
+				trait().as_acsr();
+				referenced().m_ptr = m_ptr;
+			}
+			return *this;
+		}
+		Object& as_acsr_of(Object& stk_var){
+			as_ref_of(stk_var).trait().as_acsr();
 			return *this;
 		}
 
-		Trait get_trait()const{
-			return trait.is(TyTrait::Ref)?ref.get().get_trait():trait;
+		bool operator==(const Object& other) const {
+			return trait().has_type_of(other.trait()) && data() == other.data();
 		}
-
-		bool operator==(const Object& other) const{
-			if (!(get_trait()==other.get_trait()))
-				return false;
-			QVariant* dptrt = dat_ptr();
-			QVariant* dptro = other.dat_ptr();
-			if (!dptro||!dptrt)
-				return false;
-//			if ((dptrt && dptro) || (!dptrt && !dptro))
-//				return true;
-//			if (!dptrt || !dptro)
-//				return false;
-			return *dptrt == *dptro;
+		bool operator==(Object& other) {
+			return trait().has_type_of(other.trait()) && data() == other.data();
 		}
-		bool operator>(const Object& other) const{
-			if (is_number()&&other.is_number())
-				return value<double>() > other.value<double>();
-			return false;
+		bool operator>(const Object& other) const {
+			return trait().is_number()&&other.trait().is_number()?
+				as<double>() > other.as<double>():false;
 		}
-		bool operator<(const Object& other) const{
+		bool operator<(const Object& other) const {
 			return other > *this;
 		}
 };
+
 Q_DECLARE_METATYPE(Object)
 #endif // OBJECT_H

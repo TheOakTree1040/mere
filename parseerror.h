@@ -1,23 +1,13 @@
 #ifndef PARSEERROR_H
 #define PARSEERROR_H
-#include <QException>
-class ParseError : public QException{
+#include <stdexcept>
+class ParseError : public std::runtime_error{
 	public:
-		void raise() const{
-			throw *this;
-		}
-		ParseError* clone() const{
-			return new ParseError(*this);
-		}
+		ParseError():std::runtime_error("ParseError"){}
 };
-class ParseUnwind : public QException{
+class ParseUnwind : public std::logic_error{
 	public:
-		void raise() const{
-			throw *this;
-		}
-		ParseUnwind* clone() const{
-			return new ParseUnwind(*this);
-		}
+		ParseUnwind():std::logic_error("ParseUnwind"){}
 };
 
 #endif // PARSEERROR_H

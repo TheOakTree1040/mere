@@ -64,7 +64,7 @@ class ASTPrinter final{
 		void print_literal(int lvls, Expr expr){
 			CHKTY(ExprTy::Literal);
 			QString head = "[";
-			head.append(expr->lit->trait.id()).append("] Literal:");
+			head.append(expr->lit->trait().id()).append("] Literal:");
 			write_ln(lvls,head);
 			write_ln(lvls+1,expr->lit->to_string());
 		}

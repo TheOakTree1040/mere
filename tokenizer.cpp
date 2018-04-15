@@ -140,6 +140,7 @@ void Tokenizer::character(){
 		}
 	}
 	c = advance();
+	deprecate();
 
 	add_token(Tok::CHAR,Object(c));
 }
@@ -149,6 +150,7 @@ bool Tokenizer::is_digit(char ch){
 }
 
 void Tokenizer::number() {
+	LFn;
 	QString num = "";
 	num.append(peek(-1)); // Retrieves the digit being advanced.
 	current--;
@@ -162,11 +164,18 @@ void Tokenizer::number() {
 			num.append('x');
 			base = 16;
 		}
+		else if (match('b') || match('b')){
+			current--;
+			deprecate();
+			num.append('b');
+			base = 2;
+		}
 	}
 
 	while ((base == 10 && is_digit  (peek())) ||
 		   (base == 16 && is_base_16(peek())) ||
-		   (base ==  8 && is_base_8 (peek()))   ){
+		   (base ==  8 && is_base_8 (peek())) ||
+		   (base ==  0 && peek() < 2)){
 		num.append(QChar(peek()));
 		deprecate();
 	}
@@ -180,20 +189,23 @@ void Tokenizer::number() {
 			num.append(QChar(peek()));
 			deprecate();
 		}
+
 		add_token(Tok::REAL,
 				 Object(Trait("real"),num.toDouble()));
-		return;
+		LVd;
 	}
 	bool stat = false;
 	int n = num.toInt(&stat,base);
+	Log << "Object constructing (real)";
 	add_token(Tok::REAL,
 			 Object(Trait("real"),num.toInt(&stat,base)));
-	Logger() << "  Numeral: String:" << num;
-	Logger() << "           Number:" << n;
+	Log << "  Numeral: String:" << num;
+	Log << "           Number:" << n;
 	if (!stat){
 		MereMath::error(line, QString("Invalid base-").append(QString::number(base)).append(" numeral."));
-		Logger() << "  Numeral Lexing Error.";
+		Log << "Numeral Lexing Error.";
 	}
+	LVd;
 }
 
 bool Tokenizer::is_alpha(char c) {
@@ -246,7 +258,7 @@ void Tokenizer::raw_string(){
 
 void Tokenizer::scan_token(){
 	char c = advance();
-	Logger() << c;
+	Log << c;
 	switch (c) {
 		case '@': add_token(Tok::AT_SYMB); break;
 		case '(': add_token(Tok::LPAREN); break;
@@ -382,7 +394,7 @@ QHash<QString, Tok> Tokenizer::keywords{
 	{"global"	,	Tok::GLOBAL		},
 	{"var"		,	Tok::VAR		},
 	{"null"		,	Tok::NULL_LIT	},
-	{"refer"	,	Tok::REFER		}
+	{"print"	,	Tok::PRINT		}
 };
 
 QHash<QChar,QChar> Tokenizer::escaped{
@@ -392,5 +404,6 @@ QHash<QChar,QChar> Tokenizer::escaped{
 	{'t'	,	'\t'},
 	{'b'	,	'\b'},
 	{'v'	,	'\v'},
-	{'\\'	,	'\\'}
+	{'\\'	,	'\\'},
+	{'\''	,	'\''}
 };
