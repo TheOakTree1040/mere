@@ -11,10 +11,24 @@
 #include "interpreter.h"
 #include "parser.h"
 #include "astprinter.hpp"
+#include "natives.h"
 
-Interpreter* MereMath::interpreter = new Interpreter();
+Interpreter* MereMath::interpreter = nullptr;
 
 QVector<MereMath::Error> MereMath::errors{};
+
+void MereMath::init_once(){
+	LFn;
+	if (!QMetaType::registerComparators<Object>()){
+		QMessageBox::critical(nullptr,"Fatal Internal Failure","Failed to register Object comparators.");
+		Log << "Failed registering comparators.";
+		abort();
+	}
+	Log << "mid";
+	t::_init();
+	interpreter = new Interpreter();
+	LVd;
+}
 
 void MereMath::run(const TString& src, bool show_tok, bool show_syn){
 //	Token* tok = new Token();

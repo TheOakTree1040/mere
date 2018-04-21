@@ -1,4 +1,5 @@
 
+#include "natives.h"
 #include "interpreter.h"
 #include <cmath>
 #include "mere_math.h"
@@ -7,7 +8,21 @@
 #include <QMessageBox>
 #include "merecallable.h"
 #define GOTO_OP_ASGN(TOK) right_val_op = TOK; goto RET_OP_ASGN;
-Interpreter::Interpreter(){}
+#define define_native_function(NAME,NAT) globals->define(NAME,Object(Trait("function").as_fn(),Var::fromValue(NAT)))
+Interpreter::Interpreter(){
+	LFn;
+	Log << "sin" << t::sin.arity();
+	define_native_function("sin",t::sin);
+	Log << "cos";
+	define_native_function("cos",t::cos);
+	Log << "tan";
+	define_native_function("tan",t::tan);
+	Log << "clock";
+	define_native_function("clock",t::clock);
+	Log << "time";
+	define_native_function("time",t::time);
+	LVd;
+}
 
 
 Object Interpreter::eval_pstfx(Expr expr, bool dd){
@@ -496,13 +511,31 @@ void Interpreter::interpret(Stmts stmts){
 	}
 	catch(Return& ret){
 		Q_UNUSED(ret);
-		MereMath::error(0,"Invalid Return. [InvRet]");
+		MereMath::error(0,"Invalid Return. [inv_ret]");
+	}
+	catch(ArgumentError& arg_err){
+		QString errmsg = "[";
+		errmsg.append(arg_err.callee).append("] ");
+		errmsg.append("Expected a ").append(arg_err.expect).append(" instance but a ");
+		errmsg.append(arg_err.received).append(" instance was provided. [arg_err]");
+		MereMath::error(0,errmsg);
+	}
+	catch(ArityMismatchError& ame){
+		QString errmsg = "[";
+		errmsg.append(ame.callee).append("] ");
+		errmsg.append("Expected ").append(TString::number(ame.expect)).append(" argument(s) ");
+		errmsg.append("but ").append(TString::number(ame.received)).append(" was provided.");
+		MereMath::error(0,errmsg);
+	}
+
+	catch(std::runtime_error& re){
+		MereMath::error(0,TString(re.what()) + " [runtime_err]");
 	}
 	catch(std::exception& ex){
-		MereMath::error(0,ex.what());
+		MereMath::error(0,TString(ex.what()) + " [exception]");
 	}
 	catch(std::bad_alloc& ba){
-		MereMath::error(0,ba.what());
+		MereMath::error(0,TString(ba.what()) + " [bad_alloc]");
 	}
 
 	LVoid;

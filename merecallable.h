@@ -4,6 +4,7 @@
 #include "object.h"
 #include "stmt.h"
 #include <QVector>
+#include <crt_externs.h>
 enum class Call {
 	Reg,
 	Nat,
@@ -11,7 +12,7 @@ enum class Call {
 	__
 };
 class Interpreter;
-typedef std::function<Object(Interpreter&,const QVector<Object>&)> Callable;
+typedef std::function<Object(Interpreter&,QVector<Object>&)> Callable;
 #define CALLABLE [](Interpreter& interpreter, const QVector<Object>& arguments)
 class Return : public std::runtime_error{
 	private:
@@ -61,7 +62,7 @@ class MereCallable{
 		}
 
 		MereCallable():m_traits(default_traits),m_fn(NullStmt()){}
-		MereCallable(Callable& clb):m_traits(default_traits),m_callable(clb){
+		MereCallable(Callable clb):m_traits(default_traits),m_callable(clb){
 			as_nat();
 		}
 		MereCallable(Stmt fn_def):m_traits(default_traits),m_fn(fn_def),m_arity(fn_def->fn_params->size()){
@@ -82,7 +83,7 @@ class MereCallable{
 		Object call(Interpreter&, QVector<Object>&);
 
 		bool is(Call ci) const {
-			return m_traits.test(static_cast<size_t>(ci));
+			return m_traits.test(t_cast<size_t>(ci));
 		}
 
 		~MereCallable(){

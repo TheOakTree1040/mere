@@ -25,7 +25,8 @@ SOURCES += \
     stmt.cpp \
     object.cpp \
     merecallable.cpp \
-    tlogger.cpp
+    tlogger.cpp \
+    natives.cpp
 
 HEADERS += \
     expr.h \
@@ -45,4 +46,5 @@ HEADERS += \
     cmdparser.h \
     data_storage.h \
     tlogger.h \
-    t.h
+    t.h \
+    natives.h

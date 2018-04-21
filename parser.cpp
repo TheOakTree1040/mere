@@ -146,10 +146,10 @@ Stmt Parser::stmt(bool expected_block){
 		Q_UNUSED(pe)
 	}
 	catch(std::exception& ex){
-		MereMath::error(prev().ln,TString("Exception caught during parsing: ").append(ex.what()));
+		MereMath::error(prev().ln,TString("Exception caught @ Parser::stmt(): ").append(ex.what()));
 	}
 	catch(...){
-		MereMath::error(prev().ln,TString("Unknown Error."));
+		MereMath::error(prev().ln,TString("Exception caught @ Parser::stmt()."));
 	}
 	synchronize();
 	LRet nullptr;

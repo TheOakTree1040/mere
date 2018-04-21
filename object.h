@@ -7,7 +7,7 @@
 using std::pair;
 typedef QVariant Var;
 
-#define VPTR_INIT new Var(0)
+#define VPTR_INIT new Var(false)
 
 enum class Ty{		//storage class in c++
 	Void	= -2,	//"[Empty object]"

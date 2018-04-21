@@ -21,6 +21,7 @@ class MereMath{
 	private:
 		static QVector<Error> errors;
 	public:
+		static void init_once();
 		static void run(const TString&, bool=false, bool=false);
 		static void run_file(QFile&);
 		static void error(int, const TString&);

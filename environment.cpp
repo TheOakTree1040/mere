@@ -5,24 +5,32 @@ EnvImpl::EnvImpl():enclosing(nullptr)
 EnvImpl::EnvImpl(EnvPtr encl):enclosing(encl){}
 void EnvImpl::define(const Token& t, const Object& o)throw(RuntimeError){
 	LFn;
-	Log << "Checking table for existing entry...";
 	if (values.contains(t.lexeme)){
 		LThw RuntimeError(t,TString("Redefinion of variable '").
 						  append(t.lexeme).append("'."));
 	}
-	Log << "Start:";
-	//if (t.lexeme.isEmpty()){
-	//	LThw RuntimeError(t,"Defining variable with no identifier.");
-	//}
-	//Log << "setting:" << t.lexeme;
-	values.insert(t.lexeme,o);
-	Object& obj = values[t.lexeme];
+	if (t.lexeme.isEmpty()){
+		LThw RuntimeError(t,"Defining variable with no identifier.");
+	}
+	Object& obj = values.insert(t.lexeme,o).value();
 	obj.trait().set_on_stack();
 	obj.fn_init();
-	Log << "OBJ_VAL" << obj.to_string();
 	LVd;
 }
-
+void EnvImpl::define(const TString& t, const Object& o)throw(RuntimeError){
+	LFn;
+	if (values.contains(t)){
+		LThw RuntimeError(Token(Tok::IDENTIFIER,t,Object(),-1),TString("Redefinion of symbol '").
+						  append(t).append("'."));
+	}
+	if (t.isEmpty()){
+		LThw RuntimeError(Token(Tok::IDENTIFIER,t,Object(),-1),"Definition without identifier.");
+	}
+	Object& obj = values.insert(t,o).value();
+	obj.trait().set_on_stack();
+	obj.fn_init();
+	LVd;
+}
 Object& EnvImpl::access(const Token& t)throw(RuntimeError){
 	LFn;
 	if (values.contains(t.lexeme)){

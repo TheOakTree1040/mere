@@ -166,7 +166,11 @@ class TString : public TBuiltinString{
 #else
   typedef QString TString;
 #endif
-
+#if T_UNDER_FW(T_FW_QT)
+# define to_std_string(QSTR) QSTR.toStdString()
+#else
+# define to_std_string(STDSTR) STDSTR
+#endif
 #define t_cast static_cast
 
 #endif // T_SPECS

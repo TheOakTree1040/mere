@@ -4,10 +4,7 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 	QApplication::setApplicationName("MereMath Interpreter");
-	if (!QMetaType::registerComparators<Object>()){
-		Log << "Failed registering comparators.";
-		return a.exec();
-	}
+	MereMath::init_once();
 	SourceEditor* editor = new SourceEditor();
 	editor->setAttribute(Qt::WA_DeleteOnClose);
 	editor->show();
