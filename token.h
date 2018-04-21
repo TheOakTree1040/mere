@@ -35,7 +35,7 @@ enum class Tok{
 	RETURN, TRUE, FALSE, DO,
 	WHILE, CASE, SWITCH, BREAK,
 	DEFAULT, ARRAY, SET,
-	ENUM, ASSERT, DEFINE, VALUED, VAR, NULL_LIT, PRINT,
+	ENUM, ASSERT, DEFINE, VALUED, VAR, NULL_LIT, PRINT, FN,
 
 	END
 };
@@ -43,7 +43,7 @@ enum class Tok{
 class Token{
 	public:
 		Tok ty;
-		QString lexeme;
+		TString lexeme;
 		Object* literal;
 		int ln;
 	public:
@@ -56,47 +56,50 @@ class Token{
 		}
 
 		Token(Tok type,
-			  const QString& lex,
+			  const TString& lex,
 			  const Object& lit,
 			  int line):
 		ty(type),
-		lexeme(QString(lex)),
+		lexeme(lex),
 		literal(new Object(lit)),
 		ln(line){}
 
 //		Token(Tok type,
-//			  const QString& lex,
+//			  const TString& lex,
 //			  Object* lit,
 //			  int line):
 //		ty(type),
-//		lexeme(QString(lex)),
+//		lexeme(TString(lex)),
 //		literal(lit),
 //		ln(line){}
 
 		Token(const Token& tok){
+			LFn;
 			ty = tok.ty;
-			lexeme = tok.lexeme;
+			Log << (lexeme = tok.lexeme);
 			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
+			LVd;
 		}
 
 		Token& operator=(const Token& tok){
+			LFn;
 			ty = tok.ty;
-			lexeme = tok.lexeme;
+			Log << (lexeme = tok.lexeme);
 			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
-			return *this;
+			LRet *this;
 		}
 
 		~Token(){
 			delete literal;
 		}
 
-		QString to_string() {
-			QString str("[Tok ");
-			str.append(QString::number(static_cast<int>(ty)));
+		TString to_string() {
+			TString str("[Tok ");
+			str.append(TString::number(static_cast<int>(ty)));
 			if (literal->trait().is("real"))
-				str.append(" : ").append(QString::number(literal->data().toDouble()));
+				str.append(" : ").append(TString::number(literal->data().toDouble()));
 			else if (literal->trait().is("string"))
 				str.append(" : \"").append(literal->to_string()).append("\"");
 			else if (lexeme.size()){
@@ -105,7 +108,7 @@ class Token{
 			return str.append(" ]");
 		}
 
-		operator QString()   {
+		operator TString()   {
 			return to_string();
 		}
 

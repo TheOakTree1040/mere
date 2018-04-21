@@ -6,12 +6,12 @@
 #include <QVariant>
 #include <QVector>
 
-#include "logger.h"
+#include "tlogger.h"
 #define EIPtr ExprImpl*
 
 using std::pair;
 
-class StmtImpl;
+class MereCallable;
 
 enum class ExprTy {
 	Invalid,
@@ -24,7 +24,6 @@ enum class ExprTy {
 	Map,
 	Hash,
 	Array,
-	ArgsList,
 	FuncCall,
 //	LValue,
 	CommaEx,
@@ -55,7 +54,8 @@ struct ExprImpl final{
 				Object* lit;//
 				struct{
 						EIPtr callee;
-						EIPtr func_args_list;
+						QVector<EIPtr>* arguments;
+						Token* call_paren;
 				};
 				struct{
 						EIPtr refer_left;
@@ -72,15 +72,10 @@ struct ExprImpl final{
 						EIPtr l_branch;
 						EIPtr r_branch;
 				};
-				QVector<EIPtr>* args_list;
 				EIPtr lval_expr;
 				QVector<EIPtr>* comma_exprs;
 				QVector<Token*>* acsr;
-				struct{//temp. function
-						QVector<Token*>* param_names;
-						QVector<EIPtr>* param_ty;//accessors
-						StmtImpl* fn_block;
-				};
+				MereCallable* function;
 				bool _invalid;
 		};
 		ExprTy ty;
@@ -180,31 +175,14 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr args(const QVector<EIPtr>& list){
-			EIPtr ptr = create();
-			ptr->ty = ExprTy::ArgsList;
-			ptr->args_list = new QVector<EIPtr>(list);
-			return ptr;
-		}
-
-		static EIPtr func_call(EIPtr callee, EIPtr args_li){
+		static EIPtr func_call(EIPtr callee, const QVector<EIPtr>& args, Token& paren){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::FuncCall;
 			ptr->callee = callee;
-			if (args_li->is(ExprTy::ArgsList))
-				ptr->args_list = args_li->args_list;
-			else
-				ptr->args_list = nullptr;
+			ptr->arguments = new QVector<EIPtr>(args);
+			ptr->call_paren = new Token(paren);
 			return ptr;
 		}
-
-//		static EIPtr lvalue(EIPtr expr){
-//			EIPtr ptr = create();
-//			ptr->ty = ExprTy::LValue;
-//			if (expr->is(ExprTy::VarAcsr) || expr->is(ExprTy::MemAccessor) || true)
-//				ptr->lval_expr = expr;
-//			return ptr;
-//		}
 
 		static EIPtr invalid(){
 			return create();
@@ -235,15 +213,10 @@ struct ExprImpl final{
 			return ptr;
 		}
 
-		static EIPtr lambda(const QVector<Token>& pn, const QVector<EIPtr>& t, StmtImpl* fnb){
+		static EIPtr lambda(MereCallable* mc){
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Lambda;
-			ptr->param_names = new QVector<Token*>();
-			int s = pn.size();
-			for (int i = 0; i != s; i++)
-				ptr->param_names->push_back(new Token(pn.at(i)));
-			ptr->param_ty = new QVector<EIPtr>(t);
-			ptr->fn_block = fnb;
+			ptr->function = mc;
 			return ptr;
 		}
 
@@ -297,8 +270,8 @@ typedef EIPtr Expr;
 #define VarAcsrExpr		ExprImpl::var_accessor
 #define MemberAcsrExpr	ExprImpl::mem_accessor
 
-#define ArgsLiExpr		ExprImpl::args
 #define FnCallExpr		ExprImpl::func_call
+#define LambdaExpr		ExprImpl::lambda
 
 //#define LValExpr		ExprImpl::lvalue
 

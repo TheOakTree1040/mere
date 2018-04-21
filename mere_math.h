@@ -1,7 +1,7 @@
 
 #ifndef MERE_MATH_FWD_H
 #define MERE_MATH_FWD_H
-#include <QString>
+#include "t.h"
 #include <QFile>
 #include "token.h"
 #include "runtimeerror.h"
@@ -12,22 +12,23 @@ class MereMath{
 	public:
 		struct Error{
 				Error():ln(0),msg(""){}
-				Error(int l, const QString& m):ln(l),msg(m){}
+				Error(int l, const TString& m):ln(l),msg(m){}
 				int ln;
-				QString msg;
+				TString msg;
 		};
 	public:
 		static Interpreter* interpreter;
 	private:
 		static QVector<Error> errors;
 	public:
-		static void run(const QString&);
+		static void run(const TString&, bool=false, bool=false);
 		static void run_file(QFile&);
-		static void error(int, const QString&);
-		static void report(int, const QString&, const QString&, bool=true);
-		static void error(const Token&, const QString&);
+		static void error(int, const TString&);
+		static void report(int, const TString&, const TString&, bool=true);
+		static void error(const Token&, const TString&);
 		static void runtime_error(const RuntimeError&);
 		static void show_errors();
+		static void reset_intp();
 };
 
 #endif // MERE_MATH_FWD_H

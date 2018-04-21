@@ -2,16 +2,17 @@
 #include "parser.h"
 #include "mere_math.h"
 #include "data_storage.h"
+#include "merecallable.h"
 #include <QVector>
 
 Parser::Parser(QVector<Token>& toks):tokens(toks){
-	Logger() << "Parser()";
-	Logger::indent++;
+	Log << "Parser()";
+	TLogHelper::indent();
 
 }
 Parser::~Parser(){
-	Logger::indent = 0;
-	Logger() << "~Parser()";
+	TLogHelper::reset();
+	TLogHelper::outdent();
 }
 
 Stmts Parser::parse(){
@@ -65,23 +66,23 @@ Token& Parser::prev(){
 
 Token& Parser::advance(){
 	if (!is_at_end()){
-		Logger() << "adv: Type" << (int)peek().ty;
+		Log << "adv: Type" << (int)peek().ty;
 		current++;
 	}
 	return prev();
 }
 
-Token& Parser::expect(Tok ty, const QString& errmsg) throw(ParseError){
+Token& Parser::expect(Tok ty, const TString& errmsg) throw(ParseError){
 	LFn;
-	Log << "Checking" << errmsg << QString::number(static_cast<int>(ty));
-	Log << QString::number(static_cast<int>(peek().ty));
+	Log << "Checking" << errmsg << TString::number(static_cast<int>(ty));
+	Log << TString::number(static_cast<int>(peek().ty));
 	if (peek().ty == ty)
 		LRet advance();
-	Log << "Throwing" << (QString)"\"" + errmsg + "\"";
+	Log << "Throwing" << (TString)"\"" + errmsg + "\"";
 	LThw error(peek(),errmsg);
 }
 
-ParseError Parser::error(const Token& tok, const QString& errmsg){
+ParseError Parser::error(const Token& tok, const TString& errmsg){
 	MereMath::error(tok,errmsg);
 	return ParseError();
 }
@@ -119,19 +120,22 @@ Stmt Parser::stmt(bool expected_block){
 		if (expected_block && peek().ty == Tok::LBRACE){
 			s = block(false);
 		}
-		else if (match(Tok::IF)){
+		else if (match(Tok::IF		)){
 			s = if_stmt();
 		}
-		else if (match(Tok::FOR)){
+		else if (match(Tok::FOR		)){
 			s = for_stmt();
 		}
-		else if (match(Tok::PRINT)){
+		else if (match(Tok::PRINT	)){
 			s = PrintStmt(expression());
-			Log << "matching ; -" << QString::number(static_cast<int>(peek().ty));
+			Log << "matching ; -" << TString::number(static_cast<int>(peek().ty));
 			expect(Tok::SCOLON,"Expected a ';'.");
 		}
-		else if (match(Tok::WHILE)){
+		else if (match(Tok::WHILE	)){
 			s = while_stmt();
+		}
+		else if (match(Tok::RETURN	)){
+			s = ret_stmt();
 		}
 		else {
 			s = (peek().ty == Tok::DOLLAR && peek(1).ty == Tok::LBRACE)?block(true):decl_stmt();
@@ -142,10 +146,10 @@ Stmt Parser::stmt(bool expected_block){
 		Q_UNUSED(pe)
 	}
 	catch(std::exception& ex){
-		MereMath::error(prev().ln,QString("Exception caught during parsing: ").append(ex.what()));
+		MereMath::error(prev().ln,TString("Exception caught during parsing: ").append(ex.what()));
 	}
 	catch(...){
-		MereMath::error(prev().ln,QString("Unknown Error."));
+		MereMath::error(prev().ln,TString("Unknown Error."));
 	}
 	synchronize();
 	LRet nullptr;
@@ -169,7 +173,9 @@ Stmt Parser::block(bool is_unexpected){
 
 Stmt Parser::decl_stmt(){
 	LFn;
-	Stmt s = match(Tok::VAR)?var_decl_stmt():expr_stmt();
+	Stmt s = match(Tok::VAR)?var_decl_stmt():
+							 match(Tok::FN)?fn_def_stmt():
+											expr_stmt();
 	LRet s;
 }
 
@@ -237,6 +243,33 @@ Stmt Parser::for_stmt(){
 	LRet body;
 }
 
+Stmt Parser::fn_def_stmt(){
+	Token& name = expect(Tok::IDENTIFIER, "Expected an identifier [FnName].");
+	QVector<Token> params;
+	expect(Tok::LPAREN,"Expected a '('. [FnLParen]");
+	if (!check(Tok::RPAREN)){
+		do{
+			params.append(advance());
+		} while(match(Tok::COMMA));
+	}
+	expect(Tok::RPAREN,"Expected a ')'. [FnRParen]");
+	Stmt body;
+	body = block(false);
+	QVector<Stmt> stmts = *(body->block);
+	body->block->clear();
+	delete body;
+	return FnStmt(name,params,stmts);
+}
+
+Stmt Parser::ret_stmt(){
+	Token& keywd = prev();
+	Expr expr;
+	expr = check(Tok::SCOLON)?LitExpr(new Object()):expression();
+	Log << "RET_EXPR_TY" << t_cast<int>(expr->type());
+	expect(Tok::SCOLON,"Expected a ';' [RetSColon]");
+	return RetStmt(keywd,expr);
+}
+
 //expr
 Expr Parser::expression(bool disable){
 	LFn;
@@ -267,7 +300,7 @@ Expr Parser::refer(){
 Expr Parser::conditional(){
 	LFn;
 	Expr expr = logical_or();
-	if (match({Tok::ASSIGN,Tok::MULT_ASGN,Tok::DIV_ASGN,Tok::PLUS_ASGN,Tok::MINUS_ASGN})){
+	if (match({Tok::ASSIGN,Tok::MULT_ASGN,Tok::DIV_ASGN,Tok::PLUS_ASGN,Tok::MINUS_ASGN,Tok::EXP_ASGN})){
 		Token& op = prev();
 		Expr right = conditional();
 		expr = AssignExpr(expr,op,right);
@@ -365,7 +398,7 @@ Expr Parser::unary(){
 	}
 	else if (match(Tok::PLUS						)){
 		Token& op = prev();
-		MereMath::error(peek(),QString("Unary operator+").append(" not supported."));
+		MereMath::error(peek(),TString("Unary operator+").append(" not supported."));
 		Expr right = unary();
 		LRet PrefxExpr(op,right);
 	}
@@ -376,7 +409,7 @@ Expr Parser::unary(){
 	}
 	else if (peek().is_bin_op(						)){
 		Token& op = prev();
-		MereMath::error(peek(),QString("Binary operator").append(op.lexeme).append(" used w/o left operand."));
+		MereMath::error(peek(),TString("Binary operator").append(op.lexeme).append(" used w/o left operand."));
 
 		Expr right = expression(true);
 		LRet PrefxExpr(op,right);
@@ -409,25 +442,48 @@ Expr Parser::rvalue(){
 	LFn;
 	int tmp_curr = current;
 	try{
-		Expr ex = nullptr;
-		if (check(Tok::LPAREN))
-			ex = group();
-		else
-			ex = primary();
+		Expr ex = call();
 		LRet ex;
 	}
 	catch(ParseUnwind&){
 		current = tmp_curr;
-		Log << (QString)"Unwinded@" + QString::number(current) << "Ty:" << (int)peek().ty;
+		Log << (TString)"Unwinded@" + TString::number(current) << "Ty:" << (int)peek().ty;
 		Expr e = primary();
 		LRet e;
 	}
 }
 
-Expr Parser::lvalue(bool unwind){
+
+Expr Parser::call(){
 	LFn;
-	Expr e = check(Tok::LPAREN)?group():accessor(unwind);
-	LRet e;
+	Expr expr = primary();
+
+	while(true){
+		Log << "Entered" << t_cast<int>(peek().ty);
+		if (match(Tok::LPAREN)){
+			Log << "Entered inner.";
+			expr = finish_call(expr);
+			Log << "Exited finish_call.";
+		} else {
+			break;
+		}
+	}
+	LRet expr;
+}
+
+Expr Parser::finish_call(Expr callee){
+	LFn;
+	QVector<Expr> args;
+	Expr arg = nullptr;
+	if (!check(Tok::RPAREN)){
+		do {
+			arg = expression(true);
+			args.append(arg);
+			Log << "FINISH_CALL_ARG_TY" << t_cast<int>(arg->type());
+		} while (match(Tok::COMMA));
+	}
+	Token& paren = expect(Tok::RPAREN, "Expected a ')'.");
+	LRet FnCallExpr(callee,args,paren);
 }
 
 Expr Parser::primary(){
@@ -545,25 +601,11 @@ Expr Parser::array(){
 
 Expr Parser::accessor(bool unwind) throw(ParseUnwind){
 	LFn;
-	Log << "current:" << QString::number(current) << "type:" << QString::number((int)peek().ty);
+	Log << "current:" << TString::number(current) << "type:" << TString::number((int)peek().ty);
 	if (((int)(peek().ty)!=44) && unwind){
 		LThw ParseUnwind();
 	}
 	LRet VarAcsrExpr(expect(Tok::IDENTIFIER,"Expected an identifier."));
-}
-
-Expr Parser::args_list(bool eaten){
-	LFn;
-	if (!eaten)
-		expect(Tok::LPAREN, "Expected a '('.");
-	QVector<Expr> list{};
-	if (!check(Tok::RPAREN)){
-		do{
-			list.append(expression(true));
-		}while (match(Tok::COMMA));
-	}
-	expect(Tok::RPAREN, "Expected a ')'.");
-	LRet ArgsLiExpr(list);
 }
 
 Expr Parser::group(){

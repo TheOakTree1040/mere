@@ -1,9 +1,23 @@
 #ifndef CMDPARSER_H
 #define CMDPARSER_H
-class CmdParser{
+#include <TString>
+#include <bitset>
+
+enum MICIndex{
+	Exc,
+	FFile,
+	ShwSyn,
+	ShwTok
+};
+class MereIntpCmdParser{
+
+		std::bitset<8> options;
 	public:
 		CmdParser(){}
-		void parse(const QString);
+		void parse(const TString&){
+
+		}
+
 };
 
 #endif // CMDPARSER_H

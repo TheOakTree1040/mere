@@ -25,9 +25,22 @@ StmtImpl::~StmtImpl(){
 				delete block->takeAt(i);
 			delete block;
 			break;
+		case StmtTy::Function:
+			for (int i = fn_params->size() - 1; i >= 0; i--)
+				delete fn_params->takeAt(i);
+			delete fn_params;
+			for (int i = fn_body->size() - 1; i >= 0; i--)
+				delete fn_body->takeAt(i);
+			delete fn_body;
+			delete fn_name;
+			break;
 		case StmtTy::While:
 			delete cont_condit;
 			delete while_block;
+			break;
+		case StmtTy::Return:
+			delete retval;
+			delete retop;
 			break;
 		case StmtTy::Empty:
 			break;

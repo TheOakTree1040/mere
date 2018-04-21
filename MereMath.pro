@@ -24,7 +24,8 @@ SOURCES += \
     expr.cpp \
     stmt.cpp \
     object.cpp \
-    logger.cpp
+    merecallable.cpp \
+    tlogger.cpp
 
 HEADERS += \
     expr.h \
@@ -42,6 +43,6 @@ HEADERS += \
     astprinter.hpp \
     object.h \
     cmdparser.h \
-    project.h \
     data_storage.h \
-    logger.h
+    tlogger.h \
+    t.h

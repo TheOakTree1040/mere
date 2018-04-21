@@ -9,7 +9,9 @@ enum class StmtTy{
 	Block,
 	If,
 	While,
-	Print
+	Print,
+	Function,
+	Return
 };
 
 #define SIPtr StmtImpl*
@@ -35,6 +37,15 @@ class StmtImpl final
 				Expr cont_condit;
 				SIPtr while_block;
 			};
+			struct{//func
+				Token* fn_name;
+				QVector<Token*>* fn_params;
+				QVector<SIPtr>* fn_body;
+			};
+			struct{
+					Expr retval;
+					Token* retop;
+			};
 			bool _inv;
 			bool empty;
 		};
@@ -57,6 +68,19 @@ class StmtImpl final
 			ptr->var_name = new Token(tok);
 			ptr->init = exp;
 			ptr->var_type = ty;
+			return ptr;
+		}
+
+		static SIPtr fn_decl_stmt(const Token& name, const QVector<Token>& params, const QVector<SIPtr>& body){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::Function;
+			ptr->fn_name = new Token(name);
+			int sz = params.size();
+			ptr->fn_params = new QVector<Token*>(sz);
+			for (int i = 0; i != sz; i++){
+				const_cast<Token*&>(ptr->fn_params->at(i)) = new Token(params[i]);
+			}
+			ptr->fn_body = new QVector<SIPtr>(body);
 			return ptr;
 		}
 
@@ -98,6 +122,14 @@ class StmtImpl final
 			return ptr;
 		}
 
+		static SIPtr ret_stmt(const Token& op, Expr ex){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::Return;
+			ptr->retop = new Token(op);
+			ptr->retval = ex;
+			return ptr;
+		}
+
 		StmtTy type(){
 			return ty;
 		}
@@ -119,5 +151,7 @@ typedef QVector<Stmt> Stmts;
 #define IfStmt		StmtImpl::if_stmt
 #define WhileStmt	StmtImpl::while_stmt
 #define PrintStmt	StmtImpl::print_stmt
+#define FnStmt		StmtImpl::fn_decl_stmt
+#define RetStmt		StmtImpl::ret_stmt
 
 #endif // STMT_H

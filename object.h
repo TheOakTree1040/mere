@@ -1,8 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 #include <QVariant>
-#include <QString>
-#include "logger.h"
+#include "tlogger.h"
 #include <functional>
 #include <bitset>
 using std::pair;
@@ -14,9 +13,10 @@ enum class Ty{		//storage class in c++
 	Void	= -2,	//"[Empty object]"
 	Struct	= -1,	//some specialized class which i need to create later
 	Null,
+	Function,		//MereCallable
 	Real,			//double
 	Char,			//char
-	String,			//QString
+	String,			//TString
 	Bool,			//bool
 	Array,			//QVector<Object>
 	Map,			//QVector<std::pair<Object,Object>>
@@ -26,10 +26,10 @@ enum class Ty{		//storage class in c++
 //defines the trait of the object
 enum class TraitIndex{
 
-	//Type Trait
+//Type Trait
 	Object = 0,	//1
 	Function,	//0
-	//Object Type
+//Object Type
 	Data,		//1
 	Accessor,	//0
 	Reference,	//0
@@ -56,14 +56,14 @@ class Trait{
 	private://fields
 		std::bitset<8> m_traits;
 		Ty m_ty;
-		QString m_id;
+		TString m_id;
 
 	private://static data
 		static QVector<TraitMatcher> type_lookup;
 		static int default_traits;
 
 	public://static fn
-		static Ty type_of(const QString&);
+		static Ty type_of(const TString&);
 
 	public://member fn
 		Trait():
@@ -76,7 +76,7 @@ class Trait{
 		m_ty(other.type()),
 		m_id(other.id()){}
 
-		Trait(const QString& id):
+		Trait(const TString& id):
 			m_traits(default_traits),
 			m_ty(type_of(id)),
 			m_id(id){}
@@ -85,7 +85,7 @@ class Trait{
 			m_traits.set(static_cast<size_t>(i),val);
 			return *this;
 		}
-		Trait& set(const QString& id, bool searches = true){
+		Trait& set(const TString& id, bool searches = true){
 			m_id = id;
 			return searches?set(type_of(id)):*this;
 		}
@@ -116,7 +116,7 @@ class Trait{
 		std::bitset<8> traits() const noexcept {
 			return m_traits;
 		}
-		QString id() const noexcept {
+		TString id() const noexcept {
 			return m_id;
 		}
 		Ty type() const noexcept {
@@ -125,7 +125,7 @@ class Trait{
 		bool is(Ty ty) const noexcept {
 			return m_ty == ty;
 		}
-		bool is(const QString& i) const noexcept {
+		bool is(const TString& i) const noexcept {
 			return m_id == i;
 		}
 
@@ -201,18 +201,18 @@ class Trait{
 };
 
 struct TraitMatcher{
-		QString type_id;
+		TString type_id;
 		Ty type;
 
 		TraitMatcher():
 			type_id("void"),
 			type(Ty::Void){}
 
-		TraitMatcher(const QString& tid, Ty type):
+		TraitMatcher(const TString& tid, Ty type):
 			type_id(tid),
 			type(type){}
 
-		bool match(const QString& id){
+		bool match(const TString& id){
 			return type_id == id;
 		}
 };
@@ -223,34 +223,28 @@ class Object{
 		std::reference_wrapper<Object> m_onstack;
 		Trait m_trait;
 	private://member fn
-		void delete_ptr(){
-			LFn;
-			if (trait().is_data() && m_ptr){
-				Log << "Deleting...";
-				delete m_ptr;
-			}
-			Log << "Pointing to null...";
-			m_ptr = nullptr;
-			LVd;
-		}
-
+		void delete_ptr();
 	public:
 		Object():
 		m_ptr(VPTR_INIT),
 		m_onstack(*this),
-		m_trait(){}
+		m_trait(){
+			Log << "OBJ_DEFLT_CTOR";
+		}
 
 		Object(const Object& o):
 		m_ptr(o.trait().is_data()?new Var(o.data()):o.ptr()),
 		m_onstack(o.trait().is_ref()?o.m_onstack.get():*this),
 		m_trait(o.m_trait){
-			LFn;
-			LVd;
+			//LFn;
+			Log << "OBJECT CTOR DATA:" << to_string();
+			//LVd;
 		}
 
 		//getters
 		Var& data() {
-			return m_ptr?*m_ptr:*(trait().as_data(),m_ptr = VPTR_INIT);
+			return m_ptr?*m_ptr:
+						 *(trait().as_data(),m_ptr = VPTR_INIT);
 		}
 		Var& data() const {
 			return *m_ptr;
@@ -272,9 +266,14 @@ class Object{
 			LRet *this;
 		}
 		Object& set(const Var& var){
-			LFn;
+			//LFn;
 			delete_ptr();
+			//Log << "Setting var.";
 			m_ptr = new Var(var);
+			//Log << "fn_init";
+			//QMessageBox::information(nullptr,"",trait().id());
+
+			fn_init();
 			LRet *this;
 		}
 
@@ -285,7 +284,7 @@ class Object{
 			m_trait(trt){
 			set(var);
 		}
-		Object(const QString& id, const Var& var):
+		Object(const TString& id, const Var& var):
 			m_ptr(nullptr),
 			m_onstack(*this),
 			m_trait(Trait(id))
@@ -313,13 +312,12 @@ class Object{
 			set(Var(d));
 			LVd;
 		}
-		Object(const QString& str):
+		Object(const TString& str):
 			m_ptr(nullptr),
 			m_onstack(*this),
 			m_trait(Trait("string")){
 			set(Var(str));
 		}
-
 		static Object null(){
 			Object ret;
 			ret.trait().set(Ty::Null);
@@ -333,6 +331,7 @@ class Object{
 
 		template <typename T>
 		T as() {
+			//LFn;
 			return data().value<T>();
 		}
 
@@ -341,25 +340,25 @@ class Object{
 			return m_ptr->value<T>();
 		}
 
-		QString to_string() {
-			LFn;
+		TString to_string() {
+//			LFn;
 			if (!m_ptr)
-				LRet "[UNALLOCATED_OBJECT]";
+				return "[UNALLOCATED_OBJECT]";
 			switch(trait().type()){
 				case Ty::String:
-					LRet as<QString>();
+					return as<TString>();
 				case Ty::Real:
-					LRet QString::number(as<double>());
+					return TString::number(as<double>());
 				case Ty::Bool:
-					LRet as<bool>()?"true":"false";
+					return as<bool>()?"true":"false";
 				case Ty::Null:
-					LRet "null";
+					return "null";
 				case Ty::Char:
-					LRet QString(as<char>());
+					return TString(as<char>());
 				case Ty::Void:
-					LRet "[Void]";
+					return "[Void]";
 				default:
-					LRet QString("[").append(trait().id()).append(" instance]");
+					return TString("[").append(trait().id()).append(" instance]");
 			}
 
 		}
@@ -368,7 +367,7 @@ class Object{
 			return trait().is_number()?
 						as<bool>():
 						trait().is(Ty::String)?
-							as<QString>().size():
+							as<TString>().size():
 							true;
 		}
 
@@ -391,7 +390,6 @@ class Object{
 		//copy
 		Object& operator=(const Object& other){
 			set(other.trait());
-
 			if (other.trait().is_data()){
 				set(other.data());
 			}
@@ -434,6 +432,8 @@ class Object{
 			as_ref_of(stk_var).trait().as_acsr();
 			return *this;
 		}
+
+		Object& fn_init();
 
 		bool operator==(const Object& other) const {
 			return trait().has_type_of(other.trait()) && data() == other.data();

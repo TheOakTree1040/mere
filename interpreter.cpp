@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include "environment.h"
 #include <QMessageBox>
+#include "merecallable.h"
 #define GOTO_OP_ASGN(TOK) right_val_op = TOK; goto RET_OP_ASGN;
 Interpreter::Interpreter(){}
 
@@ -33,7 +34,7 @@ Object Interpreter::eval_pstfx(Expr expr, bool dd){
 			break;
 		default:;
 	}
-	QString errmsg = "Operand type mismatch: '";
+	TString errmsg = "Operand type mismatch: '";
 	errmsg.append(r.trait().id()).append("' [");
 	errmsg += op.lexeme + "].";
 	LThw RuntimeError(op,errmsg);
@@ -77,13 +78,14 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 			break;
 		default:;
 	}
-	QString errmsg = "Operand type mismatch: [";
+	TString errmsg = "Operand type mismatch: [";
 	errmsg.append(op.lexeme).append("] '").append(r.trait().id()).append("'.");
 	LThw RuntimeError(op,errmsg);
 }
 Object Interpreter::eval_lit(Expr expr, bool){
 	LFn;
 	Object ro(*(expr->lit));
+	Log << "EVAL_LIT OBJ:" << ro.to_string();
 	LRet ro;
 }
 Object Interpreter::eval_group(Expr expr, bool dd){
@@ -112,7 +114,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 				LRet OP(double,+);
 			}
 			if (ARE(Ty::String)){
-				LRet OP(QString,+);
+				LRet OP(TString,+);
 			}
 			break;
 		case Tok::MINUS:
@@ -166,7 +168,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 			LThw RuntimeError(op,"Undefined Binary Operation.");
 
 	}
-	QString errmsg = "Operand type mismatch: '";
+	TString errmsg = "Operand type mismatch: '";
 	errmsg.append(l.trait().id()).append("' ").append(op.lexeme)
 			.append(" '").append(r.trait().id()).append("'.");
 	LThw RuntimeError(op,errmsg);
@@ -233,6 +235,8 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 			GOTO_OP_ASGN(Tok::PLUS);
 		case Tok::MINUS_ASGN:
 			GOTO_OP_ASGN(Tok::MINUS);
+		case Tok::EXP_ASGN:
+			GOTO_OP_ASGN(Tok::CARET);
 		default:
 			LThw RuntimeError(op,"No such assignment operator.");
 	}
@@ -259,8 +263,41 @@ Object Interpreter::eval_refer(Expr expr, bool dd){
 	}
 	LRet rl.as_ref_of(rr);
 }
+Object Interpreter::eval_call(Expr expr, bool dd){
+	LFn;
+	Expr callee_expr = expr->callee;
+	int sz = expr->arguments->size();
+	QVector<Object> args(sz);
+	Log << "ARG_SIZE" << TString::number(sz);
+	Object o;
+	for (int i = 0; i != sz; i++){
+		Log << "ARG_TY:" << TString::number(static_cast<int>(expr->arguments->at(i)->type()));
+		if (expr->arguments->at(i)->is(ExprTy::Literal))
+			Log << "ARG_OBJ_PRE_EVAL" << expr->arguments->at(i)->lit->to_string();
+		o = evaluate(expr->arguments->at(i),dd);
+		Log << "MARK" << o.to_string();
+		args[i] = o;
+		Log << "ARG_OBJ:" << args[i].to_string();
+	}
+	if (dd){
+		expr->callee = nullptr;
+		expr->arguments->clear();
+	}
+	Object callee = evaluate(callee_expr,dd);
+	if (!callee.trait().is_fn()){
+		LThw RuntimeError(*(expr->call_paren),"Invalid callee! [CalleeType]");
+	}
+	MereCallable* mc = reinterpret_cast<MereCallable*>(callee.data().data());
+	if (sz != mc->arity()){
+		LThw RuntimeError(*(expr->call_paren),TString("Expected ") +
+						  TString::number(mc->arity()) +
+						  " argument(s), but " + TString::number(sz) + " was provided. [CallArity]");
+	}
+
+	LRet mc->call(*this,args);
+}
 Object Interpreter::evaluate(Expr expr, bool dd){
-	LFn << "Evaluating expr-" << QString::number((int)expr->type());
+	LFn << "Evaluating expr-" << TString::number((int)expr->type());
 	Object o;
 	if (expr){
 		try{
@@ -291,6 +328,9 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 					break;
 				case ExprTy::Refer:
 					o = eval_refer(expr,dd);
+					break;
+				case ExprTy::FuncCall:
+					o = eval_call(expr,dd);
 					break;
 				default:
 					LThw RuntimeError(Token(Tok::INVALID,"",Object(),0),
@@ -323,7 +363,9 @@ void Interpreter::exec_print(Stmt stmt, bool dd){
 	if (dd){
 		stmt->expr = nullptr;
 	}
-	QMessageBox::information(nullptr,"Info",evaluate(ex,dd).to_string());
+	Object obj = evaluate(ex,dd);
+	TString out = obj.to_string() + " : " + TString(obj.data().typeName());
+	QMessageBox::information(nullptr,"Info",out);
 	LVd;
 }
 void Interpreter::exec_if(Stmt stmt, bool dd){
@@ -348,17 +390,21 @@ void Interpreter::exec_if(Stmt stmt, bool dd){
 	}
 	LVoid;
 }
-void Interpreter::exec_block(Stmt stmt, bool){
+void Interpreter::exec_block(Stmt stmt, bool dd, Environment env){
 	LFn;
-	int sz = stmt->block->size();
-	Stmts* stmts = stmt->block;
+	exec_block(stmt->block,dd,env);
+	LVoid;
+}
+void Interpreter::exec_block(Stmts *stmts, bool, Environment env){
+	LFn;
+	int sz = stmts->size();
 	Environment outer = environment;
-	environment = new EnvImpl(outer);
+	environment = env?env:new EnvImpl(outer);
 	for (int i = 0; i != sz; i++)
 		execute(stmts->at(i),false);
 	delete environment;
 	environment = outer;
-	LVoid;
+	LVd;
 }
 void Interpreter::exec_while(Stmt stmt, bool){
 	LFn;
@@ -377,8 +423,23 @@ void Interpreter::exec_var_decl(Stmt stmt, bool dd){
 	environment->define(*(stmt->var_name),evaluate(expr,dd));
 	LVd;
 }
+void Interpreter::exec_fn_decl(Stmt stmt, bool){
+	LFn;
+	MereCallable mc(stmt);
+	mc.set_onstack(false);
+	Log << "stmt->fn_name->lexeme: " << stmt->fn_name->lexeme;
+	environment->define(*(stmt->fn_name),Object(Trait("function").as_fn(),Var::fromValue(mc)));
+	LVd;
+}
+void Interpreter::exec_ret(Stmt stmt, bool dd){
+	LFn;
+	Object obj = evaluate(stmt->retval,dd);
+	Log << "RET_EXC_OBJ_VAL" << obj.to_string();
+	LThw Return(obj);
+}
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
+	Log << "Interpreting stmt" << t_cast<int>(stmt->type());
 	if (stmt){
 		try{
 			switch(stmt->type()){
@@ -400,6 +461,14 @@ void Interpreter::execute(Stmt stmt, bool dd){
 				case StmtTy::VarDecl:
 					exec_var_decl(stmt,dd);
 					break;
+				case StmtTy::Function:
+					exec_fn_decl(stmt,dd);
+					dd=false;
+					break;
+				case StmtTy::Return:
+					Log << "EXECUTE__RET";
+					exec_ret(stmt,dd);
+					break;
 				default:;
 			}
 		} catch(RuntimeError& re){
@@ -411,7 +480,7 @@ void Interpreter::execute(Stmt stmt, bool dd){
 		}
 
 	}
-	LVoid;
+	LVd;
 }
 
 void Interpreter::interpret(Stmts stmts){
@@ -425,5 +494,32 @@ void Interpreter::interpret(Stmts stmts){
 	catch(RuntimeError& re){
 		MereMath::runtime_error(re);
 	}
+	catch(Return& ret){
+		Q_UNUSED(ret);
+		MereMath::error(0,"Invalid Return. [InvRet]");
+	}
+	catch(std::exception& ex){
+		MereMath::error(0,ex.what());
+	}
+	catch(std::bad_alloc& ba){
+		MereMath::error(0,ba.what());
+	}
+
 	LVoid;
+}
+
+Environment Interpreter::global(){
+	return globals;
+}
+
+Interpreter::~Interpreter(){
+	reset(nullptr);
+}
+
+void Interpreter::reset(Environment envptr){
+	if (globals!=environment){
+		delete environment;
+	}
+	delete globals;
+	globals = environment = envptr;
 }

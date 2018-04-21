@@ -1,7 +1,9 @@
 #include "expr.h"
 #include "stmt.h"
+#include "merecallable.h"
 ExprImpl::~ExprImpl(){
 	switch(this->ty){
+		case ExprTy::Logical:
 		case ExprTy::Binary:
 			delete this->right;
 		case ExprTy::Prefix:
@@ -34,18 +36,13 @@ ExprImpl::~ExprImpl(){
 			delete this->array_data;
 			break;
 		case ExprTy::FuncCall:
-			delete func_args_list;
-			delete callee;
-			break;
-		case ExprTy::ArgsList:
-			for (int i = args_list->size() - 1; i >= 0; i--){
-				delete args_list->takeAt(i);
+			for (int i = arguments->size() - 1; i >= 0; i--){
+				delete arguments->takeAt(i);
 			}
-			delete args_list;
+			delete arguments;
+			delete callee;
+			delete call_paren;
 			break;
-//		case ExprTy::LValue:
-//			delete lval_expr;
-//			break;
 		case ExprTy::CommaEx:
 			for (int i = comma_exprs->size() - 1; i >= 0; i--){
 				delete comma_exprs->takeAt(i);
@@ -65,15 +62,7 @@ ExprImpl::~ExprImpl(){
 			delete asgn_op;
 			break;
 		case ExprTy::Lambda:
-			for (int i = param_ty->size() - 1; i >= 0; i--){
-				delete param_ty->takeAt(i);
-			}
-			for (int i = param_names->size() - 1; i >= 0; i--){
-				delete param_ty->takeAt(i);
-			}
-			delete param_ty;
-			delete param_names;
-			delete fn_block;
+			delete this->function;
 			break;
 		case ExprTy::VarAcsr:
 			delete var_acsr;

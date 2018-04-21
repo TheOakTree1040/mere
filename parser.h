@@ -19,19 +19,22 @@ class Parser
 		Token& peek(int=0);
 		Token& prev();
 		Token& advance();
-		Token& expect(Tok, const QString&) throw(ParseError);
+		Token& expect(Tok, const TString&) throw(ParseError);
 		//error-handling
-		ParseError error(const Token&, const QString&);
+		ParseError error(const Token&, const TString&);
 		void synchronize();
 		//Parse Grammar Rules
 		Stmt stmt			(bool=F_);
 		Stmt block			(bool=F_);
 		Stmt decl_stmt		(		);
 		Stmt var_decl_stmt	(bool=T_);
+		Stmt fn_def_stmt	(		);
+		Stmt params			(		);
 		Stmt expr_stmt		(		);
 		Stmt if_stmt		(		);
 		Stmt while_stmt		(		);
 		Stmt for_stmt		(		);
+		Stmt ret_stmt		(		);
 
 		Expr expression	(bool=F_);
 		Expr refer		(		);
@@ -43,7 +46,9 @@ class Parser
 		Expr terms		(		);
 		Expr term		(		);
 		Expr unary		(		);
-		Expr exponent	(		);//TODO
+		Expr exponent	(		);
+		Expr call		(		);
+		Expr finish_call(Expr	);
 		Expr primary	(		);
 		//primary helpers.
 		Expr spec_data	(		);
@@ -51,9 +56,7 @@ class Parser
 		Expr assoc		(		);
 		Expr map		(		);
 		Expr rvalue		(		);
-		Expr lvalue		(bool=F_);
 		Expr accessor	(bool=F_) throw(ParseUnwind);
-		Expr args_list	(bool=F_);
 		Expr group		(		);
 	public:
 		Parser(QVector<Token>&);

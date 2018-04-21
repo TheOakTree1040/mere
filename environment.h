@@ -5,7 +5,7 @@
 #include <QHash>
 #include "runtimeerror.h"
 #define EnvPtr EnvImpl*/*QSharedPointer<EnvImpl>*/
-typedef QString Identifier;
+typedef TString Identifier;
 class EnvImpl final
 {
 	private:

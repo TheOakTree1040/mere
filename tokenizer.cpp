@@ -1,14 +1,14 @@
 
 #include "tokenizer.h"
-#include "logger.h"
-Tokenizer::Tokenizer(const QString& src):source(src)
+#include "tlogger.h"
+Tokenizer::Tokenizer(const TString& src):source(src)
 {
-	Logger() << "Source: " << source;
-	Logger::indent++;
+	Log << "Source: " << source;
+	TLogHelper::indent();
 }
 Tokenizer::~Tokenizer(){
-	Logger::indent--;
-	Logger() << "~Tokenizer()";
+	TLogHelper::outdent();
+	Log << "~Tokenizer()";
 }
 
 bool Tokenizer::is_at_end(){
@@ -16,7 +16,7 @@ bool Tokenizer::is_at_end(){
 }
 
 char Tokenizer::advance(){
-	Log << "  adv:" << QString::number(current++) << peek(-1);
+	Log << "  adv:" << TString::number(current++) << peek(-1);
 	return source[current-1].toLatin1();
 }
 
@@ -26,7 +26,7 @@ void Tokenizer::add_token(Tok ty){
 
 void Tokenizer::add_token(Tok ty, const Object& lit){
 	LFn;
-	tokens.append(Token(ty,source.mid(start,current-start+1),lit,line));
+	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
 	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
 	Log << "             Type  :" << (int)tokens.last().ty;
 	LVd;
@@ -52,11 +52,11 @@ void Tokenizer::deprecate(){
 
 bool Tokenizer::match(char expct) {
 	return !is_at_end() && source[current] == expct?
-				current++, Logger() << "  matched " << expct, true:
+				current++, Log << "  matched " << expct, true:
 									   false;
 }
 
-bool Tokenizer::match(QString expct){
+bool Tokenizer::match(TString expct){
 	if (is_at_end())
 		return false;
 	if (current + 1 + expct.size() > source.size())
@@ -71,7 +71,7 @@ bool Tokenizer::match(QString expct){
 }
 
 void Tokenizer::string(){
-	QString str = "";
+	TString str = "";
 	current--;
 	deprecate();
 	while (!is_at_end()) {
@@ -132,7 +132,6 @@ void Tokenizer::character(){
 		deprecate();
 		QChar ch = escaped.value(QChar(peek()),QChar('*'));
 		if (ch != QChar('*')){
-			deprecate();
 			source[current] = ch;
 		}
 		else{
@@ -140,7 +139,11 @@ void Tokenizer::character(){
 		}
 	}
 	c = advance();
-	deprecate();
+	if (peek() != '\''){
+		MereMath::error(line,"Expected a closing single quote.");
+	}
+	else
+		deprecate();
 
 	add_token(Tok::CHAR,Object(c));
 }
@@ -151,7 +154,7 @@ bool Tokenizer::is_digit(char ch){
 
 void Tokenizer::number() {
 	LFn;
-	QString num = "";
+	TString num = "";
 	num.append(peek(-1)); // Retrieves the digit being advanced.
 	current--;
 	deprecate();
@@ -202,7 +205,7 @@ void Tokenizer::number() {
 	Log << "  Numeral: String:" << num;
 	Log << "           Number:" << n;
 	if (!stat){
-		MereMath::error(line, QString("Invalid base-").append(QString::number(base)).append(" numeral."));
+		MereMath::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
 		Log << "Numeral Lexing Error.";
 	}
 	LVd;
@@ -229,15 +232,14 @@ bool Tokenizer::is_base_8(char c){
 void Tokenizer::identifier(){
 	LFn;
 	current--;
-	QString val = "";
+	TString val = "";
 	val.append(peek());
 	if ((val == "R" || val == "r") && peek(1) == '"' && peek(2) == '['){
 		deprecate();
 		deprecate();
 		deprecate();
 		raw_string();
-		Logger() << "End of identifier()";
-		Logger::indent--;
+		LVd;
 		return;
 	}
 	advance();
@@ -245,11 +247,11 @@ void Tokenizer::identifier(){
 		val.append(advance());
 	Tok ty = keywords.value(val, Tok::IDENTIFIER);
 	tokens.append(Token(ty,val,Object(),line));
-	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
-	Log << "             Type  :" << (int)tokens.last().ty;
-	Log << val;
-	Log << "Done.";
-	LVoid
+//	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
+//	Log << "             Type  :" << (int)tokens.last().ty;
+//	Log << val;
+//	Log << "Done.";
+	LVd;
 }
 
 void Tokenizer::raw_string(){
@@ -273,8 +275,7 @@ void Tokenizer::scan_token(){
 		case '?': add_token(Tok::QUES_MK); break;
 		case '$': add_token(Tok::DOLLAR); break;
 		case '*': add_token(match('=')?Tok::MULT_ASGN:
-									   match("*=")?Tok::EXP_ASGN:
-												   Tok::STAR); break;
+									   Tok::STAR); break;
 		case '^': add_token(match('=')?Tok::EXP_ASGN:
 									   Tok::CARET); break;
 		case '%': add_token(match('=')?Tok::MOD_ASGN:
@@ -370,7 +371,7 @@ Tokens Tokenizer::scan_tokens(){
 	return tokens;
 }
 
-QHash<QString, Tok> Tokenizer::keywords{
+QHash<TString, Tok> Tokenizer::keywords{
 	{"struct"	,	Tok::STRUCT		},
 	{"for"		,	Tok::FOR		},
 	{"if"		,	Tok::IF			},
@@ -394,7 +395,8 @@ QHash<QString, Tok> Tokenizer::keywords{
 	{"global"	,	Tok::GLOBAL		},
 	{"var"		,	Tok::VAR		},
 	{"null"		,	Tok::NULL_LIT	},
-	{"print"	,	Tok::PRINT		}
+	{"print"	,	Tok::PRINT		},
+	{"fn"		,	Tok::FN			}
 };
 
 QHash<QChar,QChar> Tokenizer::escaped{

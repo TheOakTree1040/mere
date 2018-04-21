@@ -8,10 +8,10 @@
 class Tokenizer
 {
 	private:
-		QString source;
+		TString source;
 		Tokens tokens;
 
-		static QHash<QString, Tok> keywords;// defined in source
+		static QHash<TString, Tok> keywords;// defined in source
 		static QHash<QChar,QChar> escaped;
 
 		int start = 0;
@@ -23,7 +23,7 @@ class Tokenizer
 		char peek(int=0);
 		char peek_next();
 		bool match(char expct);
-		bool match(QString expct);
+		bool match(TString expct);
 		char advance();
 		void deprecate();
 
@@ -43,7 +43,7 @@ class Tokenizer
 		void identifier();
 		void scan_token();
 	public:
-		Tokenizer(const QString&);
+		Tokenizer(const TString&);
 		~Tokenizer();
 		Tokens scan_tokens();
 };

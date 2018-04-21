@@ -14,7 +14,7 @@
 	}
 class ASTPrinter final{
 	private:
-		QString text;
+		TString text;
 	public:
 		ASTPrinter(Stmts stmts):
 			text(""){
@@ -24,12 +24,12 @@ class ASTPrinter final{
 			Log << "end ASTPrinter()";
 		}
 
-		QString AST(){
+		TString AST(){
 			Log << "Getting AST";
 			return text;
 		}
 	private:
-		void write_ln(int lvls, const QString& ln){
+		void write_ln(int lvls, const TString& ln){
 			for (int i = lvls; i != 0; i--)
 				text.append("\t");
 			text.append(ln).append("\n");
@@ -53,7 +53,7 @@ class ASTPrinter final{
 
 		void print_binary(int lvls, Expr expr){
 			CHKTY(ExprTy::Binary);
-			QString head = "BinExpr ";
+			TString head = "BinExpr ";
 			head.append(expr->op->lexeme)./*append(" [Ln ").append(expr->op.ln).*/append(":");
 			write_ln(lvls,head);
 			write_ln(lvls+1,"Left:");
@@ -63,64 +63,64 @@ class ASTPrinter final{
 		}
 		void print_literal(int lvls, Expr expr){
 			CHKTY(ExprTy::Literal);
-			QString head = "[";
+			TString head = "[";
 			head.append(expr->lit->trait().id()).append("] Literal:");
 			write_ln(lvls,head);
 			write_ln(lvls+1,expr->lit->to_string());
 		}
 		void print_arr(int lvls, Expr expr){
 			CHKTY(ExprTy::Array);
-			QString head = "[Array]";
+			TString head = "[Array]";
 			write_ln(lvls,head);
 		}
 //		void print_lval(int lvls, Expr expr){
 //			CHKTY(ExprTy::LValue);
-//			QString head = "Asserted_LValue:";
+//			TString head = "Asserted_LValue:";
 //			write_ln(lvls,head);
 //			print(lvls+1,expr->lval_expr);
 //		}
 		void print_group(int lvls, Expr expr){
 			CHKTY(ExprTy::Group);
-			QString head = "GroupExpr:";
+			TString head = "GroupExpr:";
 			write_ln(lvls,head);
 			print(lvls+1,expr->expr);
 		}
 		void print_prefx(int lvls, Expr expr){
 			CHKTY(ExprTy::Prefix);
-			QString head = "UnaryExpr [";
+			TString head = "UnaryExpr [";
 			head.append(expr->op->lexeme).append("var]:");
 			write_ln(lvls,head);
 			print(lvls+1,expr->expr);
 		}
 		void print_pstfx(int lvls, Expr expr){
 			CHKTY(ExprTy::Postfix);
-			QString head = "UnaryExpr [var";
+			TString head = "UnaryExpr [var";
 			head.append(expr->op->lexeme).append("]:");
 			write_ln(lvls,head);
 			print(lvls+1,expr->expr);
 		}
 		void print_var(int lvls, Expr expr){
 			CHKTY(ExprTy::VarAcsr);
-			QString head = "[Variable ";
+			TString head = "[Variable ";
 			head.append(expr->var_acsr->lexeme).append("]");
 			write_ln(lvls,head);
 		}
 
 		void print_expr_stmt(int lvls, Stmt stmt){
 			S_CHKTY(StmtTy::Expr);
-			QString head = "ExprStmt";
+			TString head = "ExprStmt";
 			write_ln(lvls,head);
 			print(lvls+1,stmt->expr);
 		}
 		void print_var_decl_stmt(int lvls, Stmt stmt){
 			S_CHKTY(StmtTy::VarDecl);
-			QString head = "var " + stmt->var_name->lexeme + " equals:";
+			TString head = "var " + stmt->var_name->lexeme + " equals:";
 			write_ln(lvls,head);
 			print(lvls+1,stmt->init);
 		}
 		void print_block_stmt(int lvls, Stmt stmt){
 			S_CHKTY(StmtTy::Block);
-			QString head = "{";
+			TString head = "{";
 			write_ln(lvls++,head);
 			int sz = stmt->block->size();
 			for (int i = 0; i != sz; i++){
@@ -130,7 +130,7 @@ class ASTPrinter final{
 		}
 		void print_while_stmt(int lvls, Stmt stmt){
 			S_CHKTY(StmtTy::While);
-			QString head = "{\n   While:";
+			TString head = "{\n   While:";
 			write_ln(lvls,head);
 			print(lvls+2,stmt->cont_condit);
 			write_ln(lvls+1,"Do:");
@@ -189,7 +189,7 @@ class ASTPrinter final{
 					print_conditional(lvls,expr);
 					break;
 				default:
-					write_ln(lvls,QString("[EXPR-").append(QString::number((int)expr->type())).append("]"));
+					write_ln(lvls,TString("[EXPR-").append(TString::number((int)expr->type())).append("]"));
 					break;
 			}
 		}
@@ -220,7 +220,7 @@ class ASTPrinter final{
 					print_if_stmt(lvls,stmt);
 					break;
 				default:
-					write_ln(lvls,QString("[STMT-").append(QString::number((int)stmt->type())).append("]"));
+					write_ln(lvls,TString("[STMT-").append(TString::number((int)stmt->type())).append("]"));
 					break;
 			}
 		}
