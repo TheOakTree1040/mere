@@ -1,6 +1,6 @@
 #ifndef CMDPARSER_H
 #define CMDPARSER_H
-#include <TString>
+#include "t.h"
 #include <bitset>
 
 enum MICIndex{
@@ -10,7 +10,7 @@ enum MICIndex{
 	ShwTok
 };
 class MereIntpCmdParser{
-
+		std::bitset<8> already_set;
 		std::bitset<8> options;
 	public:
 		CmdParser(){}

@@ -21,11 +21,15 @@ class ASTPrinter final{
 			LFn;
 			for (int i = 0; i != stmts.size(); i++)
 				print(0,stmts[i]);
+#if _DEBUG
 			Log << "end ASTPrinter()";
+#endif
 		}
 
 		TString AST(){
+#if _DEBUG
 			Log << "Getting AST";
+#endif
 			return text;
 		}
 	private:

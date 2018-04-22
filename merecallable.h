@@ -4,7 +4,6 @@
 #include "object.h"
 #include "stmt.h"
 #include <QVector>
-#include <crt_externs.h>
 enum class Call {
 	Reg,
 	Nat,
@@ -13,7 +12,7 @@ enum class Call {
 };
 class Interpreter;
 typedef std::function<Object(Interpreter&,QVector<Object>&)> Callable;
-#define CALLABLE [](Interpreter& interpreter, const QVector<Object>& arguments)
+#define CALLABLE [](Interpreter& interpreter, QVector<Object>& arguments) -> Object
 class Return : public std::runtime_error{
 	private:
 		Object obj;
@@ -30,7 +29,7 @@ class MereCallable{
 		std::bitset<4> m_traits;
 		static int default_traits; // [REG:1][REF:0][NAT:0][___:0]
 		union{
-				Callable m_callable;
+				Callable* m_callable;
 				Stmt m_fn;
 		};
 		int m_arity = 0;
@@ -55,14 +54,14 @@ class MereCallable{
 			if (mc.is(Call::Reg)){
 				m_fn = mc.m_fn;
 			}
-			else {
-				m_callable = mc.m_callable;
+            else {
+                m_callable = mc.m_callable;
 			}
 			LVd;
 		}
 
 		MereCallable():m_traits(default_traits),m_fn(NullStmt()){}
-		MereCallable(Callable clb):m_traits(default_traits),m_callable(clb){
+		MereCallable(const Callable& clb):m_traits(default_traits),m_callable(new Callable(clb)){
 			as_nat();
 		}
 		MereCallable(Stmt fn_def):m_traits(default_traits),m_fn(fn_def),m_arity(fn_def->fn_params->size()){
@@ -88,10 +87,19 @@ class MereCallable{
 
 		~MereCallable(){
 			LFn;
-			if (is(Call::Reg) && is(Call::OnStack)){
-				//QMessageBox::information(nullptr,"","Deleting m_fn...");
-				Log << "!!!==== DELETING M_FN ====!!!";
-				delete m_fn;
+            if (is(Call::OnStack)){
+				if (is(Call::Reg)) {
+#if _DEBUG
+					Log << "!!!==== DELETING M_FN ====!!!";
+#endif
+					delete m_fn;
+				}
+				else if (is(Call::Nat)) {
+#if _DEBUG
+					Log << "!!!==== DELETING M_CL ====!!!";
+#endif
+					delete m_callable;
+				}
 			}
 			LVd;
 		}

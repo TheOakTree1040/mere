@@ -21,11 +21,11 @@ void MereMath::init_once(){
 	LFn;
 	if (!QMetaType::registerComparators<Object>()){
 		QMessageBox::critical(nullptr,"Fatal Internal Failure","Failed to register Object comparators.");
-		Log << "Failed registering comparators.";
+#if _DEBUG
+        Log << "Failed registering comparators.";
+#endif
 		abort();
-	}
-	Log << "mid";
-	t::_init();
+    }
 	interpreter = new Interpreter();
 	LVd;
 }
@@ -76,10 +76,11 @@ void MereMath::run(const TString& src, bool show_tok, bool show_syn){
 		wnd->setAttribute(Qt::WA_DeleteOnClose);
 		wnd->show();
 	}
-	interpreter->interpret(stmts);
-	Log << "Clearing";
+    interpreter->interpret(stmts);
 	errors.clear();
+#if _DEBUG
 	Log << "End of run";
+#endif
 }
 
 void MereMath::run_file(QFile & file){

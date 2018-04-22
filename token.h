@@ -76,7 +76,12 @@ class Token{
 		Token(const Token& tok){
 			LFn;
 			ty = tok.ty;
+#if _DEBUG
 			Log << (lexeme = tok.lexeme);
+#else
+            lexeme = tok.lexeme;
+#endif
+
 			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
 			LVd;
@@ -85,7 +90,11 @@ class Token{
 		Token& operator=(const Token& tok){
 			LFn;
 			ty = tok.ty;
+#if _DEBUG
 			Log << (lexeme = tok.lexeme);
+#else
+			lexeme = tok.lexeme;
+#endif
 			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
 			LRet *this;

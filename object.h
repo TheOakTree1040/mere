@@ -229,16 +229,18 @@ class Object{
 		m_ptr(VPTR_INIT),
 		m_onstack(*this),
 		m_trait(){
-			Log << "OBJ_DEFLT_CTOR";
+#if _DEBUG
+            Log << "OBJ_DEFLT_CTOR";
+#endif
 		}
 
 		Object(const Object& o):
 		m_ptr(o.trait().is_data()?new Var(o.data()):o.ptr()),
 		m_onstack(o.trait().is_ref()?o.m_onstack.get():*this),
 		m_trait(o.m_trait){
-			//LFn;
+#if _DEBUG
 			Log << "OBJECT CTOR DATA:" << to_string();
-			//LVd;
+#endif
 		}
 
 		//getters
@@ -265,14 +267,9 @@ class Object{
 			m_trait = t;
 			LRet *this;
 		}
-		Object& set(const Var& var){
-			//LFn;
-			delete_ptr();
-			//Log << "Setting var.";
-			m_ptr = new Var(var);
-			//Log << "fn_init";
-			//QMessageBox::information(nullptr,"",trait().id());
-
+        Object& set(const Var& var){
+            delete_ptr();
+            m_ptr = new Var(var);
 			fn_init();
 			LRet *this;
 		}
