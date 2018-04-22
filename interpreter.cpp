@@ -7,20 +7,38 @@
 #include "environment.h"
 #include <QMessageBox>
 #include "merecallable.h"
+#include <QDateTime>
+#include <ctime>
+#include <cmath>
 #define GOTO_OP_ASGN(TOK) right_val_op = TOK; goto RET_OP_ASGN;
 #define define_native_function(NAME,NAT) globals->define(NAME,Object(Trait("function").as_fn(),Var::fromValue(NAT)))
 Interpreter::Interpreter(){
-	LFn;
-	Log << "sin" << t::sin.arity();
-	define_native_function("sin",t::sin);
-	Log << "cos";
-	define_native_function("cos",t::cos);
-	Log << "tan";
-	define_native_function("tan",t::tan);
-	Log << "clock";
-	define_native_function("clock",t::clock);
-	Log << "time";
-	define_native_function("time",t::time);
+    LFn;
+	define_native_function("sin", MereCallable(CALLABLE{
+		Q_UNUSED(interpreter);
+	    CHECK("sin", QVector<TString>{"real"});
+	    return Object(::sin(arguments[0].as<double>()));
+    }).set_arity(1));
+	define_native_function("cos", MereCallable(CALLABLE{
+		Q_UNUSED(interpreter);
+	    CHECK("cos",QVector<TString>{"real"});
+	    return Object(::cos(arguments[0].as<double>()));
+    }).set_arity(1));
+	define_native_function("tan", MereCallable(CALLABLE{
+		Q_UNUSED(interpreter);
+	    CHECK("tan",QVector<TString>{"real"});
+	    return Object(::tan(arguments[0].as<double>()));
+    }).set_arity(1));
+	define_native_function("clock", MereCallable(CALLABLE{
+		Q_UNUSED(interpreter);
+	    CHECK("clock", QVector<TString>{});
+	    return Object(t_cast<double>(::clock()));
+    }));
+	define_native_function("time", MereCallable(CALLABLE{
+		Q_UNUSED(interpreter);
+	    CHECK("time", QVector<TString>{});
+	    return Object(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+	}));
 	LVd;
 }
 
@@ -99,8 +117,7 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 }
 Object Interpreter::eval_lit(Expr expr, bool){
 	LFn;
-	Object ro(*(expr->lit));
-	Log << "EVAL_LIT OBJ:" << ro.to_string();
+    Object ro(*(expr->lit));
 	LRet ro;
 }
 Object Interpreter::eval_group(Expr expr, bool dd){
@@ -282,17 +299,11 @@ Object Interpreter::eval_call(Expr expr, bool dd){
 	LFn;
 	Expr callee_expr = expr->callee;
 	int sz = expr->arguments->size();
-	QVector<Object> args(sz);
-	Log << "ARG_SIZE" << TString::number(sz);
+    QVector<Object> args(sz);
 	Object o;
-	for (int i = 0; i != sz; i++){
-		Log << "ARG_TY:" << TString::number(static_cast<int>(expr->arguments->at(i)->type()));
-		if (expr->arguments->at(i)->is(ExprTy::Literal))
-			Log << "ARG_OBJ_PRE_EVAL" << expr->arguments->at(i)->lit->to_string();
-		o = evaluate(expr->arguments->at(i),dd);
-		Log << "MARK" << o.to_string();
-		args[i] = o;
-		Log << "ARG_OBJ:" << args[i].to_string();
+    for (int i = 0; i != sz; i++){
+        o = evaluate(expr->arguments->at(i),dd);
+        args[i] = o;
 	}
 	if (dd){
 		expr->callee = nullptr;
@@ -312,7 +323,9 @@ Object Interpreter::eval_call(Expr expr, bool dd){
 	LRet mc->call(*this,args);
 }
 Object Interpreter::evaluate(Expr expr, bool dd){
+#if _DEBUG
 	LFn << "Evaluating expr-" << TString::number((int)expr->type());
+#endif
 	Object o;
 	if (expr){
 		try{
@@ -379,7 +392,11 @@ void Interpreter::exec_print(Stmt stmt, bool dd){
 		stmt->expr = nullptr;
 	}
 	Object obj = evaluate(ex,dd);
-	TString out = obj.to_string() + " : " + TString(obj.data().typeName());
+    TString out = obj.to_string()
+              #if _DEBUG
+                  + " : " + TString(obj.data().typeName())
+              #endif
+                  ;
 	QMessageBox::information(nullptr,"Info",out);
 	LVd;
 }
@@ -433,28 +450,27 @@ void Interpreter::exec_var_decl(Stmt stmt, bool dd){
 	Expr expr = stmt->init;
 	if (dd){
 		stmt->init = nullptr;
-	}
-	Log << stmt->var_name->lexeme;
+    }
 	environment->define(*(stmt->var_name),evaluate(expr,dd));
 	LVd;
 }
 void Interpreter::exec_fn_decl(Stmt stmt, bool){
 	LFn;
 	MereCallable mc(stmt);
-	mc.set_onstack(false);
-	Log << "stmt->fn_name->lexeme: " << stmt->fn_name->lexeme;
+    mc.set_onstack(false);
 	environment->define(*(stmt->fn_name),Object(Trait("function").as_fn(),Var::fromValue(mc)));
 	LVd;
 }
 void Interpreter::exec_ret(Stmt stmt, bool dd){
 	LFn;
-	Object obj = evaluate(stmt->retval,dd);
-	Log << "RET_EXC_OBJ_VAL" << obj.to_string();
+    Object obj = evaluate(stmt->retval,dd);
 	LThw Return(obj);
 }
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
+#if _DEBUG
 	Log << "Interpreting stmt" << t_cast<int>(stmt->type());
+#endif
 	if (stmt){
 		try{
 			switch(stmt->type()){
@@ -480,8 +496,7 @@ void Interpreter::execute(Stmt stmt, bool dd){
 					exec_fn_decl(stmt,dd);
 					dd=false;
 					break;
-				case StmtTy::Return:
-					Log << "EXECUTE__RET";
+                case StmtTy::Return:
 					exec_ret(stmt,dd);
 					break;
 				default:;
@@ -531,12 +546,12 @@ void Interpreter::interpret(Stmts stmts){
 	catch(std::runtime_error& re){
 		MereMath::error(0,TString(re.what()) + " [runtime_err]");
 	}
+    catch(std::bad_alloc& ba){
+        MereMath::error(0,TString(ba.what()) + " [bad_alloc]");
+    }
 	catch(std::exception& ex){
 		MereMath::error(0,TString(ex.what()) + " [exception]");
-	}
-	catch(std::bad_alloc& ba){
-		MereMath::error(0,TString(ba.what()) + " [bad_alloc]");
-	}
+    }
 
 	LVoid;
 }

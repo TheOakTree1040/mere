@@ -44,3 +44,13 @@ Thumbs.db
 ##########
 *.pro.user
 *.pro.user.*
+*.qmake.stash
+
+# MSVS #
+########
+.vs/
+GeneratedFiles/
+*.vcxproj.*
+debug/
+release/
+x64/

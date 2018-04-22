@@ -3,12 +3,16 @@
 #include "tlogger.h"
 Tokenizer::Tokenizer(const TString& src):source(src)
 {
+#if _DEBUG
 	Log << "Source: " << source;
 	TLogHelper::indent();
+#endif
 }
 Tokenizer::~Tokenizer(){
+#if _DEBUG
 	TLogHelper::outdent();
 	Log << "~Tokenizer()";
+#endif
 }
 
 bool Tokenizer::is_at_end(){
@@ -16,8 +20,11 @@ bool Tokenizer::is_at_end(){
 }
 
 char Tokenizer::advance(){
-	Log << "  adv:" << TString::number(current++) << peek(-1);
-	return source[current-1].toLatin1();
+#if _DEBUG
+    Log << "  adv:" << TString::number(current);
+    Log << "      " << peek();
+#endif
+    return source[current++].toLatin1();
 }
 
 void Tokenizer::add_token(Tok ty){
@@ -27,8 +34,10 @@ void Tokenizer::add_token(Tok ty){
 void Tokenizer::add_token(Tok ty, const Object& lit){
 	LFn;
 	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
+#if _DEBUG
 	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
 	Log << "             Type  :" << (int)tokens.last().ty;
+#endif
 	LVd;
 }
 
@@ -51,9 +60,7 @@ void Tokenizer::deprecate(){
 }
 
 bool Tokenizer::match(char expct) {
-	return !is_at_end() && source[current] == expct?
-				current++, Log << "  matched " << expct, true:
-									   false;
+    return !is_at_end() && source[current] == expct?current++, true:false;
 }
 
 bool Tokenizer::match(TString expct){
@@ -149,7 +156,12 @@ void Tokenizer::character(){
 }
 
 bool Tokenizer::is_digit(char ch){
-	return std::isdigit(static_cast<unsigned char>(ch));
+    #ifdef RND_NAME//__GNUC__
+    return std::isdigit(t_cast<unsigned char>(ch));
+	#else
+	return ch >= '0' && ch <= '9';
+	#endif
+	
 }
 
 void Tokenizer::number() {
@@ -167,7 +179,7 @@ void Tokenizer::number() {
 			num.append('x');
 			base = 16;
 		}
-		else if (match('b') || match('b')){
+        else if (match('b') || match('B')){
 			current--;
 			deprecate();
 			num.append('b');
@@ -178,7 +190,7 @@ void Tokenizer::number() {
 	while ((base == 10 && is_digit  (peek())) ||
 		   (base == 16 && is_base_16(peek())) ||
 		   (base ==  8 && is_base_8 (peek())) ||
-		   (base ==  0 && peek() < 2)){
+           (base ==  2 && peek() < 2)){
 		num.append(QChar(peek()));
 		deprecate();
 	}
@@ -198,15 +210,15 @@ void Tokenizer::number() {
 		LVd;
 	}
 	bool stat = false;
-	int n = num.toInt(&stat,base);
-	Log << "Object constructing (real)";
+    int n = num.toInt(&stat,base);
 	add_token(Tok::REAL,
-			 Object(Trait("real"),num.toInt(&stat,base)));
+             Object(Trait("real"),n));
+#if _DEBUG
 	Log << "  Numeral: String:" << num;
 	Log << "           Number:" << n;
+#endif
 	if (!stat){
-		MereMath::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
-		Log << "Numeral Lexing Error.";
+        MereMath::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
 	}
 	LVd;
 }
@@ -246,21 +258,21 @@ void Tokenizer::identifier(){
 	while (is_alpha_numeric(peek()))
 		val.append(advance());
 	Tok ty = keywords.value(val, Tok::IDENTIFIER);
-	tokens.append(Token(ty,val,Object(),line));
-//	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
-//	Log << "             Type  :" << (int)tokens.last().ty;
-//	Log << val;
-//	Log << "Done.";
+    tokens.append(Token(ty,val,Object(),line));
 	LVd;
 }
 
 void Tokenizer::raw_string(){
 	//Assume R"[ was eaten as in Tokenizer::identifier()
+    MereMath::error(0,"Raw string literal not supported.");
 }
 
 void Tokenizer::scan_token(){
+    LFn;
 	char c = advance();
+#if _DEBUG
 	Log << c;
+#endif
 	switch (c) {
 		case '@': add_token(Tok::AT_SYMB); break;
 		case '(': add_token(Tok::LPAREN); break;
@@ -357,6 +369,7 @@ void Tokenizer::scan_token(){
 			else
 				MereMath::error(line, "Unexpected character.");
 	}
+    LVd;
 }
 
 Tokens Tokenizer::scan_tokens(){

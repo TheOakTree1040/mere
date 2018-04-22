@@ -1,16 +1,16 @@
 
 #ifndef T_LOGGER
 #define T_LOGGER
-#include <iostream>
 #include "t.h"
-#include <QDebug>
 
 #if T_UNDER_FW(T_FW_QT)
 # define TO_COUT_PRINTABLE(STR) (STR).toStdString()
 #else
 # define TO_COUT_PRINTABLE(STR) (STR)
 #endif
-
+#if _DEBUG
+#include <iostream>
+#include <QDebug>
 class TLogHelper{
 		static int indentation;
 	public:
@@ -88,6 +88,7 @@ template<>
 TLogger& TLogger::operator<<(const TString& s);
 template<>
 TLogger& TLogger::operator<<(const char& ch);
+
 #define LIndt	TLogger().indent()
 #define LOdt	TLogger().outdent()
 #define Log		TLogger()
@@ -99,4 +100,16 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LVoid	LVd
 #define LThw	(Log.begw("<") << __PRETTY_FUNCTION__ << "threw on line" << TString::number((long)__LINE__)), LOdt; throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){LThw ex;}
+#else
+#define LIndt
+#define LOdt
+#define Log
+#define LFn_
+#define LFn
+#define LRet	return
+#define LVd
+#define LVoid
+#define LThw	throw
+#define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
+#endif
 #endif // T_LOGGER

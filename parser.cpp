@@ -6,13 +6,16 @@
 #include <QVector>
 
 Parser::Parser(QVector<Token>& toks):tokens(toks){
+#if _DEBUG
 	Log << "Parser()";
 	TLogHelper::indent();
-
+#endif
 }
 Parser::~Parser(){
+#if _DEBUG
 	TLogHelper::reset();
 	TLogHelper::outdent();
+#endif
 }
 
 Stmts Parser::parse(){
@@ -66,7 +69,9 @@ Token& Parser::prev(){
 
 Token& Parser::advance(){
 	if (!is_at_end()){
+#if _DEBUG
 		Log << "adv: Type" << (int)peek().ty;
+#endif
 		current++;
 	}
 	return prev();
@@ -74,11 +79,12 @@ Token& Parser::advance(){
 
 Token& Parser::expect(Tok ty, const TString& errmsg) throw(ParseError){
 	LFn;
+#if _DEBUG
 	Log << "Checking" << errmsg << TString::number(static_cast<int>(ty));
 	Log << TString::number(static_cast<int>(peek().ty));
+#endif
 	if (peek().ty == ty)
-		LRet advance();
-	Log << "Throwing" << (TString)"\"" + errmsg + "\"";
+        LRet advance();
 	LThw error(peek(),errmsg);
 }
 
@@ -127,8 +133,7 @@ Stmt Parser::stmt(bool expected_block){
 			s = for_stmt();
 		}
 		else if (match(Tok::PRINT	)){
-			s = PrintStmt(expression());
-			Log << "matching ; -" << TString::number(static_cast<int>(peek().ty));
+            s = PrintStmt(expression());
 			expect(Tok::SCOLON,"Expected a ';'.");
 		}
 		else if (match(Tok::WHILE	)){
@@ -264,8 +269,7 @@ Stmt Parser::fn_def_stmt(){
 Stmt Parser::ret_stmt(){
 	Token& keywd = prev();
 	Expr expr;
-	expr = check(Tok::SCOLON)?LitExpr(new Object()):expression();
-	Log << "RET_EXPR_TY" << t_cast<int>(expr->type());
+    expr = check(Tok::SCOLON)?LitExpr(new Object()):expression();
 	expect(Tok::SCOLON,"Expected a ';' [RetSColon]");
 	return RetStmt(keywd,expr);
 }
@@ -274,8 +278,7 @@ Stmt Parser::ret_stmt(){
 Expr Parser::expression(bool disable){
 	LFn;
 	Expr exp = refer();//goto next precedence
-	if (!disable && check(Tok::COMMA)){
-		Log << "parsing CSExpr";
+    if (!disable && check(Tok::COMMA)){
 		QVector<Expr> cex;
 		cex.append(exp);
 		while(match(Tok::COMMA)){
@@ -447,7 +450,9 @@ Expr Parser::rvalue(){
 	}
 	catch(ParseUnwind&){
 		current = tmp_curr;
+#if _DEBUG
 		Log << (TString)"Unwinded@" + TString::number(current) << "Ty:" << (int)peek().ty;
+#endif
 		Expr e = primary();
 		LRet e;
 	}
@@ -458,12 +463,9 @@ Expr Parser::call(){
 	LFn;
 	Expr expr = primary();
 
-	while(true){
-		Log << "Entered" << t_cast<int>(peek().ty);
-		if (match(Tok::LPAREN)){
-			Log << "Entered inner.";
-			expr = finish_call(expr);
-			Log << "Exited finish_call.";
+    while(true){
+        if (match(Tok::LPAREN)){
+            expr = finish_call(expr);
 		} else {
 			break;
 		}
@@ -479,7 +481,9 @@ Expr Parser::finish_call(Expr callee){
 		do {
 			arg = expression(true);
 			args.append(arg);
+#if _DEBUG
 			Log << "FINISH_CALL_ARG_TY" << t_cast<int>(arg->type());
+#endif
 		} while (match(Tok::COMMA));
 	}
 	Token& paren = expect(Tok::RPAREN, "Expected a ')'.");
@@ -600,9 +604,8 @@ Expr Parser::array(){
 }
 
 Expr Parser::accessor(bool unwind) throw(ParseUnwind){
-	LFn;
-	Log << "current:" << TString::number(current) << "type:" << TString::number((int)peek().ty);
-	if (((int)(peek().ty)!=44) && unwind){
+    LFn;
+    if ((peek().ty!=Tok::IDENTIFIER) && unwind){
 		LThw ParseUnwind();
 	}
 	LRet VarAcsrExpr(expect(Tok::IDENTIFIER,"Expected an identifier."));

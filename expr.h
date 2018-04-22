@@ -135,22 +135,18 @@ struct ExprImpl final{
 		}
 */
 		static EIPtr literal(const Object& raw){
-			LFn;
-			Log << ":::by ref";
+            LFn;
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
-			ptr->lit = new Object(raw);
-			Log << ":::" << raw.trait().id();
+            ptr->lit = new Object(raw);
 			LRet ptr;
 		}
 
 		static EIPtr literal(Object* raw){
-			LFn;
-			Log << "by ptr";
+            LFn;
 			EIPtr ptr = create();
 			ptr->ty = ExprTy::Literal;
-			ptr->lit = raw;
-			Log << raw->trait().id();
+            ptr->lit = raw;
 			LRet ptr;
 		}
 
