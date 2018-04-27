@@ -26,25 +26,27 @@ SOURCES += \
     object.cpp \
     merecallable.cpp \
     tlogger.cpp \
-    natives.cpp
+    natives.cpp \
+    runtimeerror.cpp \
+    cmd.cpp
 
 HEADERS += \
     expr.h \
-    token.h \
     tokenizer.h \
     mere_math.h \
-    sourceeditor.h \
     parser.h \
     interpreter.h \
-    parseerror.h \
     environment.h \
     runtimeerror.h \
     stmt.h \
     merecallable.h \
     astprinter.hpp \
     object.h \
-    cmdparser.h \
-    data_storage.h \
     tlogger.h \
-    t.h \
-    natives.h
+    natives.h \
+    cmd.h \
+    sourceeditor.hpp \
+    t.hpp \
+    data_storage.hpp \
+    token.hpp \
+    parseerror.hpp

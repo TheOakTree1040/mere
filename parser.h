@@ -35,6 +35,7 @@ class Parser
 		Stmt while_stmt		(		);
 		Stmt for_stmt		(		);
 		Stmt ret_stmt		(		);
+		Stmt assert_stmt	(		);
 
 		Expr expression	(bool=F_);
 		Expr refer		(		);

@@ -11,7 +11,8 @@ enum class StmtTy{
 	While,
 	Print,
 	Function,
-	Return
+	Return,
+	Assert
 };
 
 #define SIPtr StmtImpl*
@@ -21,7 +22,7 @@ class StmtImpl final
 	public:
 		StmtTy ty;
 		union{
-			Expr expr;// ExprStmt, PrintStmt
+			Expr expr;// ExprStmt, PrintStmt, Assertion
 			struct{// var_decl
 					Expr init;
 					Expr var_type; // nullptr or ScopeAcsr
@@ -130,6 +131,12 @@ class StmtImpl final
 			return ptr;
 		}
 
+		static SIPtr assert_stmt(Expr expr){
+			SIPtr ptr = expr_stmt(expr);
+			ptr->ty = StmtTy::Assert;
+			return ptr;
+		}
+
 		StmtTy type(){
 			return ty;
 		}
@@ -153,5 +160,6 @@ typedef QVector<Stmt> Stmts;
 #define PrintStmt	StmtImpl::print_stmt
 #define FnStmt		StmtImpl::fn_decl_stmt
 #define RetStmt		StmtImpl::ret_stmt
+#define AssertStmt	StmtImpl::assert_stmt
 
 #endif // STMT_H

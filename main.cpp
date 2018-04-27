@@ -1,9 +1,10 @@
 #include "sourceeditor.h"
+#include "cmd.h"
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	QApplication::setApplicationName("MereMath Interpreter");
-	MereMath::init_once();
+	MereCmdExec::execute();
+
 	SourceEditor* editor = new SourceEditor();
 	editor->setAttribute(Qt::WA_DeleteOnClose);
 	editor->show();

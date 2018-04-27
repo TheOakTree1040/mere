@@ -17,7 +17,7 @@ class Return : public std::runtime_error{
 	private:
 		Object obj;
 	public:
-		Return(const Object& obj):std::runtime_error("return $;"),obj(obj){}
+		Return(const Object& obj):std::runtime_error("return"),obj(obj){}
 		Object value(){
 			return obj;
 		}

@@ -528,6 +528,10 @@ void Interpreter::interpret(Stmts stmts){
 		Q_UNUSED(ret);
 		MereMath::error(0,"Invalid Return. [inv_ret]");
 	}
+	catch(Abort& abt){
+		MereMath::error(0,"Aborted.");
+	}
+
 	catch(ArgumentError& arg_err){
 		QString errmsg = "[";
 		errmsg.append(arg_err.callee).append("] ");
@@ -559,11 +563,9 @@ void Interpreter::interpret(Stmts stmts){
 Environment Interpreter::global(){
 	return globals;
 }
-
 Interpreter::~Interpreter(){
 	reset(nullptr);
 }
-
 void Interpreter::reset(Environment envptr){
 	if (globals!=environment){
 		delete environment;
