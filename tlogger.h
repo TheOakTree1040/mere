@@ -1,7 +1,7 @@
 
 #ifndef T_LOGGER
 #define T_LOGGER
-#include "t.h"
+#include "t.hpp"
 
 #if T_UNDER_FW(T_FW_QT)
 # define TO_COUT_PRINTABLE(STR) (STR).toStdString()

@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "expr.h"
-#include "parseerror.h"
+#include "parseerror.hpp"
 #include "stmt.h"
 #define T_ true
 #define F_ false
@@ -29,7 +29,7 @@ class Parser
 		Stmt decl_stmt		(		);
 		Stmt var_decl_stmt	(bool=T_);
 		Stmt fn_def_stmt	(		);
-		Stmt params			(		);
+	  //Stmt params			(		);
 		Stmt expr_stmt		(		);
 		Stmt if_stmt		(		);
 		Stmt while_stmt		(		);

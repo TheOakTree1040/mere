@@ -1,9 +1,9 @@
 
 #ifndef MERE_MATH_FWD_H
 #define MERE_MATH_FWD_H
-#include "t.h"
+#include "t.hpp"
 #include <QFile>
-#include "token.h"
+#include "token.hpp"
 #include "runtimeerror.h"
 #include <QVector>
 

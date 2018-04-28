@@ -45,6 +45,8 @@ Thumbs.db
 *.pro.user
 *.pro.user.*
 *.qmake.stash
+moc_*
+*_plugin_import.*
 
 # MSVS #
 ########
@@ -54,3 +56,5 @@ GeneratedFiles/
 debug/
 release/
 x64/
+x32/
+.qmake.stash

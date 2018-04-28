@@ -21,7 +21,6 @@ class Tokenizer
 		bool is_at_end();
 		bool is_digit(char c);
 		char peek(int=0);
-		char peek_next();
 		bool match(char expct);
 		bool match(TString expct);
 		char advance();

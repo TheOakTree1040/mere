@@ -1,7 +1,7 @@
 
 #include "parser.h"
 #include "mere_math.h"
-#include "data_storage.h"
+#include "data_storage.hpp"
 #include "merecallable.h"
 #include <QVector>
 
@@ -29,6 +29,7 @@ Stmts Parser::parse(){
 }
 
 //Helpers
+
 bool Parser::match(const QVector<Tok>& toks){
 	for (int i = 0; i != toks.size(); i++){
 		if (check(toks[i])){
@@ -528,14 +529,14 @@ Expr Parser::primary(){
 }
 
 //Primary Helpers
-constexpr long long
+constexpr qulonglong
 h(const char* string)
 {
-	long long hash = 0xeef8;
+	qulonglong hash = 0xEEF8UL;
 	while (*string)
 	{
-		hash ^= (uint)(*string++);
-		hash *= 0xAE9D;
+		hash ^= (qulonglong)(*string++);
+		hash *= 0xAE0DUL;
 	}
 
 	return hash;

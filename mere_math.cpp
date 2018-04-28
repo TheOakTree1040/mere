@@ -12,6 +12,7 @@
 #include "parser.h"
 #include "astprinter.hpp"
 #include "natives.h"
+#include <QFont>
 
 Interpreter* MereMath::interpreter = nullptr;
 
@@ -33,6 +34,8 @@ void MereMath::init_once(){
 void MereMath::run(const TString& src, bool show_tok, bool show_syn){
 //	Token* tok = new Token();
 //	delete tok;
+	if (src.isEmpty())
+		return;
 	Stmts stmts;
 	{
 		Tokens tokens = Tokenizer(src).scan_tokens();

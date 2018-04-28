@@ -1,6 +1,6 @@
 #ifndef EXPR_H
 #define EXPR_H
-#include "token.h"
+#include "token.hpp"
 #include "object.h"
 #include <QSharedPointer>
 #include <QVariant>

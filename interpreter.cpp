@@ -427,7 +427,7 @@ void Interpreter::exec_block(Stmt stmt, bool dd, Environment env){
 	exec_block(stmt->block,dd,env);
 	LVoid;
 }
-void Interpreter::exec_block(Stmts *stmts, bool, Environment env){
+void Interpreter::exec_block(QVector<Stmt> *stmts, bool dd, Environment env){
 	LFn;
 	int sz = stmts->size();
 	Environment outer = environment;

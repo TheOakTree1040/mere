@@ -1,7 +1,7 @@
 #ifndef RUNTIMEERROR_H
 #define RUNTIMEERROR_H
 #include <stdexcept>
-#include "token.h"
+#include "token.hpp"
 class RuntimeError : public std::runtime_error{
 	public:
 		TString msg;
@@ -39,7 +39,7 @@ class Abort : public std::runtime_error{
 	public:
 		int code;
 		TString message;
-		Abort(int code):std::runtime_error(message = abort_codes.value(code,"Aborted")),code(code){}
+		Abort(int code):std::runtime_error((message = abort_codes.value(code,"Aborted")).toStdString()),code(code){}
 };
 
 #endif // RUNTIMEERROR_H
