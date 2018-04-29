@@ -1,10 +1,9 @@
 #include "sourceeditor.hpp"
 #include "cmd.h"
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	QApplication a(argc, argv);
-	MereCmder().execute();
-	int ret = a.exec();
-	MereCmder::clean_up();
-	return ret;
+	MereCmder cmder;
+    int r = cmder.execute()?a.exec():0;
+	Log << "Exited main event loop";
+	return r;
 }

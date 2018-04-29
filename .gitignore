@@ -47,6 +47,7 @@ Thumbs.db
 *.qmake.stash
 moc_*
 *_plugin_import.*
+.qmake.stash
 
 # MSVS #
 ########
@@ -54,7 +55,7 @@ moc_*
 GeneratedFiles/
 *.vcxproj.*
 debug/
-release/
+#release/
 x64/
 x32/
-.qmake.stash
+*.cbt

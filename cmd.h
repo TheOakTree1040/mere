@@ -9,6 +9,8 @@
 #include <QFile>
 #include <QDialog>
 #include <iostream>
+#include <QTextStream>
+#include <QTimer>
 using std::cout;
 typedef std::bitset<8> Options;
 enum Opt{
@@ -47,7 +49,6 @@ public:
 	TString text() {
 		return editor->toPlainText();
 	}
-public slots:
 };
 class MereCmder{
 		Options options = 0b0000010;
@@ -59,7 +60,7 @@ class MereCmder{
 				status = 2;
 				MereMath::init_once();
 				QApplication::setApplicationName("MereMath Interpreter");
-				QApplication::setApplicationVersion("0.0.0.3-bkn");
+				QApplication::setApplicationVersion("0.0.0.3-pre-alpha");
 				parser.setApplicationDescription("The MereMath Interpreter (cmm)");
 				parser.addHelpOption();
 				parser.addVersionOption();
@@ -103,7 +104,10 @@ class MereCmder{
 				MereMath::interpreter = nullptr;
 			}
 		}
-		void execute(){
+		~MereCmder() {
+			clean_up();
+		}
+        bool execute(){
 			LFn;
 			_init();
 			//parsing
@@ -190,14 +194,37 @@ class MereCmder{
 						source = "print \"Invalid Filename!\"";
 					}
 				}
+                if (source.isEmpty())
+                    return 0;
 				MereMath::run(source, tok, syn);
+                return 1;
 			}
 			else if (test(Opt::Prompt)) {
+				/*TString src = "";
+				QTextStream in(stdin);
+				QTextStream out(stdout);*/
 				std::string src = "";
+				QTimer* timer = new QTimer();
+				timer->setInterval(90000);
+				timer->setSingleShot(true);
+				timer->deleteLater();
+				auto app = QApplication::instance();
+				app->connect(timer, &QTimer::timeout, app, &QApplication::quit);
+				cout << " < ";
+				std::cin >> src;
+				//out << " > ";
+				//in >> src;
+				if (src != "__cali__;") {
+					timer->stop();
+					return 0;
+				}
+				timer->stop();
 				for (;;) {
 					cout << " > ";
-					std::getline(std::cin, src);
-					MereMath::run(TString::fromStdString(src), tok, syn);
+					std::cin >> src;
+                    if (src == "quit();")
+                        return 0;
+                    MereMath::run(TString::fromStdString(src)/*src*/, tok, syn);
 				}
 			}
 			LVd;

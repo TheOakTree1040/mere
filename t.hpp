@@ -179,6 +179,6 @@ typedef QString TString;
 #define _DEBUG 1
 #endif
 #ifndef _DEBUG
-#define _DEBUG 0
+#define _DEBUG 1
 #endif
 #endif // T_SPECS
