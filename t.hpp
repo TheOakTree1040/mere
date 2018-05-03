@@ -2,10 +2,10 @@
 #define T_SPECS
 
 /**
-* @author TheOakCode
-* @brief This file is a convenience file
-* for development under different frameworks
-*/
+  * @author TheOakCode
+  * @brief This file is a convenience file
+  * for development under different frameworks and platforms
+  */
 
 #define T_FW_QT				0x01
 #define T_FW_MSVS			0x02
@@ -28,6 +28,7 @@
 #ifndef __GNUC__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
+#if T_FW != T_FW_QT
 template <typename char_t>
 class t_raw_char {
 	private:
@@ -94,16 +95,16 @@ class t_raw_char {
 
 typedef t_raw_char<char> tchar;
 typedef t_raw_char<wchar_t> twchar;
-
+#endif
 #if T_UNDER_FW(T_FW_QT)
 # include <QString>
 typedef QString TBuiltinString;
 #else
-# include <stirng>
+# include <string>
 typedef std::basic_string<TChar> TBuiltinString;
 typedef unsigned int uint;
 #endif
-#if 0
+#if 0 // TString Impl.
 #define T_STRING
 class TString : public TBuiltinString {
 	public:

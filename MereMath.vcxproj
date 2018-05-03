@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cmd.cpp" />
+    <ClCompile Include="cmm_plugin_import.cpp" />
     <ClCompile Include="environment.cpp" />
     <ClCompile Include="expr.cpp" />
     <ClCompile Include="interpreter.cpp" />
@@ -209,7 +210,6 @@
     <ClInclude Include="tokenizer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include=".\cmm_plugin_import.cpp" />
     <CustomBuild Include="debug\moc_predefs.h.cbt">
       <FileType>Document</FileType>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\mkspecs\features\data\dummy.cpp;%(AdditionalInputs)</AdditionalInputs>

@@ -36,7 +36,7 @@ class Interpreter final{
 		Object evaluate		(Expr,bool);
 
 		void exec_expr		(Stmt,bool);
-		void exec_print		(Stmt, bool);
+		void exec_print		(Stmt,bool);
 		void exec_if		(Stmt,bool);
 		void exec_block		(Stmt,bool,Environment=nullptr);
 		void exec_block		(QVector<Stmt>*,bool,Environment=nullptr);
