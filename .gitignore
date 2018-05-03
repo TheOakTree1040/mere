@@ -52,6 +52,7 @@ moc_*
 # MSVS #
 ########
 .vs/
+Win32/
 GeneratedFiles/
 *.vcxproj.*
 debug/
