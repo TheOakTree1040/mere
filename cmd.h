@@ -20,7 +20,8 @@ enum Opt{
 	ShwTok,//dbg
 	Prompt,//mode
 	GUI,//ui
-	Edtr//edtr
+	Edtr,//edtr
+	Src
 };
 class SrcEdit : public QDialog {
 	Q_OBJECT
@@ -51,7 +52,7 @@ public:
 	}
 };
 class MereCmder{
-		Options options = 0b0000010;
+		Options options = Options("00000100");
 		static QCommandLineParser parser;
 		static short status;
 		static void _init(){
@@ -64,12 +65,13 @@ class MereCmder{
 				parser.setApplicationDescription("The MereMath Interpreter (cmm)");
 				parser.addHelpOption();
 				parser.addVersionOption();
-				QCommandLineOption mode_opt({"mode","m"},"The output mode","[mode]","exec");//handled
-				QCommandLineOption gui_opt({"ui","u"},"The UI used by cmm.","[ui]","gui");//
-				QCommandLineOption dbg_opt({"dbg","d"},"The debugging tools.","[dbg-tl]");//handled
+				QCommandLineOption mode_opt({"mode","m"},"The output mode","mode","exec");//handled
+				QCommandLineOption gui_opt({"ui","u"},"The UI used by cmm.","UI","gui");//
+				QCommandLineOption dbg_opt({"dbg","d"},"The debugging tools.","tool-name");//handled
 				QCommandLineOption edtr_opt({"editor","edtr","e"},"Opens the inbuilt editor.");//handled
-				QCommandLineOption ff_opt({"file","f"},"Input from file.","[file]");//handled
-				parser.addOptions({mode_opt,gui_opt,dbg_opt,edtr_opt,ff_opt});
+				QCommandLineOption ff_opt({"file","f"},"File input.","filename");//handled
+				QCommandLineOption src_opt({"src","s"},"The source that you want to execute directly.","code");
+				parser.addOptions({mode_opt,gui_opt,dbg_opt,edtr_opt,ff_opt,src_opt});
 			}
 			else {
 				status++;
@@ -109,8 +111,8 @@ class MereCmder{
 		}
         bool execute(){
 			LFn;
-			_init();
 			//parsing
+			_init();
 			parser.process(QApplication::arguments());
 			if (parser.unknownOptionNames().size()){
 				LVd;
@@ -125,6 +127,9 @@ class MereCmder{
 						}
 						else if (parser.isSet("file")){
 							set(Opt::FFile);
+						}
+						else if (parser.isSet("src")){
+							set(Opt::Src);
 						}
 						else {
 							set(Opt::Edtr);
@@ -174,6 +179,7 @@ class MereCmder{
 			}
 
 			//execution
+
 			//setup
 			bool tok = test(Opt::ShwTok), syn = test(Opt::ShwSyn);
 			if (test(Opt::Exc)) {
@@ -182,7 +188,7 @@ class MereCmder{
 					SrcEdit* edt = new SrcEdit;
 					edt->exec();
 					source = edt->text();
-					edt->deleteLater();
+					delete edt;
 				}
 				else if (test(Opt::FFile)) {
 					QFile file(parser.value("file"));
@@ -194,10 +200,11 @@ class MereCmder{
 						source = "print \"Invalid Filename!\"";
 					}
 				}
-                if (source.isEmpty())
-                    return 0;
-				MereMath::run(source, tok, syn);
-                return 1;
+				else if (test(Opt::Src)){
+					source = parser.value("src");
+				}
+				else parser.showHelp(EXIT_FAILURE);
+				return source.size()?MereMath::run(source, tok, syn):false;
 			}
 			else if (test(Opt::Prompt)) {
 				/*TString src = "";
@@ -227,7 +234,7 @@ class MereCmder{
                     MereMath::run(TString::fromStdString(src)/*src*/, tok, syn);
 				}
 			}
-			LVd;
+			LRet false;
 		}
 };
 

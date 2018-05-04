@@ -22,7 +22,7 @@ class StmtImpl final
 	public:
 		StmtTy ty;
 		union{
-			Expr expr;// ExprStmt, PrintStmt, Assertion
+			Expr expr;// ExprStmt, PrintStmt
 			struct{// var_decl
 					Expr init;
 					Expr var_type; // nullptr or ScopeAcsr
@@ -43,9 +43,14 @@ class StmtImpl final
 				QVector<Token*>* fn_params;
 				QVector<SIPtr>* fn_body;
 			};
-			struct{
+			struct{//return
 					Expr retval;
 					Token* retop;
+			};
+			struct{//assert
+					Expr assertion;
+					int code;
+					TString* msg;
 			};
 			bool _inv;
 			bool empty;
@@ -131,9 +136,12 @@ class StmtImpl final
 			return ptr;
 		}
 
-		static SIPtr assert_stmt(Expr expr){
-			SIPtr ptr = expr_stmt(expr);
+		static SIPtr assert_stmt(Expr expr, int code, const TString& message){
+			SIPtr ptr = create();
 			ptr->ty = StmtTy::Assert;
+			ptr->assertion = expr;
+			ptr->code = code;
+			ptr->msg = new TString(message);
 			return ptr;
 		}
 

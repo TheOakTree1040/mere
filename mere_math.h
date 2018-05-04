@@ -22,9 +22,10 @@ class MereMath{
 		static QVector<Error> errors;
 	public:
 		static void init_once();
-		static void run(const TString&, bool=false, bool=false);
-		static void run_file(QFile&);
+		static bool run(const TString&, bool=false, bool=false);
+		static bool run_file(QFile&);
 		static void error(int, const TString&);
+		static void error(const TString&);
 		static void report(int, const TString&, const TString&, bool=true);
 		static void error(const Token&, const TString&);
 		static void runtime_error(const RuntimeError&);

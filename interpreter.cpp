@@ -429,6 +429,7 @@ void Interpreter::exec_block(Stmt stmt, bool dd, Environment env){
 }
 void Interpreter::exec_block(QVector<Stmt> *stmts, bool dd, Environment env){
 	LFn;
+	Q_UNUSED(dd);
 	int sz = stmts->size();
 	Environment outer = environment;
 	environment = env?env:new EnvImpl(outer);
@@ -466,6 +467,20 @@ void Interpreter::exec_ret(Stmt stmt, bool dd){
     Object obj = evaluate(stmt->retval,dd);
 	LThw Return(obj);
 }
+void Interpreter::exec_assert(Stmt stmt, bool dd){
+	LFn;
+	Expr assertion = stmt->assertion;
+	TString msg = *(stmt->msg);
+	if (dd){
+		stmt->assertion = nullptr;
+		stmt->msg = nullptr;
+	}
+	if (!evaluate(assertion,dd).to_bool()){
+		LThw Abort(stmt->code, msg);
+	}
+	LVd;
+}
+
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
 #if _DEBUG
@@ -499,6 +514,8 @@ void Interpreter::execute(Stmt stmt, bool dd){
                 case StmtTy::Return:
 					exec_ret(stmt,dd);
 					break;
+				case StmtTy::Assert:
+					exec_assert(stmt,dd);
 				default:;
 			}
 		} catch(RuntimeError& re){
@@ -513,51 +530,52 @@ void Interpreter::execute(Stmt stmt, bool dd){
 	LVd;
 }
 
-void Interpreter::interpret(Stmts stmts){
+bool Interpreter::interpret(Stmts stmts){
 	LFn;
 	try{
 		int sz = stmts.size();
 		for (int i = 0; i != sz; i++){
 			execute(stmts.takeAt(0),true);
 		}
+		LRet true;
 	}
 	catch(RuntimeError& re){
 		MereMath::runtime_error(re);
 	}
 	catch(Return& ret){
 		Q_UNUSED(ret);
-		MereMath::error(0,"Invalid Return. [inv_ret]");
+		MereMath::error("Invalid Return. [inv_ret]");
 	}
 	catch(Abort& abt){
-		MereMath::error(0,"Aborted.");
+		TString msg = TString("[Code ") + TString::number(abt.code) + "]" + abt.message;
+		MereMath::error(msg);
 	}
-
 	catch(ArgumentError& arg_err){
 		QString errmsg = "[";
 		errmsg.append(arg_err.callee).append("] ");
 		errmsg.append("Expected a ").append(arg_err.expect).append(" instance but a ");
 		errmsg.append(arg_err.received).append(" instance was provided. [arg_err]");
-		MereMath::error(0,errmsg);
+		MereMath::error(errmsg);
 	}
 	catch(ArityMismatchError& ame){
 		QString errmsg = "[";
 		errmsg.append(ame.callee).append("] ");
 		errmsg.append("Expected ").append(TString::number(ame.expect)).append(" argument(s) ");
 		errmsg.append("but ").append(TString::number(ame.received)).append(" was provided.");
-		MereMath::error(0,errmsg);
+		MereMath::error(errmsg);
 	}
 
 	catch(std::runtime_error& re){
-		MereMath::error(0,TString(re.what()) + " [runtime_err]");
+		MereMath::error(TString(re.what()) + " [runtime_err]");
 	}
     catch(std::bad_alloc& ba){
-        MereMath::error(0,TString(ba.what()) + " [bad_alloc]");
+		MereMath::error(TString(ba.what()) + " [bad_alloc]");
     }
 	catch(std::exception& ex){
-		MereMath::error(0,TString(ex.what()) + " [exception]");
+		MereMath::error(TString(ex.what()) + " [exception]");
     }
 
-	LVoid;
+	LRet false;
 }
 
 Environment Interpreter::global(){

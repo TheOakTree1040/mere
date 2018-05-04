@@ -44,8 +44,9 @@ class Interpreter final{
 		void exec_var_decl	(Stmt,bool);
 		void exec_fn_decl	(Stmt,bool);
 		void exec_ret		(Stmt,bool);
+		void exec_assert	(Stmt,bool);
 		void execute		(Stmt,bool);
-		void interpret		(Stmts);
+		bool interpret		(Stmts);
 
 };
 

@@ -34,12 +34,12 @@ class ArityMismatchError : public std::runtime_error{
 			callee(c){}
 };
 class Abort : public std::runtime_error{
-	public:
-		static const QHash<int, TString> abort_codes;
+	//public:
+		//static const QHash<int, TString> abort_codes;
 	public:
 		int code;
 		TString message;
-		Abort(int code):std::runtime_error((message = abort_codes.value(code,"Aborted")).toStdString()),code(code){}
+		Abort(int code,const TString& msg):std::runtime_error(msg.toStdString()),code(code),message(msg){}
 };
 
 #endif // RUNTIMEERROR_H

@@ -100,6 +100,7 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LVoid	LVd
 #define LThw	(Log.begw("<") << __PRETTY_FUNCTION__ << "threw on line" << TString::number((long)__LINE__)), LOdt; throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){LThw ex;}
+#define Log1(MSG) TLogger() << MSG
 #else
 #define LIndt
 #define LOdt
@@ -111,5 +112,6 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LVoid
 #define LThw	throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
+#define Log1(MSG)
 #endif
 #endif // T_LOGGER

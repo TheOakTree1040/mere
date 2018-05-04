@@ -106,6 +106,7 @@ void Parser::synchronize(){
 			case Tok::IF:
 			case Tok::WHILE:
 			case Tok::RETURN:
+			case Tok::ASSERT:
 				return;
 			default:;
 		}
@@ -142,6 +143,9 @@ Stmt Parser::stmt(bool expected_block){
 		}
 		else if (match(Tok::RETURN	)){
 			s = ret_stmt();
+		}
+		else if (match(Tok::ASSERT)){
+			s = assert_stmt();
 		}
 		else {
 			s = (peek().ty == Tok::DOLLAR && peek(1).ty == Tok::LBRACE)?block(true):decl_stmt();
@@ -273,6 +277,34 @@ Stmt Parser::ret_stmt(){
     expr = check(Tok::SCOLON)?LitExpr(new Object()):expression();
 	expect(Tok::SCOLON,"Expected a ';' [RetSColon]");
 	return RetStmt(keywd,expr);
+}
+
+Stmt Parser::assert_stmt(){
+	int ln = peek(-1).ln + 1;
+	Expr expr = expression();
+	int code = 0xFF;
+	TString msg = "[Ln ";
+	msg.append(TString::number(ln)).append("] ");
+	if (match(Tok::COLON)){
+		bool has_code = false;
+		if(match(Tok::REAL)){
+			has_code = true;
+			code = peek(-1).literal->as<double>();
+			if (!match(Tok::COMMA))
+				goto WRAP_UP;
+		}
+		if (!has_code){
+			msg += expect(Tok::STRING, "Expected an exit message [AssertMsg]").literal->to_string();
+		}
+		else if (match(Tok::STRING)){
+			msg += peek(-1).literal->to_string();
+		}
+		else msg += "Assertion failed.";
+	}
+	else msg += "Assertion failed.";
+	WRAP_UP:
+	expect(Tok::SCOLON, "Expected a ';' [AssertSColon]");
+	return AssertStmt(expr,code,msg);
 }
 
 //expr

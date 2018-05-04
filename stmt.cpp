@@ -6,6 +6,10 @@ StmtImpl::StmtImpl(){
 
 StmtImpl::~StmtImpl(){
 	switch(ty){
+		case StmtTy::Assert:
+			delete assertion;
+			delete msg;
+			break;
 		case StmtTy::Print:
 		case StmtTy::Expr:
 			delete expr;

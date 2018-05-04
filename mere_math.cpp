@@ -31,11 +31,11 @@ void MereMath::init_once(){
 	LVd;
 }
 
-void MereMath::run(const TString& src, bool show_tok, bool show_syn){
+bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 //	Token* tok = new Token();
 //	delete tok;
 	if (src.isEmpty())
-		return;
+		return false;
 	Stmts stmts;
 	{
 		Tokens tokens = Tokenizer(src).scan_tokens();
@@ -50,16 +50,19 @@ void MereMath::run(const TString& src, bool show_tok, bool show_syn){
 		if (errors.size()){
 			show_errors();
 			errors.clear();
-			return;
+			return false;
 		}
 		stmts = Parser(tokens).parse();
 	}
+
 	if (errors.size()){
 		show_errors();
 		errors.clear();
-		return;
+		return false;
 	}
+
 	if (show_syn){
+		Log1("Showing Syntax tree");
 		TString str = ASTPrinter(stmts).AST();
 		QWidget* wnd = new QWidget();
 		QTextEdit* edt = new QTextEdit();
@@ -79,19 +82,26 @@ void MereMath::run(const TString& src, bool show_tok, bool show_syn){
 		wnd->setAttribute(Qt::WA_DeleteOnClose);
 		wnd->show();
 	}
-    interpreter->interpret(stmts);
+	auto res = interpreter->interpret(stmts);
+
 	errors.clear();
 #if _DEBUG
 	Log << "End of run";
 #endif
+	return res;
 }
 
-void MereMath::run_file(QFile & file){
-	run(TBuiltinString(file.readAll()));
+bool MereMath::run_file(QFile & file){
+	return run(TBuiltinString(file.readAll()));
 }
 
 void MereMath::error(int ln, const TString& msg){
 	report(ln, "", TString("Error: ") + msg);
+}
+
+void MereMath::error(const TString & msg){
+	errors.append(Error(-1,msg));
+	QMessageBox::critical(nullptr, "Error", msg);
 }
 
 void MereMath::error(const Token& tok, const TString& msg){
