@@ -1,18 +1,20 @@
 #ifndef MERE_MATH_H
 #define MERE_MATH_H
+
 #include <QFile>
 #include <QVector>
 #include <QMessageBox>
 #include <QWidget>
 #include <QTextEdit>
-#include "tokenizer.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QFont>
+
+#include "tokenizer.h"
 #include "interpreter.h"
 #include "parser.h"
 #include "astprinter.hpp"
 #include "natives.h"
-#include <QFont>
 
 Interpreter* MereMath::interpreter = nullptr;
 

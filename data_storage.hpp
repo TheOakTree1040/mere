@@ -1,7 +1,10 @@
 #ifndef DATA_STORAGE_H
 #define DATA_STORAGE_H
-#include "object.h"
+
 #include <QHash>
+
+#include "object.h"
+
 typedef QVector<pair<Object,Object>> ObjectAssocData;
 class ObjectAssoc final{
 		typedef ObjectAssocData OADat;

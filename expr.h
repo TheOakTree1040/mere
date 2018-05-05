@@ -1,12 +1,13 @@
 #ifndef EXPR_H
 #define EXPR_H
-#include "token.hpp"
-#include "object.h"
 #include <QSharedPointer>
 #include <QVariant>
 #include <QVector>
 
 #include "tlogger.h"
+#include "token.hpp"
+#include "object.h"
+
 #define EIPtr ExprImpl*
 
 using std::pair;

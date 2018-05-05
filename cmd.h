@@ -1,16 +1,19 @@
 #ifndef CMDPARSER_H
 #define CMDPARSER_H
-#include "t.hpp"
+
 #include <bitset>
 #include <QCommandLineParser>
-#include "mere_math.h"
 #include <QApplication>
-#include "sourceeditor.hpp"
 #include <QFile>
 #include <QDialog>
 #include <iostream>
 #include <QTextStream>
 #include <QTimer>
+
+#include "t.hpp"
+#include "mere_math.h"
+#include "sourceeditor.hpp"
+
 using std::cout;
 typedef std::bitset<8> Options;
 enum Opt{

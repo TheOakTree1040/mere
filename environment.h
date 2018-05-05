@@ -1,10 +1,14 @@
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 //#include <QSharedPointer>
-#include "object.h"
+
 #include <QHash>
+
+#include "object.h"
 #include "runtimeerror.h"
+
 #define EnvPtr EnvImpl*/*QSharedPointer<EnvImpl>*/
+
 typedef TString Identifier;
 class EnvImpl final
 {

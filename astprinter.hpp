@@ -1,5 +1,6 @@
 #ifndef ASTPRINTER_H
 #define ASTPRINTER_H
+
 #include "stmt.h"
 
 #define CHKTY(TY)\

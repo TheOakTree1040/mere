@@ -7,7 +7,9 @@
 #include "runtimeerror.h"
 #include <QVector>
 
+//forward declaration of Interpreter
 class Interpreter;
+
 class MereMath{
 	public:
 		struct Error{
