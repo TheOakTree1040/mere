@@ -107,7 +107,7 @@ void MereMath::error(const TString & msg){
 }
 
 void MereMath::error(const Token& tok, const TString& msg){
-	if (tok.ty == Tok::END) {
+	if (tok.ty == Tok::_eof_) {
 		report(tok.ln, "at end", msg);
 	}
 	else {

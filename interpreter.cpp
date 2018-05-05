@@ -55,12 +55,12 @@ Object Interpreter::eval_pstfx(Expr expr, bool dd){
 		LThw RuntimeError(op,"Expected a lvalue.");
 	}
 	switch(op.ty){
-		case Tok::INCR:
+		case Tok::incr:
 			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.postfix(1);
 			}
 			break;
-		case Tok::DECR:
+		case Tok::decr:
 			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.postfix(-1);
 			}
@@ -83,17 +83,17 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 	Token op(*tptr);
 
 	switch(op.ty){
-		case Tok::MINUS:
+		case Tok::minus:
 			if (IS_NUM){
 				LRet -(r.as<double>());
 			}
 			break;
-		case Tok::EXCL:
+		case Tok::bang:
 			if (IS_NUM){
 				LRet !r.to_bool();
 			}
 			break;
-		case Tok::INCR:
+		case Tok::incr:
 			if (!r.trait().is_lvalue()){
 				LThw RuntimeError(op, "Expected an lvalue.");
 			}
@@ -101,7 +101,7 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 				LRet r.prefix(1);
 			}
 			break;
-		case Tok::DECR:
+		case Tok::decr:
 			if (!r.trait().is_lvalue()){
 				LThw RuntimeError(op, "Expected an lvalue.");
 			}
@@ -140,7 +140,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 	Object r = evaluate(rex, dd);
 	Token op(*expr->op);
 	switch(op.ty){
-		case Tok::PLUS:
+		case Tok::plus:
 
 			if (ARE_NUM){
 				LRet OP(double,+);
@@ -149,22 +149,22 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 				LRet OP(TString,+);
 			}
 			break;
-		case Tok::MINUS:
+		case Tok::minus:
 			if (ARE_NUM){
 				LRet OP(double,-);
 			}
 			break;
-		case Tok::CARET:
+		case Tok::caret:
 			if (ARE_NUM){
 				LRet ::pow(l.as<double>(),r.as<double>());
 			}
 			break;
-		case Tok::STAR:
+		case Tok::star:
 			if (ARE_NUM){
 				LRet OP(double,*);
 			}
 			break;
-		case Tok::SLASH:
+		case Tok::slash:
 			if (ARE_NUM){
 				if (r.as<double>() == 0){
 					LThw RuntimeError(op,"Division by 0 Error!");
@@ -172,26 +172,26 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 				LRet OP(double,/);
 			}
 			break;
-		case Tok::EQUAL:
+		case Tok::equal:
 			LRet r==l;
-		case Tok::N_EQUAL:
+		case Tok::bang_equal:
 			LRet (!(r==l));
-		case Tok::GREATER:
+		case Tok::greater:
 			if (ARE_NUM){
 				LRet OP(double,>);
 			}
 			break;
-		case Tok::GREATER_EQUAL:
+		case Tok::greater_equal:
 			if (ARE_NUM){
 				LRet OP(double,>=);
 			}
 			break;
-		case Tok::LESS:
+		case Tok::less:
 			if (ARE_NUM){
 				LRet OP(double,<);
 			}
 			break;
-		case Tok::LESS_EQUAL:
+		case Tok::less_equal:
 			if (ARE_NUM){
 				LRet OP(double,<=);
 			}
@@ -213,7 +213,7 @@ Object Interpreter::eval_logical(Expr expr, bool dd){
 		expr->expr = nullptr;
 	}
 	Object l = evaluate(ex, dd);
-	if (ty == Tok::VERTVERT){
+	if (ty == Tok::vert_vert){
 		if (l.to_bool()){
 			LRet l;
 		}
@@ -254,21 +254,21 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 	if (!ref.trait().is_dynamic() && !ref.trait().has_type_of(right.trait())){
 		LThw RuntimeError(*(expr->op), "Attempting to re-type a fixed-type variable.");
 	}
-	Tok right_val_op = Tok::INVALID;
+	Tok right_val_op = Tok::invalid;
 	switch(ty){
-		case Tok::ASSIGN:
+		case Tok::assign:
 			ref.recv(right);
 			LRet ref;
-		case Tok::MULT_ASGN:
-			GOTO_OP_ASGN(Tok::STAR);
-		case Tok::DIV_ASGN:
-			GOTO_OP_ASGN(Tok::SLASH);
-		case Tok::PLUS_ASGN:
-			GOTO_OP_ASGN(Tok::PLUS);
-		case Tok::MINUS_ASGN:
-			GOTO_OP_ASGN(Tok::MINUS);
-		case Tok::EXP_ASGN:
-			GOTO_OP_ASGN(Tok::CARET);
+		case Tok::mult_asgn:
+			GOTO_OP_ASGN(Tok::star);
+		case Tok::div_asgn:
+			GOTO_OP_ASGN(Tok::slash);
+		case Tok::plus_asgn:
+			GOTO_OP_ASGN(Tok::plus);
+		case Tok::minus_asgn:
+			GOTO_OP_ASGN(Tok::minus);
+		case Tok::exp_asgn:
+			GOTO_OP_ASGN(Tok::caret);
 		default:
 			LThw RuntimeError(op,"No such assignment operator.");
 	}
@@ -361,7 +361,7 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 					o = eval_call(expr,dd);
 					break;
 				default:
-					LThw RuntimeError(Token(Tok::INVALID,"",Object(),0),
+					LThw RuntimeError(Token(Tok::invalid,"",Object(),0),
 									  "Failed to evaluate expr.");
 			}
 		} catch(RuntimeError& re){

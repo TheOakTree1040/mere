@@ -55,7 +55,7 @@ bool Parser::check(Tok ty){
 }
 
 bool Parser::is_at_end(){
-	return peek().ty == Tok::END;
+	return peek().ty == Tok::_eof_;
 }
 
 Token& Parser::peek(int i){
@@ -97,16 +97,16 @@ ParseError Parser::error(const Token& tok, const TString& errmsg){
 void Parser::synchronize(){
 	advance();
 	while(!is_at_end()){
-		if (prev().ty == Tok::SCOLON)
+		if (prev().ty == Tok::semi_colon)
 			return;
 		switch(peek().ty){
-			case Tok::STRUCT:
-			case Tok::VAR:
-			case Tok::FOR:
-			case Tok::IF:
-			case Tok::WHILE:
-			case Tok::RETURN:
-			case Tok::ASSERT:
+			case Tok::_struct:
+			case Tok::_var:
+			case Tok::_for:
+			case Tok::_if:
+			case Tok::_while:
+			case Tok::_return:
+			case Tok::_assert:
 				return;
 			default:;
 		}
@@ -119,36 +119,36 @@ void Parser::synchronize(){
 Stmt Parser::stmt(bool expected_block){
 	LFn;
 	try{
-		bool m = match(Tok::SCOLON);
-		while(match(Tok::SCOLON));
+		bool m = match(Tok::semi_colon);
+		while(match(Tok::semi_colon));
 		if (m){
 			LRet nullptr;
 		}
 		Stmt s = nullptr;
-		if (expected_block && peek().ty == Tok::LBRACE){
+		if (expected_block && peek().ty == Tok::l_brace){
 			s = block(false);
 		}
-		else if (match(Tok::IF		)){
+		else if (match(Tok::_if		)){
 			s = if_stmt();
 		}
-		else if (match(Tok::FOR		)){
+		else if (match(Tok::_for	)){
 			s = for_stmt();
 		}
-		else if (match(Tok::PRINT	)){
+		else if (match(Tok::_print	)){
             s = PrintStmt(expression());
-			expect(Tok::SCOLON,"Expected a ';'.");
+			expect(Tok::semi_colon,"Expected a ';'.");
 		}
-		else if (match(Tok::WHILE	)){
+		else if (match(Tok::_while	)){
 			s = while_stmt();
 		}
-		else if (match(Tok::RETURN	)){
+		else if (match(Tok::_return	)){
 			s = ret_stmt();
 		}
-		else if (match(Tok::ASSERT)){
+		else if (match(Tok::_assert	)){
 			s = assert_stmt();
 		}
 		else {
-			s = (peek().ty == Tok::DOLLAR && peek(1).ty == Tok::LBRACE)?block(true):decl_stmt();
+			s = (peek().ty == Tok::dollar && peek(1).ty == Tok::l_brace)?block(true):decl_stmt();
 		}
 		LRet s;
 	}
@@ -168,12 +168,12 @@ Stmt Parser::stmt(bool expected_block){
 Stmt Parser::block(bool is_unexpected){
 	LFn;
 	if (is_unexpected){
-		expect(Tok::DOLLAR,"Expected a '$'.");
+		expect(Tok::dollar,"Expected a '$'.");
 	}
-	expect(Tok::LBRACE, "Expected a '{'");
+	expect(Tok::l_brace, "Expected a '{'");
 	Stmts blk;
 	for(;!is_at_end();){
-		if (match(Tok::RBRACE)){
+		if (match(Tok::r_brace)){
 			LRet BlockStmt(blk);
 		}
 		blk.append(stmt());
@@ -183,26 +183,26 @@ Stmt Parser::block(bool is_unexpected){
 
 Stmt Parser::decl_stmt(){
 	LFn;
-	Stmt s = match(Tok::VAR)?var_decl_stmt():
-							 match(Tok::FN)?fn_def_stmt():
-											expr_stmt();
+	Stmt s = match(Tok::_var)?var_decl_stmt():
+							  match(Tok::_fn)?fn_def_stmt():
+											  expr_stmt();
 	LRet s;
 }
 
 Stmt Parser::var_decl_stmt(bool eaten){
 	LFn;
 	if (!eaten){
-		expect(Tok::VAR,"Expected keyword 'var'.");
+		expect(Tok::_var,"Expected keyword 'var'.");
 	}
-	Token& name = expect(Tok::IDENTIFIER,"Expected an identifier.");
+	Token& name = expect(Tok::identifier,"Expected an identifier.");
 	Expr initializer = nullptr;
-	if (match(Tok::ASSIGN)){
+	if (match(Tok::assign)){
 		initializer = expression();
 	}
 	else{
 		initializer = LitExpr(Object());
 	}
-	expect(Tok::SCOLON, "Expected a ';' after declaration.");
+	expect(Tok::semi_colon, "Expected a ';' after declaration.");
 	LRet VarDeclStmt(name,initializer,nullptr);
 }
 
@@ -211,7 +211,7 @@ Stmt Parser::if_stmt(){
 	Expr condit = expression();
 	Stmt i_blk = stmt(true);
 	Stmt e_blk = nullptr;
-	if (match(Tok::ELSE)){
+	if (match(Tok::_else)){
 		e_blk = stmt(true);
 	}
 	LRet IfStmt(condit,i_blk,e_blk);
@@ -227,21 +227,21 @@ Stmt Parser::while_stmt(){
 Stmt Parser::expr_stmt(){
 	LFn;
 	Expr expr = expression();
-	expect(Tok::SCOLON,"Expected statement termination with ';'.");
+	expect(Tok::semi_colon,"Expected statement termination with ';'.");
 	LRet ExprStmt(expr);
 }
 
 Stmt Parser::for_stmt(){
 	LFn;
-	expect(Tok::LPAREN, "Expected a parenthesis.");
-	Stmt for_init = match(Tok::SCOLON)?nullptr:
-									   match(Tok::VAR)?var_decl_stmt():
-													   expr_stmt();
-	Expr for_cond = check(Tok::SCOLON)?LitExpr(Object("bool",true)):
-									   expression();
-	expect(Tok::SCOLON,"Expected a ';'.");
-	Expr for_act = check(Tok::RPAREN)?nullptr:expression();
-	expect(Tok::RPAREN,"Expected a ')'.");
+	expect(Tok::l_paren, "Expected a parenthesis.");
+	Stmt for_init = match(Tok::semi_colon)?nullptr:
+										   match(Tok::_var)?var_decl_stmt():
+															expr_stmt();
+	Expr for_cond = check(Tok::semi_colon)?LitExpr(Object("bool",true)):
+										   expression();
+	expect(Tok::semi_colon,"Expected a ';'.");
+	Expr for_act = check(Tok::r_paren)?nullptr:expression();
+	expect(Tok::r_paren,"Expected a ')'.");
 	Stmt body = stmt(true);
 	if (for_act){
 		body = BlockStmt({body,ExprStmt(for_act)});
@@ -254,15 +254,15 @@ Stmt Parser::for_stmt(){
 }
 
 Stmt Parser::fn_def_stmt(){
-	Token& name = expect(Tok::IDENTIFIER, "Expected an identifier [FnName].");
+	Token& name = expect(Tok::identifier, "Expected an identifier [FnName].");
 	QVector<Token> params;
-	expect(Tok::LPAREN,"Expected a '('. [FnLParen]");
-	if (!check(Tok::RPAREN)){
+	expect(Tok::l_paren,"Expected a '('. [FnLParen]");
+	if (!check(Tok::r_paren)){
 		do{
 			params.append(advance());
-		} while(match(Tok::COMMA));
+		} while(match(Tok::comma));
 	}
-	expect(Tok::RPAREN,"Expected a ')'. [FnRParen]");
+	expect(Tok::r_paren,"Expected a ')'. [FnRParen]");
 	Stmt body;
 	body = block(false);
 	QVector<Stmt> stmts = *(body->block);
@@ -274,8 +274,8 @@ Stmt Parser::fn_def_stmt(){
 Stmt Parser::ret_stmt(){
 	Token& keywd = prev();
 	Expr expr;
-    expr = check(Tok::SCOLON)?LitExpr(new Object()):expression();
-	expect(Tok::SCOLON,"Expected a ';' [RetSColon]");
+	expr = check(Tok::semi_colon)?LitExpr(new Object()):expression();
+	expect(Tok::semi_colon,"Expected a ';' [RetSColon]");
 	return RetStmt(keywd,expr);
 }
 
@@ -285,25 +285,25 @@ Stmt Parser::assert_stmt(){
 	int code = 0xFF;
 	TString msg = "[Ln ";
 	msg.append(TString::number(ln)).append("] ");
-	if (match(Tok::COLON)){
+	if (match(Tok::colon)){
 		bool has_code = false;
-		if(match(Tok::REAL)){
+		if(match(Tok::_real)){
 			has_code = true;
 			code = peek(-1).literal->as<double>();
-			if (!match(Tok::COMMA))
+			if (!match(Tok::comma))
 				goto WRAP_UP;
 		}
 		if (!has_code){
-			msg += expect(Tok::STRING, "Expected an exit message [AssertMsg]").literal->to_string();
+			msg += expect(Tok::_string, "Expected an exit message [AssertMsg]").literal->to_string();
 		}
-		else if (match(Tok::STRING)){
+		else if (match(Tok::_string)){
 			msg += peek(-1).literal->to_string();
 		}
 		else msg += "Assertion failed.";
 	}
 	else msg += "Assertion failed.";
 	WRAP_UP:
-	expect(Tok::SCOLON, "Expected a ';' [AssertSColon]");
+	expect(Tok::semi_colon, "Expected a ';' [AssertSColon]");
 	return AssertStmt(expr,code,msg);
 }
 
@@ -311,10 +311,10 @@ Stmt Parser::assert_stmt(){
 Expr Parser::expression(bool disable){
 	LFn;
 	Expr exp = refer();//goto next precedence
-    if (!disable && check(Tok::COMMA)){
+	if (!disable && check(Tok::comma)){
 		QVector<Expr> cex;
 		cex.append(exp);
-		while(match(Tok::COMMA)){
+		while(match(Tok::comma)){
 			Expr expr = refer();//goto next precedence
 			cex.append(expr);
 		}
@@ -326,7 +326,7 @@ Expr Parser::expression(bool disable){
 Expr Parser::refer(){
 	LFn;
 	Expr expr = conditional();
-	if (match(Tok::FAT_ARROW)){
+	if (match(Tok::fat_arrow)){
 		Token& op = prev();
 		expr = RefExpr(expr, op, conditional());
 	}
@@ -336,14 +336,14 @@ Expr Parser::refer(){
 Expr Parser::conditional(){
 	LFn;
 	Expr expr = logical_or();
-	if (match({Tok::ASSIGN,Tok::MULT_ASGN,Tok::DIV_ASGN,Tok::PLUS_ASGN,Tok::MINUS_ASGN,Tok::EXP_ASGN})){
+	if (match({Tok::assign,Tok::mult_asgn,Tok::div_asgn,Tok::plus_asgn,Tok::minus_asgn,Tok::exp_asgn})){
 		Token& op = prev();
 		Expr right = conditional();
 		expr = AssignExpr(expr,op,right);
 	}
-	else if (match(Tok::QUES_MK)){
+	else if (match(Tok::ques_mk)){
 		Expr l = logical_or();
-		expect(Tok::COLON, "Expected a ':' in a conditional expression.");
+		expect(Tok::colon, "Expected a ':' in a conditional expression.");
 		Expr r = logical_or();
 		expr = CndtnlExpr(expr,l,r);
 	}
@@ -353,7 +353,7 @@ Expr Parser::conditional(){
 Expr Parser::logical_or(){
 	LFn;
 	Expr expr = logical_and();
-	while (match(Tok::VERTVERT)){
+	while (match(Tok::vert_vert)){
 		Token& op = prev();
 		Expr right = logical_and();
 		expr = LogicalExpr(expr,op,right);
@@ -364,7 +364,7 @@ Expr Parser::logical_or(){
 Expr Parser::logical_and(){
 	LFn;
 	Expr expr = equality();
-	while (match(Tok::AMPAMP)){
+	while (match(Tok::amp_amp)){
 		Token& op = prev();
 		Expr right = equality();
 		expr = LogicalExpr(expr,op,right);
@@ -376,7 +376,7 @@ Expr Parser::equality(){
 	LFn;
 	Expr expr = comparison();
 
-	while (match({Tok::EQUAL,Tok::N_EQUAL})){
+	while (match({Tok::equal,Tok::bang_equal})){
 		Token& op = prev();
 		Expr right = comparison();
 		expr = BinExpr(expr,op,right);
@@ -389,8 +389,8 @@ Expr Parser::comparison(){
 	LFn;
 	Expr expr = terms();
 
-	while (match({Tok::GREATER,Tok::GREATER_EQUAL,
-				 Tok::LESS,Tok::LESS_EQUAL})){
+	while (match({Tok::greater,Tok::greater_equal,
+				 Tok::less,Tok::less_equal})){
 		Token& op = prev();
 		Expr right = terms();
 		expr = BinExpr(expr,op,right);
@@ -403,7 +403,7 @@ Expr Parser::terms(){
 	LFn;
 	Expr expr = term();
 
-	while(match({Tok::PLUS, Tok::MINUS})){
+	while(match({Tok::plus, Tok::minus})){
 		Token& op = prev();
 		Expr right = term();
 		expr = BinExpr(expr,op,right);
@@ -416,7 +416,7 @@ Expr Parser::term(){
 	LFn;
 	Expr expr = unary();
 
-	while (match({Tok::SLASH,Tok::STAR})){
+	while (match({Tok::slash,Tok::star})){
 		Token& op = prev();
 		Expr right = unary();
 		expr = BinExpr(expr,op,right);
@@ -427,18 +427,18 @@ Expr Parser::term(){
 
 Expr Parser::unary(){
 	LFn;
-	if		(match({Tok::EXCL,Tok::MINUS}			)){
+	if		(match({Tok::bang,Tok::minus}			)){
 		Token& op = prev();
 		Expr right = unary();
 		LRet PrefxExpr(op,right);
 	}
-	else if (match(Tok::PLUS						)){
+	else if (match(Tok::plus						)){
 		Token& op = prev();
 		MereMath::error(peek(),TString("Unary operator+").append(" not supported."));
 		Expr right = unary();
 		LRet PrefxExpr(op,right);
 	}
-	else if (match({Tok::INCR,Tok::DECR}			)){
+	else if (match({Tok::incr,Tok::decr}			)){
 		Token& op = prev();
 		Expr right = unary();
 		LRet PrefxExpr(op,right);
@@ -451,11 +451,11 @@ Expr Parser::unary(){
 		LRet PrefxExpr(op,right);
 	}
 	Expr rval = exponent();
-	if		(!rval->is(ExprTy::VarAcsr		)){
+	if		(!rval->is(ExprTy::VarAcsr				)){
 		LRet rval;
 	}
-	if (check(Tok::INCR)||check(Tok::DECR	)){
-		while	(match({Tok::INCR,Tok::DECR}							)){
+	if (check(Tok::incr)||check(Tok::decr			)){
+		while	(match({Tok::incr,Tok::decr}			)){
 			Token& op = prev();
 			rval = PstfxExpr(rval, op);
 		}
@@ -466,7 +466,7 @@ Expr Parser::unary(){
 
 Expr Parser::exponent(){
 	Expr expr = rvalue();
-	while (match(Tok::CARET)){
+	while (match(Tok::caret)){
 		Token& op = prev();
 		Expr right = rvalue();
 		expr = BinExpr(expr,op,right);
@@ -497,7 +497,7 @@ Expr Parser::call(){
 	Expr expr = primary();
 
     while(true){
-        if (match(Tok::LPAREN)){
+		if (match(Tok::l_paren)){
             expr = finish_call(expr);
 		} else {
 			break;
@@ -510,47 +510,47 @@ Expr Parser::finish_call(Expr callee){
 	LFn;
 	QVector<Expr> args;
 	Expr arg = nullptr;
-	if (!check(Tok::RPAREN)){
+	if (!check(Tok::r_paren)){
 		do {
 			arg = expression(true);
 			args.append(arg);
 #if _DEBUG
 			Log << "FINISH_CALL_ARG_TY" << t_cast<int>(arg->type());
 #endif
-		} while (match(Tok::COMMA));
+		} while (match(Tok::comma));
 	}
-	Token& paren = expect(Tok::RPAREN, "Expected a ')'.");
+	Token& paren = expect(Tok::r_paren, "Expected a ')'.");
 	LRet FnCallExpr(callee,args,paren);
 }
 
 Expr Parser::primary(){
 	LFn;
 	Expr ex = nullptr;
-	if		(match(Tok::NULL_LIT					)){
+	if		(match(Tok::_null							)){
 		LRet LitExpr(Object(Trait("null"),QVariant(0)));
 	}
-	else if	(check(Tok::IDENTIFIER					)){
+	else if	(check(Tok::identifier						)){
 		ex = VarAcsrExpr(advance());
 		LRet ex;
 	}
-	else if (match(Tok::TRUE						)){
+	else if (match(Tok::_true							)){
 		LRet LitExpr(Object(Trait("bool"),QVariant(true)));
 	}
-	else if (match(Tok::FALSE						)){
+	else if (match(Tok::_false							)){
 		LRet LitExpr(Object(Trait("bool"),QVariant(false)));
 	}
-	else if (match(Tok::LBRACE						)){
+	else if (match(Tok::l_brace							)){
 		ex = array();
 		LRet ex;
 	}
-	else if (match({Tok::STRING,Tok::REAL,Tok::CHAR})){
+	else if (match({Tok::_string,Tok::_real,Tok::_char}	)){
 		LRet LitExpr(*(prev().literal));
 	}
-	else if (match(Tok::DOLLAR						)){
+	else if (match(Tok::dollar							)){
 		ex = spec_data();
 		LRet ex;
 	}
-	else if (check(Tok::LPAREN						)){
+	else if (check(Tok::l_paren							)){
 		ex = group();
 		LRet ex;
 	}
@@ -576,8 +576,8 @@ h(const char* string)
 
 Expr Parser::spec_data(){
 	LFn;
-	//assume '$' is eaten
-	Token& t = expect(Tok::IDENTIFIER,"Expected an identifier");
+	//assumes '$' is eaten
+	Token& t = expect(Tok::identifier,"Expected an identifier");
 	switch(h(t.lexeme.toStdString().c_str())){
 		case h("a"):
 			LRet assoc();
@@ -592,32 +592,32 @@ Expr Parser::spec_data(){
 Expr Parser::assoc(){
 	LFn;
 	QVector<pair<Expr,Expr>> inits;
-	expect(Tok::LBRACE,"Expected a '{'.");
-	if (!check(Tok::RBRACE)){
+	expect(Tok::l_brace,"Expected a '{'.");
+	if (!check(Tok::r_brace)){
 		do{
 			Expr x = expression(true);
-			expect(Tok::COLON,"Expected a ':'.");
+			expect(Tok::colon,"Expected a ':'.");
 			Expr y = expression(true);
 			inits.append(pair<Expr,Expr>(x,y));
-		}while (!is_at_end() && peek().ty != Tok::RBRACE && match(Tok::COMMA));
+		}while (!is_at_end() && peek().ty != Tok::r_brace && match(Tok::comma));
 	}
-	expect(Tok::RBRACE, "Expected a '}'.");
+	expect(Tok::r_brace, "Expected a '}'.");
 	LRet AssocExpr(inits);
 }
 
 Expr Parser::map(){
 	LFn;
 	QVector<pair<Expr,Expr>> inits;
-	expect(Tok::LBRACE,"Expected a '{'.");
-	if (!check(Tok::RBRACE)){
+	expect(Tok::l_brace,"Expected a '{'.");
+	if (!check(Tok::r_brace)){
 		do{
 			Expr x = expression(true);
-			expect(Tok::COLON,"Expected a ':'.");
+			expect(Tok::colon,"Expected a ':'.");
 			Expr y = expression(true);
 			inits.append(pair<Expr,Expr>(x,y));
-		}while (!is_at_end() && peek().ty != Tok::RBRACE && match(Tok::COMMA));
+		}while (!is_at_end() && peek().ty != Tok::r_brace && match(Tok::comma));
 	}
-	expect(Tok::RBRACE, "Expected a '}'.");
+	expect(Tok::r_brace, "Expected a '}'.");
 	LRet HashExpr(inits);
 }
 
@@ -625,28 +625,28 @@ Expr Parser::array(){
 	LFn;
 	Token& t = prev();
 	QVector<Expr> inits{};
-	if (match(Tok::RBRACE))
+	if (match(Tok::r_brace))
 		LRet ArrayExpr(inits);
 	inits.append(expression(true));
 	for (;!is_at_end();){
-		if (match(Tok::RBRACE))
+		if (match(Tok::r_brace))
 			LRet ArrayExpr(inits);
-		inits.append((expect(Tok::COMMA, "Expected a ','."),expression(true)));
+		inits.append((expect(Tok::comma, "Expected a ','."),expression(true)));
 	}
 	LThw error(t,"Expected termination.");
 }
 
 Expr Parser::accessor(bool unwind) throw(ParseUnwind){
     LFn;
-    if ((peek().ty!=Tok::IDENTIFIER) && unwind){
+	if ((peek().ty!=Tok::identifier) && unwind){
 		LThw ParseUnwind();
 	}
-	LRet VarAcsrExpr(expect(Tok::IDENTIFIER,"Expected an identifier."));
+	LRet VarAcsrExpr(expect(Tok::identifier,"Expected an identifier."));
 }
 
 Expr Parser::group(){
 	LFn;
-	if (!check(Tok::LPAREN)){
+	if (!check(Tok::l_paren)){
 		LRet expression();
 	}
 	advance();
@@ -654,6 +654,6 @@ Expr Parser::group(){
 	if (expr->is(ExprTy::Group)){
 		expr = expr->expr;
 	}
-	expect(Tok::RPAREN, "Expected a ')'.");
+	expect(Tok::r_paren, "Expected a ')'.");
 	LRet GroupExpr(expr);
 }

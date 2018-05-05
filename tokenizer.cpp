@@ -21,10 +21,10 @@ bool Tokenizer::is_at_end(){
 
 char Tokenizer::advance(){
 #if _DEBUG
-    Log << "  adv:" << TString::number(current);
-    Log << "      " << peek();
+	Log << "  adv:" << TString::number(current);
+	Log << "      " << peek();
 #endif
-    return source[current++].toLatin1();
+	return source[current++].toLatin1();
 }
 
 void Tokenizer::add_token(Tok ty){
@@ -60,7 +60,7 @@ void Tokenizer::deprecate(){
 }
 
 bool Tokenizer::match(char expct) {
-    return !is_at_end() && source[current] == expct?current++, true:false;
+	return !is_at_end() && source[current] == expct?current++, true:false;
 }
 
 bool Tokenizer::match(TString expct){
@@ -124,7 +124,7 @@ void Tokenizer::string(){
 		MereMath::error(line, "Expected string termination.");
 		return;
 	}
-	add_token(Tok::STRING, Object(Trait("string"),QVariant(str)));
+	add_token(Tok::_string, Object(Trait("string"),QVariant(str)));
 }
 
 void Tokenizer::character(){
@@ -152,16 +152,16 @@ void Tokenizer::character(){
 	else
 		deprecate();
 
-	add_token(Tok::CHAR,Object(c));
+	add_token(Tok::_char,Object(c));
 }
 
 bool Tokenizer::is_digit(char ch){
-    #ifdef RND_NAME//__GNUC__
-    return std::isdigit(t_cast<unsigned char>(ch));
+	#ifdef RND_NAME//__GNUC__
+	return std::isdigit(t_cast<unsigned char>(ch));
 	#else
 	return ch >= '0' && ch <= '9';
 	#endif
-	
+
 }
 
 void Tokenizer::number() {
@@ -179,7 +179,7 @@ void Tokenizer::number() {
 			num.append('x');
 			base = 16;
 		}
-        else if (match('b') || match('B')){
+		else if (match('b') || match('B')){
 			current--;
 			deprecate();
 			num.append('b');
@@ -190,7 +190,7 @@ void Tokenizer::number() {
 	while ((base == 10 && is_digit  (peek())) ||
 		   (base == 16 && is_base_16(peek())) ||
 		   (base ==  8 && is_base_8 (peek())) ||
-           (base ==  2 && peek() < 2)){
+		   (base ==  2 && peek() < 2)){
 		num.append(QChar(peek()));
 		deprecate();
 	}
@@ -205,20 +205,20 @@ void Tokenizer::number() {
 			deprecate();
 		}
 
-		add_token(Tok::REAL,
+		add_token(Tok::_real,
 				 Object(Trait("real"),num.toDouble()));
 		LVd;
 	}
 	bool stat = false;
-    int n = num.toInt(&stat,base);
-	add_token(Tok::REAL,
-             Object(Trait("real"),n));
+	int n = num.toInt(&stat,base);
+	add_token(Tok::_real,
+			 Object(Trait("real"),n));
 #if _DEBUG
 	Log << "  Numeral: String:" << num;
 	Log << "           Number:" << n;
 #endif
 	if (!stat){
-        MereMath::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
+		MereMath::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
 	}
 	LVd;
 }
@@ -257,65 +257,65 @@ void Tokenizer::identifier(){
 	advance();
 	while (is_alpha_numeric(peek()))
 		val.append(advance());
-	Tok ty = keywords.value(val, Tok::IDENTIFIER);
-    tokens.append(Token(ty,val,Object(),line));
+	Tok ty = keywords.value(val, Tok::identifier);
+	tokens.append(Token(ty,val,Object(),line));
 	LVd;
 }
 
 void Tokenizer::raw_string(){
 	//Assume R"[ was eaten as in Tokenizer::identifier()
-    MereMath::error(0,"Raw string literal not supported.");
+	MereMath::error(0,"Raw string literal not supported.");
 }
 
 void Tokenizer::scan_token(){
-    LFn;
+	LFn;
 	char c = advance();
 #if _DEBUG
 	Log << c;
 #endif
 	switch (c) {
-		case '@': add_token(Tok::AT_SYMB); break;
-		case '(': add_token(Tok::LPAREN); break;
-		case ')': add_token(Tok::RPAREN); break;
-		case '{': add_token(Tok::LBRACE); break;
-		case '}': add_token(Tok::RBRACE); break;
-		case '[': add_token(Tok::LSQBRKT); break;
-		case ']': add_token(Tok::RSQBRKT); break;
-		case ',': add_token(Tok::COMMA); break;
-		case '.': add_token(Tok::DOT); break;
-		case ';': add_token(Tok::SCOLON); break;
-		case '?': add_token(Tok::QUES_MK); break;
-		case '$': add_token(Tok::DOLLAR); break;
-		case '*': add_token(match('=')?Tok::MULT_ASGN:
-									   Tok::STAR); break;
-		case '^': add_token(match('=')?Tok::EXP_ASGN:
-									   Tok::CARET); break;
-		case '%': add_token(match('=')?Tok::MOD_ASGN:
-									   Tok::MOD); break;
-		case '-': add_token(match('>')?Tok::ARROW:
-									   match('-')?Tok::DECR:
-												  match('=')?Tok::MINUS_ASGN:
-															 Tok::MINUS); break;
-		case '+': add_token(match('+')?Tok::INCR:
-									   match('=')?Tok::PLUS_ASGN:
-												  Tok::PLUS); break;
-		case '&': add_token(match('&')?Tok::AMPAMP:
-									   match('=')?Tok::AMP_ASGN:
-												  Tok::AMP); break;
-		case ':': add_token(match(':')?Tok::SCOPE:
-									   Tok::COLON); break;
-		case '|': add_token(match('|')?Tok::VERTVERT:
-									   match('=')?Tok::VERT_ASGN:
-												  Tok::VERT); break;
-		case '>': add_token(match('=')?Tok::GREATER_EQUAL:
-									   Tok::GREATER); break;
-		case '<': add_token(match('=')?Tok::LESS_EQUAL:
-									   Tok::LESS); break;
-		case '=': add_token(match('=')?Tok::EQUAL:
-									   match('>')?Tok::FAT_ARROW:
-												  Tok::ASSIGN); break;
-		case '!': add_token(match('=')?Tok::N_EQUAL:
-									   Tok::EXCL); break;
+		case '@': add_token(Tok::at_symbol); break;
+		case '(': add_token(Tok::l_paren); break;
+		case ')': add_token(Tok::r_paren); break;
+		case '{': add_token(Tok::l_brace); break;
+		case '}': add_token(Tok::r_brace); break;
+		case '[': add_token(Tok::l_sq_brkt); break;
+		case ']': add_token(Tok::r_sq_brkt); break;
+		case ',': add_token(Tok::comma); break;
+		case '.': add_token(Tok::dot); break;
+		case ';': add_token(Tok::semi_colon); break;
+		case '?': add_token(Tok::ques_mk); break;
+		case '$': add_token(Tok::dollar); break;
+		case '*': add_token(match('=')?Tok::mult_asgn:
+									   Tok::star); break;
+		case '^': add_token(match('=')?Tok::exp_asgn:
+									   Tok::caret); break;
+		case '%': add_token(match('=')?Tok::mod_asgn:
+									   Tok::mod); break;
+		case '-': add_token(match('>')?Tok::arrow:
+									   match('-')?Tok::decr:
+												  match('=')?Tok::minus_asgn:
+															 Tok::minus); break;
+		case '+': add_token(match('+')?Tok::incr:
+									   match('=')?Tok::plus_asgn:
+												  Tok::plus); break;
+		case '&': add_token(match('&')?Tok::amp_amp:
+									   match('=')?Tok::amp_asgn:
+												  Tok::amp); break;
+		case ':': add_token(match(':')?Tok::scope:
+									   Tok::colon); break;
+		case '|': add_token(match('|')?Tok::vert_vert:
+									   match('=')?Tok::vert_asgn:
+												  Tok::vert); break;
+		case '>': add_token(match('=')?Tok::greater_equal:
+									   Tok::greater); break;
+		case '<': add_token(match('=')?Tok::less_equal:
+									   Tok::less); break;
+		case '=': add_token(match('=')?Tok::equal:
+									   match('>')?Tok::fat_arrow:
+												  Tok::assign); break;
+		case '!': add_token(match('=')?Tok::bang_equal:
+									   Tok::bang); break;
 		case '/':
 			if (match('/')) {
 				// A comment goes until the end of the line.
@@ -343,9 +343,9 @@ void Tokenizer::scan_token(){
 			}
 			else {
 				if (match('='))
-					add_token(Tok::DIV_ASGN);
+					add_token(Tok::div_asgn);
 				else
-					add_token(Tok::SLASH);
+					add_token(Tok::slash);
 			}
 			break;
 		case '\n':
@@ -369,7 +369,7 @@ void Tokenizer::scan_token(){
 			else
 				MereMath::error(line, "Unexpected character.");
 	}
-    LVd;
+	LVd;
 }
 
 Tokens Tokenizer::scan_tokens(){
@@ -380,36 +380,34 @@ Tokens Tokenizer::scan_tokens(){
 		scan_token();
 	}
 	start = current = 0;
-	add_token(Tok::END);
+	add_token(Tok::_eof_);
 	return tokens;
 }
 
 QHash<TString, Tok> Tokenizer::keywords{
-	{"struct"	,	Tok::STRUCT		},
-	{"for"		,	Tok::FOR		},
-	{"if"		,	Tok::IF			},
-	{"else"		,	Tok::ELSE		},
-	{"return"	,	Tok::RETURN		},
-	{"this"		,	Tok::THIS		},
-	{"true"		,	Tok::TRUE		},
-	{"false"	,	Tok::FALSE		},
-	{"do"		,	Tok::DO			},
-	{"while"	,	Tok::WHILE		},
-	{"case"		,	Tok::CASE		},
-	{"switch"	,	Tok::SWITCH		},
-	{"break"	,	Tok::BREAK		},
-	{"default"	,	Tok::DEFAULT	},
-	{"enum"		,	Tok::ENUM		},
-	{"assert"	,	Tok::ASSERT		},
-	{"define"	,	Tok::DEFINE		},
-	{"array"	,	Tok::ARRAY		},
-	{"set"		,	Tok::SET		},
-	{"valued"	,	Tok::VALUED		},
-	{"global"	,	Tok::GLOBAL		},
-	{"var"		,	Tok::VAR		},
-	{"null"		,	Tok::NULL_LIT	},
-	{"print"	,	Tok::PRINT		},
-	{"fn"		,	Tok::FN			}
+	{"struct"	,	Tok::_struct	},
+	{"for"		,	Tok::_for		},
+	{"if"		,	Tok::_if		},
+	{"else"		,	Tok::_else		},
+	{"return"	,	Tok::_return	},
+	{"this"		,	Tok::_this		},
+	{"true"		,	Tok::_true		},
+	{"false"	,	Tok::_false		},
+	{"do"		,	Tok::_do		},
+	{"while"	,	Tok::_while		},
+	{"case"		,	Tok::_case		},
+	{"switch"	,	Tok::_switch	},
+	{"break"	,	Tok::_break		},
+	{"default"	,	Tok::_default	},
+	{"enum"		,	Tok::_enum		},
+	{"assert"	,	Tok::_assert	},
+	{"define"	,	Tok::_define	},
+	{"array"	,	Tok::_array		},
+	{"set"		,	Tok::_set		},
+	{"var"		,	Tok::_var		},
+	{"null"		,	Tok::_null		},
+	{"print"	,	Tok::_print		},
+	{"fn"		,	Tok::_fn		}
 };
 
 QHash<QChar,QChar> Tokenizer::escaped{

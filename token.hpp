@@ -3,41 +3,41 @@
 
 #include "object.h"
 enum class Tok{
-	INVALID,
+	invalid,
 
 	// Characters.
-	LPAREN, RPAREN, LBRACE, RBRACE, LSQBRKT, RSQBRKT,
-	COMMA, DOT, SCOLON, SCOPE, AT_SYMB, QUES_MK, DOLLAR,
+	l_paren, r_paren, l_brace, r_brace, l_sq_brkt, r_sq_brkt,
+	comma, dot, semi_colon, scope, at_symbol, ques_mk, dollar,
 
 	//UnaryOp
-	INCR, DECR,
-	MINUS, PLUS, SLASH, STAR, COLON,
-	AMP, CARET/* ^ */, MOD, EXCL/* ! */, VERT,
+	incr, decr,
+	minus, plus, slash, star, colon,
+	amp, caret/* ^ */, mod, bang/* ! */, vert,
 
 	//BinOp
-	ARROW,
-	ASSIGN, EQUAL, N_EQUAL,
-	GREATER, GREATER_EQUAL,
-	LESS, LESS_EQUAL,
-	AMPAMP, VERTVERT,
-	MOD_ASGN,
-	MINUS_ASGN, PLUS_ASGN, DIV_ASGN,
-	MULT_ASGN, EXP_ASGN,
-	AMP_ASGN, VERT_ASGN,
+	arrow,
+	assign, equal, bang_equal,
+	greater, greater_equal,
+	less, less_equal,
+	amp_amp, vert_vert,
+	mod_asgn,
+	minus_asgn, plus_asgn, div_asgn,
+	mult_asgn, exp_asgn,
+	amp_asgn, vert_asgn,
 
-	FAT_ARROW,
+	fat_arrow,
 
 	// Literals.
-	IDENTIFIER, CHAR, STRING, REAL,
+	identifier, _char, _string, _real,
 
 	// Keywords.
-	STRUCT, THIS, FOR, IF, ELSE, GLOBAL,
-	RETURN, TRUE, FALSE, DO,
-	WHILE, CASE, SWITCH, BREAK,
-	DEFAULT, ARRAY, SET,
-	ENUM, ASSERT, DEFINE, VALUED, VAR, NULL_LIT, PRINT, FN,
+	_struct, _this, _for, _if, _else,
+	_return, _true, _false, _do,
+	_while, _case, _switch, _break,
+	_default, _array, _set,
+	_enum, _assert, _define, _var, _null, _print, _fn,
 
-	END
+	_eof_
 };
 
 class Token{
@@ -52,7 +52,7 @@ class Token{
 			ln = 0;
 			lexeme = "";
 			literal = new Object();
-			ty = Tok::END;
+			ty = Tok::_eof_;
 		}
 
 		Token(Tok type,
@@ -123,7 +123,7 @@ class Token{
 
 		bool is_bin_op()const{
 			int i = static_cast<int>(ty);
-			return (int)Tok::ARROW <= i && i <= (int)Tok::VERT_ASGN;
+			return (int)Tok::arrow <= i && i <= (int)Tok::vert_asgn;
 		}
 
 };

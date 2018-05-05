@@ -24,11 +24,11 @@ void EnvImpl::define(const Token& t, const Object& o)throw(RuntimeError){
 void EnvImpl::define(const TString& t, const Object& o)throw(RuntimeError){
 	LFn;
 	if (values.contains(t)){
-		LThw RuntimeError(Token(Tok::IDENTIFIER,t,Object(),-1),TString("Redefinion of symbol '").
+		LThw RuntimeError(Token(Tok::identifier,t,Object(),-1),TString("Redefinion of symbol '").
 						  append(t).append("'."));
 	}
 	if (t.isEmpty()){
-		LThw RuntimeError(Token(Tok::IDENTIFIER,t,Object(),-1),"Definition without identifier.");
+		LThw RuntimeError(Token(Tok::identifier,t,Object(),-1),"Definition without identifier.");
 	}
 	Object& obj = values.insert(t,o).value();
 	obj.trait().set_on_stack();
