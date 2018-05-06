@@ -47,6 +47,7 @@ Thumbs.db
 moc_*.*
 *_plugin_import.*
 .qmake.stash
+build-*/
 
 # MSVS #
 ########
