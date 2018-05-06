@@ -3,7 +3,6 @@
 *.com
 *.class
 *.dll
-*.exe
 *.o
 *.so
 
@@ -57,7 +56,6 @@ GeneratedFiles/
 *.vcxproj
 *.vcxproj.*
 debug/
-#release/
 x64/
 x32/
 *.cbt

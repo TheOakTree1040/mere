@@ -169,9 +169,8 @@ void MereMath::show_errors(){
 	}
 
 	TString error_text = "\n";
-	for (int i = 0; i != errors.size(); i++){
-		error_text.append("Error:\n");
-		error_text.append(TString("\t") + errors.at(i).msg);
+    for (int i = 0; i != errors.size(); i++){
+        error_text.append(TString("  > ") + errors.at(i).msg);
 		error_text.append("\n");
 	}
 #if IS_GUI_APP
