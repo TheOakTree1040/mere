@@ -3,7 +3,6 @@
 *.com
 *.class
 *.dll
-*.exe
 *.o
 *.so
 
@@ -45,7 +44,7 @@ Thumbs.db
 *.pro.user
 *.pro.user.*
 *.qmake.stash
-moc_*
+moc_*.*
 *_plugin_import.*
 .qmake.stash
 
@@ -54,9 +53,21 @@ moc_*
 .vs/
 Win32/
 GeneratedFiles/
+*.vcxproj
 *.vcxproj.*
 debug/
-#release/
 x64/
 x32/
 *.cbt
+*.sln
+*.pdb
+
+# build #
+#########
+build/*.h
+build/*.cpp
+
+# Other #
+#########
+*.make
+Makefile
