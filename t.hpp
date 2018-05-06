@@ -10,7 +10,7 @@
 //DEBUG - whether to display debug output.
 
 #ifndef _DEBUG
-#define _DEBUG 0
+//#define _DEBUG 0
 #endif
 
 #define T_FW_QT				0x01

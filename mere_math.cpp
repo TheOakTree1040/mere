@@ -185,7 +185,7 @@ void MereMath::show_errors(){
 	wind->setAttribute(Qt::WA_DeleteOnClose);
 	wind->show();
 #else
-	std::cout << error_text.toStdString() /*<< std::endl*/;
+    std::cout << error_text.toStdString() << std::endl;
 #endif
 }
 

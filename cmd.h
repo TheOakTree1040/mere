@@ -121,7 +121,7 @@ class MerePrompt{
 					}
 					if (temp[0] == '.'){
 						temp = QString::fromStdString(temp).trimmed().toStdString();
-						if		(temp == ".exec") {
+                        if		(temp == "." || temp == ".exec") {
 							back(prompt.size()+5+1);
 							if(lines)
 								cout << "\n";
