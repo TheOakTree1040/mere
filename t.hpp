@@ -7,6 +7,12 @@
   * for development under different frameworks and platforms
   */
 
+//DEBUG - whether to display debug output.
+
+#ifndef _DEBUG
+#define _DEBUG 0
+#endif
+
 #define T_FW_QT				0x01
 #define T_FW_MSVS			0x02
 #define T_FW_NONE			0x03
@@ -14,8 +20,8 @@
 #define T_PF_WIN			0x11
 #define T_PF_OSX			0x12
 
-#define T_UNDER_FW(FW_NAME) T_FW		== FW_NAME
-#define T_UNDER_PF(PF_NAME)	T_PLATFORM	== PF_NAME
+#define T_UNDER_FW(FW_NAME) T_FW	== FW_NAME
+#define T_UNDER_PF(PF_NAME)	T_PF	== PF_NAME
 //>>environment
 //framework
 #define T_FW				T_FW_QT
@@ -95,7 +101,8 @@ class t_raw_char {
 
 typedef t_raw_char<char> tchar;
 typedef t_raw_char<wchar_t> twchar;
-#endif
+#endif // T_FW != T_FW_QT
+
 #if T_UNDER_FW(T_FW_QT)
 # include <QString>
 typedef QString TBuiltinString;
@@ -103,8 +110,9 @@ typedef QString TBuiltinString;
 # include <string>
 typedef std::basic_string<TChar> TBuiltinString;
 typedef unsigned int uint;
-#endif
-#if 0 // TString Impl.
+#endif // T_UNDER_FW(T_FW_QT)
+
+#if T_FW != T_FW_QT // TString Impl. on non-Qt environment. IT DOESN'T WORK!
 #define T_STRING
 class TString : public TBuiltinString {
 	public:
@@ -169,17 +177,44 @@ Q_DECLARE_METATYPE(TString)
 #endif
 #else
 typedef QString TString;
-#endif
+#endif // T_FW != T_FW_QT
+
+#define OUT_STR_TY // DEPRECATE
+#define COUT_COMPAT // DEPRECATE
+
 #if T_UNDER_FW(T_FW_QT)
 # define to_std_string(QSTR) QSTR.toStdString()
 #else
 # define to_std_string(STDSTR) STDSTR
-#endif
+#endif // T_UNDER_FW(T_FW_QT)
+
 #define t_cast static_cast
-#ifdef __GNUC__
-#define _DEBUG 1
-#endif
-#ifndef _DEBUG
-#define _DEBUG 1
-#endif
+
+//===PROJECT SPECIFIC MACROS===
+
+#define T_UI_GUI 0x21
+#define T_UI_CLI 0x22
+
+//UI Configuration.
+#define T_UI_Conf T_UI_CLI
+#define IS_GUI_APP (T_UI_Conf == T_UI_GUI)
+#define IS_CLI_APP (T_UI_Conf == T_UI_CLI)
+
+#define PROJECT		("Mere Interpreter")
+#define VERSION		("v0.1")
+#define AUTHOR		("TheOakCode")
+#define EMAIL		("theoaktree1040@gmail.com")
+#define DESCRIPTION	("An interpreter for the scripting language Mere.")
+
+#if IS_GUI_APP
+#define App QApplication
+#else
+#define App QCoreApplication
+#endif // T_UI_Conf == T_UI_GUI
+
+#if IS_CLI_APP
+#include <iostream>
+#endif // IS_CLI_APP
+//===END PROJECT SPECIFIC MACROS===
+
 #endif // T_SPECS

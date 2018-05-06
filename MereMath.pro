@@ -2,15 +2,17 @@
 # 2018-03-21 18:24:44 #
 #---------------------#
 
-QT       += core gui
+QT       += core #
+QT       -= gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+#greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = cmm
 TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += STATIC
+CONFIG += console
 CONFIG += static
 CONFIG += c++14
 

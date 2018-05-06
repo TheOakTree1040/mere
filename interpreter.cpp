@@ -1,15 +1,20 @@
 
 #include "natives.h"
 #include "interpreter.h"
-#include <cmath>
 #include "mere_math.h"
-#include <QMessageBox>
 #include "environment.h"
-#include <QMessageBox>
 #include "merecallable.h"
+
 #include <QDateTime>
+
+#if T_UI_Conf == T_UI_GUI
+#include <QMessageBox>
+#else
+
+#endif // T_UI_Conf == T_UI_GUI
 #include <ctime>
 #include <cmath>
+
 #define GOTO_OP_ASGN(TOK) right_val_op = TOK; goto RET_OP_ASGN;
 #define define_native_function(NAME,NAT) globals->define(NAME,Object(Trait("function").as_fn(),Var::fromValue(NAT)))
 Interpreter::Interpreter(){
@@ -397,7 +402,11 @@ void Interpreter::exec_print(Stmt stmt, bool dd){
                   + " : " + TString(obj.data().typeName())
               #endif
                   ;
+#if T_UI_Conf == T_UI_GUI
 	QMessageBox::information(nullptr,"Info",out);
+#else
+	std::cout << out.toStdString() << std::endl;
+#endif // T_UI_Conf == T_UI_GUI
 	LVd;
 }
 void Interpreter::exec_if(Stmt stmt, bool dd){

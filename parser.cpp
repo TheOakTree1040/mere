@@ -560,7 +560,6 @@ Expr Parser::primary(){
 	}
 }
 
-//Primary Helpers
 constexpr qulonglong
 h(const char* string)
 {

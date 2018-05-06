@@ -1,11 +1,13 @@
 #ifndef SOURCEEDITOR_H
 #define SOURCEEDITOR_H
 #include "mere_math.h"
+#include "interpreter.h"
+
+#if T_UI_Conf == T_UI_GUI
 #include <QApplication>
 #include <QTextEdit>
 #include <QLayout>
 #include <QPushButton>
-#include "interpreter.h"
 #include <QCheckBox>
 
 class SourceEditor : public QWidget{
@@ -54,4 +56,7 @@ class SourceEditor : public QWidget{
             MereMath::reset_intp();
         }
 };
+#else
+#include <QCoreApplication>
+#endif // T_UI_Conf == T_UI_GUI
 #endif // SOURCEEDITOR_H

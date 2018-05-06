@@ -3,12 +3,15 @@
 
 #include <QFile>
 #include <QVector>
+
+#if IS_GUI_APP
 #include <QMessageBox>
 #include <QWidget>
 #include <QTextEdit>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFont>
+#endif
 
 #include "tokenizer.h"
 #include "interpreter.h"
@@ -23,7 +26,11 @@ QVector<MereMath::Error> MereMath::errors{};
 void MereMath::init_once(){
 	LFn;
 	if (!QMetaType::registerComparators<Object>()){
+#if IS_GUI_APP
 		QMessageBox::critical(nullptr,"Fatal Internal Failure","Failed to register Object comparators.");
+#else
+		std::cout << "  > Fatal Internal Error: Failed to register Object comparators\n";
+#endif
 #if _DEBUG
         Log << "Failed registering comparators.";
 #endif
@@ -47,7 +54,11 @@ bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 			for (int i = 0; i != size; i++){
 				str.append(tokens[i].to_string());
 			}
+#if IS_GUI_APP
 			QMessageBox::information(nullptr,"",str);
+#else
+			std::cout << "  > " << str.toStdString() << std::endl;
+#endif
 		}
 		if (errors.size()){
 			show_errors();
@@ -64,6 +75,7 @@ bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 	}
 
 	if (show_syn){
+#if IS_GUI_APP
 		Log1("Showing Syntax tree");
 		TString str = ASTPrinter(stmts).AST();
 		QWidget* wnd = new QWidget();
@@ -83,6 +95,9 @@ bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 		wnd->setLayout(layout);
 		wnd->setAttribute(Qt::WA_DeleteOnClose);
 		wnd->show();
+#else
+		std::cout << "  > " + ASTPrinter(stmts).AST().toStdString() + "\n";
+#endif
 	}
 	auto res = interpreter->interpret(stmts);
 
@@ -103,7 +118,11 @@ void MereMath::error(int ln, const TString& msg){
 
 void MereMath::error(const TString & msg){
 	errors.append(Error(-1,msg));
+#if IS_GUI_APP
 	QMessageBox::critical(nullptr, "Error", msg);
+#else
+	std::cout << "  > " << msg.toStdString() << "\n";
+#endif
 }
 
 void MereMath::error(const Token& tok, const TString& msg){
@@ -121,31 +140,41 @@ void MereMath::report(int ln, const TString& loc, const TString& msg, bool is_id
 	TString p = TString("[Ln ").append(TString::number(ln))
 				.append("] ").append(loc)
 				.append(": ").append(msg);
-	if (!p.endsWith("."))
+	if (!p.endsWith('.'))
 		p.append(".");
 	errors.append(Error(ln,p));
+#if IS_GUI_APP
 	QMessageBox::critical(nullptr,"Error",p);
+#endif
 }
 
 void MereMath::runtime_error(const RuntimeError &re){
 	TString str = "";
 	str.append("[Ln ").append(TString::number(re.tok.ln+1)).append("] ").append(re.msg);
 	errors.append(Error(re.tok.ln+1,re.msg));
+#if IS_GUI_APP
 	QMessageBox::critical(nullptr,"Runtime Error",str);
+#else
+	std::cout << "  > Runtime Error: " << re.msg.toStdString() + "\n";
+#endif
 }
 
 void MereMath::show_errors(){
 	if (!errors.size()){
+#if IS_GUI_APP
 		QMessageBox::information(nullptr,"Info","0 error recorded.");
+#else
+		std::cout << "  > 0 error recorded.\n";
+#endif
 	}
 
-	TString error_text = "";
+	TString error_text = "\n";
 	for (int i = 0; i != errors.size(); i++){
-		error_text.append("<===========Error===========>\n");
-		error_text.append(errors.at(i).msg);
+		error_text.append("Error:\n");
+		error_text.append(TString("\t") + errors.at(i).msg);
 		error_text.append("\n");
 	}
-
+#if IS_GUI_APP
 	QWidget* wind = new QWidget();
 	QTextEdit* edt = new QTextEdit();
 	QVBoxLayout* vlay = new QVBoxLayout();
@@ -155,6 +184,9 @@ void MereMath::show_errors(){
 	wind->setLayout(vlay);
 	wind->setAttribute(Qt::WA_DeleteOnClose);
 	wind->show();
+#else
+	std::cout << error_text.toStdString() /*<< std::endl*/;
+#endif
 }
 
 void MereMath::reset_intp(){

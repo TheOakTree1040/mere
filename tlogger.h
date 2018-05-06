@@ -9,8 +9,11 @@
 # define TO_COUT_PRINTABLE(STR) (STR)
 #endif
 #if _DEBUG
-#include <iostream>
+#if T_UI_Conf == T_UI_GUI
 #include <QDebug>
+#else
+#include <iostream>
+#endif // T_UI_Conf == T_UI_GUI
 class TLogHelper{
 		static int indentation;
 	public:
@@ -26,8 +29,7 @@ class TLogHelper{
 				indentation = 0;
 			for (int i = indentation; i > 0; i--){
 				out += "  ";
-			}/*
-			std::cout << TO_COUT_PRINTABLE(out += " " + starter + " ");*/
+			}
 			return out + " " + starter + " ";
 		}
 		static void reset(){
@@ -75,11 +77,13 @@ class TLogger{
 		}
 
 		~TLogger(){
-//			TLogHelper::startln(st);
-//			std::cout	<< TO_COUT_PRINTABLE(out)
-//						<< (noln?"":"\n");
-			if (out.size())
+			if (out.size()){
+#if T_UI_Conf == T_UI_GUI
 				qDebug().noquote() << TLogHelper::startln(st) << out;
+#elif T_UI_Conf == T_UI_CLI
+				std::cout << (TLogHelper::startln(st) + " " + out + "\n").toStdString();
+#endif // T_UI_Conf == T_UI_GUI
+			}
 		}
 };
 //template<>
@@ -113,5 +117,5 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LThw	throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
 #define Log1(MSG)
-#endif
+#endif // _DEBUG
 #endif // T_LOGGER
