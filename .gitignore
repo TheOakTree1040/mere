@@ -45,7 +45,7 @@ Thumbs.db
 *.pro.user
 *.pro.user.*
 *.qmake.stash
-moc_*
+moc_*.*
 *_plugin_import.*
 .qmake.stash
 
@@ -60,3 +60,4 @@ debug/
 x64/
 x32/
 *.cbt
+*.sln
