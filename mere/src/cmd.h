@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QTimer>
+#include <QDate>
 
 #if T_UI_Conf == T_UI_GUI
 #include <QApplication>
@@ -65,25 +66,20 @@ public:
 #elif T_UI_Conf == T_UI_CLI
 class MerePrompt{
 	private:
-		std::string prompt = " >> ";
+		std::string prompt	= " >> ";// The prompt
+		std::string input	= ""	;// The input (accumulated temp's)
+		std::string last	= ""	;// The last piece of code executed
+		std::string temp	= ""	;// input cache
+
+		bool print_prompt	= true	;// whether to print the prompt
+		bool syn			= false	;// whether to show the syntax tree
+		bool tok			= false	;// whether to show the token
+		bool single			= true	;// whether single or multiline code is expected
+		bool lines			= false	;// whether to print extra lines before and after code execution
+		bool calc			= false	;// calculator mode
+
 	public:
 		MerePrompt(){}
-		static void back(int n){
-			return;
-			if (!n)
-				return;
-			std::string out = "";
-			std::string bk = "";
-			for (int i = n; i != 0; i--){
-				bk += "\b";
-			}
-			out += bk;
-			for (int i = n; i != 0; i--){
-				out += " ";
-			}
-			out += bk;
-			printf("%s",out.c_str());
-		}
 
 		void interface(){
 			using std::cout;
@@ -92,22 +88,14 @@ class MerePrompt{
 			using std::string;
 			using std::getline;
 
-			string initial_output = string PROJECT + " " + VERSION COUT_COMPAT + " by " + AUTHOR COUT_COMPAT + "\n\n";
+			string initial_output = string PROJECT + " " + VERSION + " build " + BUILD + " by " + AUTHOR + "\n\n";
 			initial_output += "Common commands:\n"
 								"	.exec	Execute the code you've typed.\n"
 								"	.help	Display help.\n"
 								"	.quit	Quit.\n"
 								"\n";
 			cout << initial_output;
-			string input = "";
-			string last = "";
 
-			string temp = "";
-
-			bool print_prompt = true;
-			bool syn = false, tok = false;
-			bool single = true, lines = true;
-			bool calc = false;
 			forever{
 				input = temp = "";
 				syn = tok = false;
@@ -116,13 +104,14 @@ class MerePrompt{
 						cout << prompt;
 					getline(cin,temp);
 					if(!temp.size()){
+						if((single || calc) && input.size())
+							goto PRE_EXEC;
 						input += "\n";
 						continue;
 					}
 					if (temp[0] == '.'){
 						temp = QString::fromStdString(temp).trimmed().toStdString();
-                        if		(temp == "." || temp == ".exec") {
-							back(prompt.size()+5+1);
+						if		(temp == "." || temp == ".exec") {
 							if(lines)
 								cout << "\n";
 							if (!single && !calc)
@@ -132,7 +121,6 @@ class MerePrompt{
 							string output = "Help page not available.";
 							cout << output;
 							cin.get();
-							back(prompt.size()+5+1+output.size()+1);
 						}
 						else if (temp == ".clear"){
 #if T_UNDER_PF(T_PF_OSX)
@@ -142,44 +130,40 @@ class MerePrompt{
 #endif
 						}
 						else if (temp == ".last"){
-							input += "\n" + last;
+							input += last;
+							if(single || calc)
+								goto EXEC;
 						}
 						else if (temp == ".view"){
-							cout << "----\n" << input << "----\n";
+							cout << "--beg--\n" << input << "--end--\n";
 						}
-						else if (temp == ".toggle_multi"){
-							single = !single;
+						else if (temp == ".multi"){
+							cout << "  > multi = " << !(single = !single) << "\n";
 						}
 						else if (temp == ".calc"){
 							input = "";
-							calc = !calc;
+							cout << "  > calc = " << (calc = !calc) << "\n";
 							single = true;
 							continue;
 						}
-						else if (temp == ".toggle_lines"){
-							lines = !lines;
+						else if (temp == ".ln"){
+							cout << "  > print_lines = " << (lines = !lines) << "\n";
 						}
-						else if (temp == ".toggle_prompt"){
-							print_prompt = !print_prompt;
+						else if (temp == ".prompt"){
+							cout << "  > print_prompt = " << (print_prompt = !print_prompt) << "\n";
 						}
 						else if (temp == ".set_prompt"){
-							int bk = prompt.size() + 11 + 1;
-							cout << prompt;
-							bk += prompt.size();
+							cout << prompt << "prompt = ";
 							getline(cin,temp);
-							bk += temp.size() + 1;
-							back(bk);
 							prompt = temp;
 						}
-						else if (temp == ".toggle_syn"){
-							back(prompt.size() + 11 + 1);
-							syn = !syn;
+						else if (temp == ".syn"){
+							cout << "  > syn = " << (syn = !syn) << "";
 						}
-						else if (temp == ".toggle_tok"){
-							back(prompt.size() + 11 + 1);
+						else if (temp == ".tok"){
 							tok = !tok;
 						}
-						else if	(temp == ".quit") return;
+						else if	(temp == ".quit" || temp == ".exit") return;
 						else {
 							goto PRE_EXEC;
 						}
@@ -187,6 +171,7 @@ class MerePrompt{
 					else {
 						PRE_EXEC:
 						input += temp + (calc||single?"":"\n");
+						EXEC:
 						if (single || calc){
 							if(lines)
 								cout << "\n";

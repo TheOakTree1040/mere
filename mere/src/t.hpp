@@ -205,6 +205,7 @@ typedef QString TString;
 #define AUTHOR		("TheOakCode")
 #define EMAIL		("theoaktree1040@gmail.com")
 #define DESCRIPTION	("An interpreter for the scripting language Mere.")
+#define BUILD		("1-" + QDate::currentDate().toString("yyMMdd").toStdString())
 
 #if IS_GUI_APP
 #define App QApplication
