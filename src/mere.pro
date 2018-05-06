@@ -12,9 +12,14 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += STATIC
+
 CONFIG += console
 CONFIG += static
 CONFIG += c++14
+
+macx{
+    CONFIG -= app_bundle
+}
 
 SOURCES += \
         main.cpp \
@@ -48,7 +53,7 @@ HEADERS += \
     natives.h \
     cmd.h \
     sourceeditor.hpp \
-    t.hpp \
     data_storage.hpp \
     token.hpp \
-    parseerror.hpp
+    parseerror.hpp \
+    config.hpp

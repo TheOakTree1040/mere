@@ -1,7 +1,7 @@
 
 #ifndef MERE_MATH_FWD_H
 #define MERE_MATH_FWD_H
-#include "t.hpp"
+#include "config.hpp"
 #include <QFile>
 #include "token.hpp"
 #include "runtimeerror.h"

@@ -7,7 +7,7 @@
 
 #include <QDateTime>
 
-#if T_UI_Conf == T_UI_GUI
+#if T_GUI
 #include <QMessageBox>
 #else
 
@@ -37,7 +37,7 @@ Interpreter::Interpreter(){
 	define_native_function("clock", MereCallable(CALLABLE{
 		Q_UNUSED(interpreter);
 	    CHECK("clock", QVector<TString>{});
-	    return Object(t_cast<double>(::clock()));
+		return Object(t_cast<double>(::clock()));
     }));
 	define_native_function("time", MereCallable(CALLABLE{
 		Q_UNUSED(interpreter);
@@ -402,7 +402,7 @@ void Interpreter::exec_print(Stmt stmt, bool dd){
                   + " : " + TString(obj.data().typeName())
               #endif
                   ;
-#if T_UI_Conf == T_UI_GUI
+#if T_GUI
 	QMessageBox::information(nullptr,"Info",out);
 #else
 	std::cout << out.toStdString() << std::endl;

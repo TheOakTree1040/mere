@@ -5,7 +5,7 @@ int main(int argc, char *argv[]) {
 	App a(argc, argv);
 
 	MereCmder cmder;
-#if T_UI_Conf == T_UI_GUI
+#if T_GUI
 	int r = cmder.execute()?a.exec():EXIT_SUCCESS;
 #if _DEBUG
 	Log << "Exited main event loop";

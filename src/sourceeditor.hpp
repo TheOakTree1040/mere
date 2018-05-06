@@ -3,7 +3,7 @@
 #include "mere_math.h"
 #include "interpreter.h"
 
-#if T_UI_Conf == T_UI_GUI
+#if T_GUI
 #include <QApplication>
 #include <QTextEdit>
 #include <QLayout>

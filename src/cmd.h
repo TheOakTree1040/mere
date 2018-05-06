@@ -1,7 +1,7 @@
 #ifndef CMDPARSER_H
 #define CMDPARSER_H
 
-#include "t.hpp"
+#include "config.hpp"
 
 #include <QCommandLineParser>
 #include <QFile>
@@ -9,7 +9,7 @@
 #include <QTimer>
 #include <QDate>
 
-#if T_UI_Conf == T_UI_GUI
+#if T_GUI
 #include <QApplication>
 #include <QDialog>
 #endif
@@ -29,12 +29,12 @@ enum class Opt{
 	ShwSyn,//dbg
 	ShwTok,//dbg
 	Prompt,//mode
-#if IS_GUI_APP
+#if T_GUI
 	Edtr,//edtr
 #endif
 	Src
 };
-#if T_UI_Conf == T_UI_GUI
+#if T_GUI
 class SrcEdit : public QDialog {
 	Q_OBJECT
 
@@ -63,7 +63,7 @@ public:
 		return editor->toPlainText();
 	}
 };
-#elif T_UI_Conf == T_UI_CLI
+#elif T_CLI
 class MerePrompt{
 	private:
 		std::string prompt	= " >> ";// The prompt
@@ -123,9 +123,9 @@ class MerePrompt{
 							cin.get();
 						}
 						else if (temp == ".clear"){
-#if T_UNDER_PF(T_PF_OSX)
+#if T_OSX
 							system("clear");
-#elif T_UNDER_PF(T_PF_WIN)
+#elif T_WIN32
 							system("cls");
 #endif
 						}
@@ -207,7 +207,7 @@ class MereCmder{
 				parser.addVersionOption();
 				QCommandLineOption mode_opt({"mode","m"},"The output mode","mode","exec");//handled
 				QCommandLineOption dbg_opt({"dbg","d"},"The debugging tools.","tool-name");//handled
-#if IS_GUI_APP
+#if T_GUI
 				QCommandLineOption edtr_opt({"editor","edtr","e"},"Opens the inbuilt editor.");//handled
 #endif
 				QCommandLineOption ff_opt({"file","f"},"File input.","filename");//handled
@@ -215,7 +215,7 @@ class MereCmder{
 				parser.addOptions({
 									  mode_opt,
 									  dbg_opt,
-					  #if IS_GUI_APP
+					  #if T_GUI
 									  edtr_opt,
 					  #endif
 									  ff_opt,
@@ -287,7 +287,7 @@ class MereCmder{
 				switch(h(parser.value("mode").toStdString().c_str())){
 					case h("exec"):
 						set(Opt::Exc);
-#if IS_GUI_APP
+#if T_GUI
 						if (parser.isSet("editor")){
 							set(Opt::Edtr);
 						} else
@@ -298,7 +298,7 @@ class MereCmder{
 						else if (parser.isSet("src")){
 							set(Opt::Src);
 						}
-#if IS_GUI_APP
+#if T_GUI
 						else {
 							set(Opt::Edtr);
 						}
@@ -326,7 +326,7 @@ class MereCmder{
 			bool tok = test(Opt::ShwTok), syn = test(Opt::ShwSyn);
 			if (test(Opt::Exc)) {
 				TString source = "";
-#if IS_GUI_APP
+#if T_GUI
 				if (test(Opt::Edtr)) {
 					SrcEdit* edt = new SrcEdit;
 					edt->exec();

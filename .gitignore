@@ -47,7 +47,6 @@ Thumbs.db
 moc_*.*
 *_plugin_import.*
 .qmake.stash
-build-*/
 
 # MSVS #
 ########
@@ -62,3 +61,13 @@ x32/
 *.cbt
 *.sln
 *.pdb
+
+# build #
+#########
+build/*.h
+build/*.cpp
+
+# Other #
+#########
+*.make
+Makefile
