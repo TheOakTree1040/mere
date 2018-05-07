@@ -1,10 +1,12 @@
 #ifndef MERE_MATH_H
 #define MERE_MATH_H
 
+#include "config.hpp"
+
 #include <QFile>
 #include <QVector>
 
-#if IS_GUI_APP
+#if T_GUI
 #include <QMessageBox>
 #include <QWidget>
 #include <QTextEdit>

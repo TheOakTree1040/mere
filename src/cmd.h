@@ -8,6 +8,7 @@
 #include <QTextStream>
 #include <QTimer>
 #include <QDate>
+#include <QStringList>
 
 #if T_GUI
 #include <QApplication>
@@ -63,7 +64,7 @@ public:
 		return editor->toPlainText();
 	}
 };
-#elif T_CLI
+#endif
 class MerePrompt{
 	private:
 		std::string prompt	= " >> ";// The prompt
@@ -74,7 +75,7 @@ class MerePrompt{
 		bool print_prompt	= true	;// whether to print the prompt
 		bool syn			= false	;// whether to show the syntax tree
 		bool tok			= false	;// whether to show the token
-		bool single			= true	;// whether single or multiline code is expected
+		bool single			= false	;// whether single or multiline code is expected
 		bool lines			= false	;// whether to print extra lines before and after code execution
 		bool calc			= false	;// calculator mode
 
@@ -158,10 +159,10 @@ class MerePrompt{
 							prompt = temp;
 						}
 						else if (temp == ".syn"){
-							cout << "  > syn = " << (syn = !syn) << "";
+							cout << "  > syn = " << (syn = !syn) << "\n";
 						}
 						else if (temp == ".tok"){
-							tok = !tok;
+							cout << "  > tok = " << (tok = !tok) << "\n";
 						}
 						else if	(temp == ".quit" || temp == ".exit") return;
 						else {
@@ -190,7 +191,6 @@ class MerePrompt{
 		}
 };
 
-#endif
 class MereCmder{
 		Options options = 0;
 		static QCommandLineParser parser;
@@ -231,11 +231,11 @@ class MereCmder{
 		static constexpr qulonglong
 		h(const char* string)
 		{
-			qulonglong hash = 0xEEF8UL;
+			qulonglong hash = 0xA8UL;
 			while (*string)
 			{
 				hash ^= (qulonglong)(*string++);
-				hash *= 0x8C17UL;
+				hash *= 0x3C17UL;
 			}
 
 			return hash;
@@ -261,21 +261,29 @@ class MereCmder{
         bool execute(){
 			LFn;
 			_init();
+			Log1("Before processing");
 			parser.process(App::arguments());
+			Log1("After processing");
 			if (parser.unknownOptionNames().size()){
 				LVd;
 				parser.showHelp(EXIT_FAILURE);
 			}
+			Log1("1");
 			if (parser.isSet("mode")){
+				Log1("In mode");
 				if (parser.isSet("dbg")){
-					QStringList values = parser.values("dbg");
-					for (int i = values.size(); i != 0; i--){
-						switch(h(parser.value("ui").toStdString().c_str())){
-							case h("tok"):
+					Log1("In dbg");
+					QStringList tools({"tok","tree","syn"});
+					QStringList opts = parser.values("dbg");
+					Log1("Parsing");
+					for (int i = 0; i != opts.size(); i++){
+						Log1("Checking");
+						switch(tools.indexOf(opts[i])){
+							case 0:
 								set(Opt::ShwTok);
 								break;
-							case h("tree"):
-							case h("syn"):
+							case 1:
+							case 2:
 								set(Opt::ShwSyn);
 								break;
 							default:
@@ -283,7 +291,9 @@ class MereCmder{
 								parser.showHelp(EXIT_FAILURE);
 						}
 					}
+					Log1("End dbg");
 				}
+				Log1("Start mode");
 				switch(h(parser.value("mode").toStdString().c_str())){
 					case h("exec"):
 						set(Opt::Exc);
@@ -316,10 +326,16 @@ class MereCmder{
 						LVd;
 						parser.showHelp(EXIT_FAILURE);
 				}
+				Log1("End mode");
 			}
 			else {
+#if T_CLI
 				set(Opt::Prompt);
+#else
+				set(Opt::Edtr);
+#endif
 			}
+			Log1("Init bools.");
 			//execution
 
 			//setup

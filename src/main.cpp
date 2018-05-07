@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
 
 	MereCmder cmder;
 #if T_GUI
-	int r = cmder.execute()?a.exec():EXIT_SUCCESS;
+	int r = cmder.execute()?(a.quit(),a.exec()):EXIT_SUCCESS;
 #if _DEBUG
 	Log << "Exited main event loop";
 #endif //_DEBUG

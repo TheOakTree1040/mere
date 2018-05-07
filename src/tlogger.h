@@ -66,7 +66,7 @@ class TLogger{
 			noln = true;
 			return *this;
 		}
-		TLogger& begw(const TBuiltinString& str){
+		TLogger& begw(const TString& str){
 			st = str;
 			return *this;
 		}
