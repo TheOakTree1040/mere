@@ -414,15 +414,25 @@ Expr Parser::terms(){
 
 Expr Parser::term(){
 	LFn;
-	Expr expr = unary();
+	Expr expr = exponent();
 
 	while (match({Tok::slash,Tok::star})){
 		Token& op = prev();
-		Expr right = unary();
+		Expr right = exponent();
 		expr = BinExpr(expr,op,right);
 	}
 
 	LRet expr;
+}
+
+Expr Parser::exponent(){
+	Expr expr = unary();
+	while (match(Tok::caret)){
+		Token& op = prev();
+		Expr right = unary();
+		expr = BinExpr(expr,op,right);
+	}
+	return expr;
 }
 
 Expr Parser::unary(){
@@ -450,7 +460,7 @@ Expr Parser::unary(){
 		Expr right = expression(true);
 		LRet PrefxExpr(op,right);
 	}
-	Expr rval = exponent();
+	Expr rval = rvalue();
 	if		(!rval->is(ExprTy::VarAcsr				)){
 		LRet rval;
 	}
@@ -462,16 +472,6 @@ Expr Parser::unary(){
 	}
 
 	LRet rval;
-}
-
-Expr Parser::exponent(){
-	Expr expr = rvalue();
-	while (match(Tok::caret)){
-		Token& op = prev();
-		Expr right = rvalue();
-		expr = BinExpr(expr,op,right);
-	}
-	return expr;
 }
 
 Expr Parser::rvalue(){

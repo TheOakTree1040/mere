@@ -345,7 +345,7 @@ class Object{
 				case Ty::String:
 					return as<TString>();
 				case Ty::Real:
-					return TString::number(as<double>());
+					return TString::number(as<double>(),'g',10);
 				case Ty::Bool:
 					return as<bool>()?"true":"false";
 				case Ty::Null:
