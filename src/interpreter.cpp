@@ -29,13 +29,20 @@ Interpreter::Interpreter(){
 	    CHECK("cos",QVector<TString>{"real"});
 	    return Object(::cos(arguments[0].as<double>()));
     }).set_arity(1));
+	define_native_function("sqrt", MereCallable(CALLABLE{
+		Q_UNUSED(interpreter);
+		CHECK("sqrt",QVector<TString>{"real"});
+		return Object(::sqrt(arguments[0].as<double>()));
+	}).set_arity(1));
 	define_native_function("tan", MereCallable(CALLABLE{
 		Q_UNUSED(interpreter);
+		Q_UNUSED(arguments);
 	    CHECK("tan",QVector<TString>{"real"});
 	    return Object(::tan(arguments[0].as<double>()));
     }).set_arity(1));
 	define_native_function("clock", MereCallable(CALLABLE{
 		Q_UNUSED(interpreter);
+		Q_UNUSED(arguments);
 	    CHECK("clock", QVector<TString>{});
 		return Object(t_cast<double>(::clock()));
     }));

@@ -170,6 +170,8 @@ void Tokenizer::number() {
 	num.append(peek(-1)); // Retrieves the digit being advanced.
 	current--;
 	deprecate();
+
+	//base prediction
 	int base = 10;
 	if (num[0] == "0" && peek() != '.'){
 		base = 8;
@@ -186,6 +188,7 @@ void Tokenizer::number() {
 			base = 2;
 		}
 	}
+
 
 	while ((base == 10 && is_digit  (peek())) ||
 		   (base == 16 && is_base_16(peek())) ||
@@ -208,6 +211,7 @@ void Tokenizer::number() {
 		add_token(Tok::_real,
 				 Object(Trait("real"),num.toDouble()));
 		LVd;
+		return;
 	}
 	bool stat = false;
 	int n = num.toInt(&stat,base);

@@ -37,6 +37,8 @@ void EnvImpl::define(const TString& t, const Object& o)throw(RuntimeError){
 }
 Object& EnvImpl::access(const Token& t)throw(RuntimeError){
 	LFn;
+	Log1( "VARS = " + QStringList::fromStdList(values.keys().toStdList()).join(QString(", ")));
+	Log1("ACCESSING " + t.lexeme);
 	if (values.contains(t.lexeme)){
 		LRet values[t.lexeme];
 	}
