@@ -25,10 +25,12 @@ Ty Trait::type_of(const TString& str){
 	return Ty::Struct;
 }
 void Object::delete_ptr(){
+	LFn;
     if (trait().is_data() && m_ptr){
 		delete m_ptr;
     }
     m_ptr = nullptr;
+	LVd;
 }
 
 Object& Object::fn_init(){

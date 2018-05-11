@@ -411,7 +411,9 @@ QHash<TString, Tok> Tokenizer::keywords{
 	{"var"		,	Tok::_var		},
 	{"null"		,	Tok::_null		},
 	{"print"	,	Tok::_print		},
-	{"fn"		,	Tok::_fn		}
+	{"fn"		,	Tok::_fn		},
+	{"match"	,	Tok::_match		},
+	{"matches"	,	Tok::_matches	}
 };
 
 QHash<QChar,QChar> Tokenizer::escaped{

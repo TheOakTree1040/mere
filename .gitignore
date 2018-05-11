@@ -67,6 +67,10 @@ x32/
 build/*.h
 build/*.cpp
 
+# VS Code #
+.vscode
+*.o-*
+
 # Other #
 #########
 *.make

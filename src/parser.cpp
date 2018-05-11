@@ -147,6 +147,9 @@ Stmt Parser::stmt(bool expected_block){
 		else if (match(Tok::_assert	)){
 			s = assert_stmt();
 		}
+		else if (match(Tok::_match	)){
+			s = match_stmt();
+		}
 		else {
 			s = (peek().ty == Tok::dollar && peek(1).ty == Tok::l_brace)?block(true):decl_stmt();
 		}
@@ -208,13 +211,35 @@ Stmt Parser::var_decl_stmt(bool eaten){
 
 Stmt Parser::if_stmt(){
 	LFn;
-	Expr condit = expression();
+	Expr expr = expression();
+	if (match(Tok::_matches))
+		LRet finish_match(expr);
 	Stmt i_blk = stmt(true);
 	Stmt e_blk = nullptr;
 	if (match(Tok::_else)){
 		e_blk = stmt(true);
 	}
-	LRet IfStmt(condit,i_blk,e_blk);
+	LRet IfStmt(expr,i_blk,e_blk);
+}
+
+Stmt Parser::match_stmt(){
+	LFn;
+	LRet finish_match(expression());
+}
+
+Stmt Parser::finish_match(Expr m){
+	LFn;
+	expect(Tok::l_brace, "Expected a '{' [match_lbrace]");
+	Expr e = nullptr; // branch temp
+	Stmt s = nullptr; // "   ""    "
+	QVector<Branch*> br;
+	while(!check(Tok::r_brace)){
+		e = match(Tok::star)?LitExpr(Object()):expression(); // * (wildcard) -> void literal, else call expression()
+		s = match(Tok::colon)?stmt():block(); // : -> one stmt, else call block()
+		br.push_back(new Branch(e,s)); // create a branch
+	}
+	expect(Tok::r_brace, "Expected a '}' [match_rbrace]");
+	LRet MatchStmt(m,br);
 }
 
 Stmt Parser::while_stmt(){

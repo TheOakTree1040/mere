@@ -5,6 +5,7 @@ StmtImpl::StmtImpl(){
 }
 
 StmtImpl::~StmtImpl(){
+	LFn;
 	switch(ty){
 		case StmtTy::Assert:
 			delete assertion;
@@ -25,17 +26,23 @@ StmtImpl::~StmtImpl(){
 			delete condition;
 			break;
 		case StmtTy::Block:
-			for (int i = block->size() - 1; i >= 0; i--)
-				delete block->takeAt(i);
-			delete block;
+			if (block){
+				for (int i = block->size() - 1; i >= 0; i--)
+					delete block->takeAt(i);
+				delete block;
+			}
 			break;
 		case StmtTy::Function:
-			for (int i = fn_params->size() - 1; i >= 0; i--)
-				delete fn_params->takeAt(i);
-			delete fn_params;
-			for (int i = fn_body->size() - 1; i >= 0; i--)
-				delete fn_body->takeAt(i);
-			delete fn_body;
+			if (fn_params){
+				for (int i = fn_params->size() - 1; i >= 0; i--)
+					delete fn_params->takeAt(i);
+				delete fn_params;
+			}
+			if (fn_body){
+				for (int i = fn_body->size() - 1; i >= 0; i--)
+					delete fn_body->takeAt(i);
+				delete fn_body;
+			}
 			delete fn_name;
 			break;
 		case StmtTy::While:
@@ -50,5 +57,15 @@ StmtImpl::~StmtImpl(){
 			break;
 		case StmtTy::Invalid:
 			break;
+		case StmtTy::Match:
+			delete match;
+			if (branches){
+				for (int i = branches->size() - 1; i >= 0; i--){
+					delete branches->takeAt(i);
+				}
+				delete branches;
+			}
+			break;
 	}
+	LVd;
 }

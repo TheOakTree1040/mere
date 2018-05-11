@@ -12,8 +12,12 @@ enum class StmtTy{
 	Print,
 	Function,
 	Return,
-	Assert
+	Assert,
+	Match
 };
+
+//For MatchStmt
+struct Branch;
 
 #define SIPtr StmtImpl*
 
@@ -51,6 +55,10 @@ class StmtImpl final
 					Expr assertion;
 					int code;
 					TString* msg;
+			};
+			struct{//match
+					Expr match;
+					QVector<Branch*>* branches;
 			};
 			bool _inv;
 			bool empty;
@@ -145,6 +153,14 @@ class StmtImpl final
 			return ptr;
 		}
 
+		static SIPtr match_stmt(Expr m, const QVector<Branch*>& b){
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::Match;
+			ptr->match = m;
+			ptr->branches = new QVector<Branch*>(b);
+			return ptr;
+		}
+
 		StmtTy type(){
 			return ty;
 		}
@@ -159,6 +175,18 @@ class StmtImpl final
 typedef SIPtr Stmt;
 typedef QVector<Stmt> Stmts;
 
+struct Branch {
+	   Expr expr;
+	   Stmt stmt;
+	   Branch(Expr ex, Stmt st):expr(ex),stmt(st){}
+	   ~Branch(){
+		   LFn;
+		   delete expr;
+		   delete stmt;
+		   LVd;
+	   }
+};
+
 #define ExprStmt	StmtImpl::expr_stmt
 #define VarDeclStmt	StmtImpl::var_decl_stmt
 #define NullStmt	StmtImpl::null_stmt
@@ -169,5 +197,6 @@ typedef QVector<Stmt> Stmts;
 #define FnStmt		StmtImpl::fn_decl_stmt
 #define RetStmt		StmtImpl::ret_stmt
 #define AssertStmt	StmtImpl::assert_stmt
+#define MatchStmt	StmtImpl::match_stmt
 
 #endif // STMT_H

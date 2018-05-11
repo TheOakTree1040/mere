@@ -28,13 +28,13 @@ class Interpreter final{
 		EnvImpl* environment = globals;
 
 	public:
-		Interpreter();
+		Interpreter	();
 		~Interpreter();
 
 		void reset(Environment=new EnvImpl());
 
 		Environment global();
-
+	public:
 		Object eval_group	(Expr,bool);
 		Object eval_lit		(Expr,bool);
 		Object eval_binary	(Expr,bool);
@@ -45,7 +45,6 @@ class Interpreter final{
 		Object eval_asgn	(Expr,bool);
 		Object eval_refer	(Expr,bool);
 		Object eval_call	(Expr,bool);
-		Object evaluate		(Expr,bool);
 
 		void exec_expr		(Stmt,bool);
 		void exec_print		(Stmt,bool);
@@ -57,7 +56,10 @@ class Interpreter final{
 		void exec_fn_decl	(Stmt,bool);
 		void exec_ret		(Stmt,bool);
 		void exec_assert	(Stmt,bool);
+		void exec_match		(Stmt,bool);
 		void execute		(Stmt,bool);
+	public:
+		Object evaluate		(Expr,bool);
 		bool interpret		(Stmts);
 
 };
