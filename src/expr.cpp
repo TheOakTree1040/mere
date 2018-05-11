@@ -2,6 +2,7 @@
 #include "stmt.h"
 #include "merecallable.h"
 ExprImpl::~ExprImpl(){
+	LFn;
 	switch(this->ty){
 		case ExprTy::Logical:
 		case ExprTy::Binary:
@@ -75,4 +76,5 @@ ExprImpl::~ExprImpl(){
 		//case ExprTy::MemAccessor:
 
 	}
+	LVd;
 }

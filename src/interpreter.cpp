@@ -17,6 +17,7 @@
 
 #define GOTO_OP_ASGN(TOK) right_val_op = TOK; goto RET_OP_ASGN;
 #define define_native_function(NAME,NAT) globals->define(NAME,Object(Trait("function").as_fn(),Var::fromValue(NAT)))
+#define clean_up if(dd)
 Interpreter::Interpreter(){
     LFn;
 	define_native_function("sin", MereCallable(CALLABLE{
@@ -58,7 +59,7 @@ Interpreter::Interpreter(){
 Object Interpreter::eval_pstfx(Expr expr, bool dd){
 	LFn;
 	Expr rex = expr->expr;
-	if (dd){
+	clean_up{
 		expr->expr = nullptr;
 	}
 	Object r = evaluate(rex,dd);
@@ -88,7 +89,7 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 	LFn;
 	Expr ex = expr->expr;
 	Token* tptr = expr->op;
-	if (dd){
+	clean_up{
 		expr->expr = nullptr;
 	}
 	Object r = evaluate(ex, dd);
@@ -135,7 +136,7 @@ Object Interpreter::eval_lit(Expr expr, bool){
 Object Interpreter::eval_group(Expr expr, bool dd){
 	LFn;
 	Expr group = expr->expr;
-	if (dd){
+	clean_up{
 		expr->expr = nullptr;
 	}
 	LRet evaluate(group,dd);
@@ -144,7 +145,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 	LFn;
 	Expr ex = expr->expr;
 	Expr rex = expr->right;
-	if (dd){
+	clean_up{
 		expr->expr = nullptr;
 		expr->right = nullptr;
 	}
@@ -221,7 +222,7 @@ Object Interpreter::eval_logical(Expr expr, bool dd){
 	LFn;
 	Expr ex = expr->expr;
 	Tok ty = expr->op->ty;
-	if (dd){
+	clean_up{
 		expr->expr = nullptr;
 	}
 	Object l = evaluate(ex, dd);
@@ -234,7 +235,7 @@ Object Interpreter::eval_logical(Expr expr, bool dd){
 		LRet l;
 	}
 	Expr rex = expr->right;
-	if (dd){
+	clean_up{
 		expr->right = nullptr;
 	}
 	Object r = evaluate(rex,dd);
@@ -253,7 +254,7 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 	Tok ty = expr->asgn_op->ty;
 	int ln = (expr->asgn_op->ln);
 	Token op(*(expr->asgn_op));
-	if (dd){
+	clean_up{
 		expr->asgn_left = nullptr;
 		expr->asgn_right = nullptr;
 	}
@@ -293,7 +294,7 @@ Object Interpreter::eval_refer(Expr expr, bool dd){
 	LFn;
 	Expr refl = expr->refer_left;
 	Expr refr = expr->refer_right;
-	if (dd){
+	clean_up{
 		expr->refer_right = nullptr;
 		expr->refer_left = nullptr;
 	}
@@ -317,7 +318,7 @@ Object Interpreter::eval_call(Expr expr, bool dd){
         o = evaluate(expr->arguments->at(i),dd);
         args[i] = o;
 	}
-	if (dd){
+	clean_up{
 		expr->callee = nullptr;
 		expr->arguments->clear();
 	}
@@ -380,7 +381,7 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 			delete expr;//not checking do_del 'cause when an error is thrown, it will be del'd by dtor
 			LThw re;
 		}
-		if (dd){
+		clean_up{
 			delete expr;
 		}
 
@@ -391,7 +392,7 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 void Interpreter::exec_expr(Stmt stmt, bool dd){
 	LFn;
 	Expr ex = stmt->expr;
-	if (dd){
+	clean_up{
 		stmt->expr = nullptr;
 	}
 	evaluate(ex,dd);
@@ -400,7 +401,7 @@ void Interpreter::exec_expr(Stmt stmt, bool dd){
 void Interpreter::exec_print(Stmt stmt, bool dd){
 	LFn;
 	Expr ex = stmt->expr;
-	if (dd){
+	clean_up{
 		stmt->expr = nullptr;
 	}
 	Object obj = evaluate(ex,dd);
@@ -419,19 +420,19 @@ void Interpreter::exec_print(Stmt stmt, bool dd){
 void Interpreter::exec_if(Stmt stmt, bool dd){
 	LFn;
 	Expr cond = stmt->condition;
-	if (dd){
+	clean_up{
 		stmt->condition = nullptr;
 	}
 	if (evaluate(cond,dd).to_bool()){
 		Stmt i_blk = stmt->if_block;
-		if (dd){
+		clean_up{
 			stmt->if_block = nullptr;
 		}
 		execute(i_blk,dd);
 	}
 	else if (stmt->else_block){
 		Stmt e_blk = stmt->else_block;
-		if (dd){
+		clean_up{
 			stmt->else_block = nullptr;
 		}
 		execute(e_blk,dd);
@@ -465,7 +466,7 @@ void Interpreter::exec_while(Stmt stmt, bool){
 void Interpreter::exec_var_decl(Stmt stmt, bool dd){
 	LFn;
 	Expr expr = stmt->init;
-	if (dd){
+	clean_up{
 		stmt->init = nullptr;
     }
 	environment->define(*(stmt->var_name),evaluate(expr,dd));
@@ -487,8 +488,9 @@ void Interpreter::exec_assert(Stmt stmt, bool dd){
 	LFn;
 	Expr assertion = stmt->assertion;
 	TString msg = *(stmt->msg);
-	if (dd){
+	clean_up{
 		stmt->assertion = nullptr;
+		delete stmt->msg;
 		stmt->msg = nullptr;
 	}
 	if (!evaluate(assertion,dd).to_bool()){
@@ -496,7 +498,51 @@ void Interpreter::exec_assert(Stmt stmt, bool dd){
 	}
 	LVd;
 }
-
+void Interpreter::exec_match(Stmt stmt, bool dd){
+	LFn;
+	Object match = evaluate(stmt->match,dd);
+	QVector<Branch*>* br = stmt->branches;
+	int size = br->size();
+	Log1("1");
+	clean_up{
+		stmt->match = nullptr;
+		stmt->branches = nullptr;
+	}
+	Log1("2");
+	int i = 0;
+	for ( ; i != size; i++){
+		Branch* current = (*br)[i];
+		Object case_ = evaluate(current->expr,dd);
+		Log1("3");
+		if (match.match(case_)){
+			execute(current->stmt,dd);
+			Log1("4");
+			clean_up{
+				current->expr = nullptr;
+				current->stmt = nullptr;
+			}
+			break;
+		}
+		Log1("a");
+		clean_up{
+			current->expr = nullptr;
+			current->stmt = nullptr;
+			Log1("b");
+			delete current;
+		}
+	}
+	Log1("c");
+	clean_up{
+		for (int k = i; k < size; k++){
+			delete (*br)[k];
+		}
+		Log1("d");
+		br->clear();
+		delete br;
+	}
+	stmt->type();
+	LVd;
+}
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
 #if _DEBUG
@@ -532,14 +578,20 @@ void Interpreter::execute(Stmt stmt, bool dd){
 					break;
 				case StmtTy::Assert:
 					exec_assert(stmt,dd);
+					break;
+				case StmtTy::Match:
+					exec_match(stmt,dd);
+					Log1("e");
+					break;
 				default:;
 			}
 		} catch(RuntimeError& re){
 			delete stmt;//Same thing applies here (check out interpret(Expr))
 			LThw re;
 		}
-		if (dd){
+		clean_up{
 			delete stmt;
+			Log1("f");
 		}
 
 	}
@@ -548,6 +600,7 @@ void Interpreter::execute(Stmt stmt, bool dd){
 
 bool Interpreter::interpret(Stmts stmts){
 	LFn;
+
 	try{
 		int sz = stmts.size();
 		for (int i = 0; i != sz; i++){
@@ -555,6 +608,7 @@ bool Interpreter::interpret(Stmts stmts){
 		}
 		LRet true;
 	}
+
 	catch(RuntimeError& re){
 		MereMath::runtime_error(re);
 	}

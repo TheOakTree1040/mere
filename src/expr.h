@@ -1,6 +1,6 @@
 #ifndef EXPR_H
 #define EXPR_H
-#include <QSharedPointer>
+
 #include <QVariant>
 #include <QVector>
 

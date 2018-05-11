@@ -432,6 +432,12 @@ class Object{
 
 		Object& fn_init();
 
+		bool match(const Object& other){
+			if (other.trait().is("void"))
+				return true;
+			return data() == other.data();
+		}
+
 		bool operator==(const Object& other) const {
 			return trait().has_type_of(other.trait()) && data() == other.data();
 		}
@@ -439,11 +445,12 @@ class Object{
 			return trait().has_type_of(other.trait()) && data() == other.data();
 		}
 		bool operator>(const Object& other) const {
-			return trait().is_number()&&other.trait().is_number()?
+			return trait().is_number() && other.trait().is_number()?
 				as<double>() > other.as<double>():false;
 		}
 		bool operator<(const Object& other) const {
-			return other > *this;
+			return trait().is_number() && other.trait().is_number()?
+				as<double>() < other.as<double>():false;
 		}
 };
 

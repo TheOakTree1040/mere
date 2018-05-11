@@ -1,4 +1,4 @@
-//t_gen - 180508
+//t_gen - 180510
 #ifndef T_SPECS
 #define T_SPECS
 #if _DEBUG
@@ -22,7 +22,7 @@ typedef QString TString;
 #define AUTHOR ("TheOakCode")
 #define EMAIL ("theoaktree1040@gmail.com")
 #define DESCRIPTION ("An interpreter for the scripting language Mere.")
-#define BUILD ("2 (180508)")
+#define BUILD ("3 (180510)")
 #define App QCoreApplication
 #include <iostream>
 #endif // T_SPECS

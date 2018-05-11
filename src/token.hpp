@@ -35,7 +35,7 @@ enum class Tok{
 	_return, _true, _false, _do,
 	_while, _case, _switch, _break,
 	_default, _array, _set,
-	_enum, _assert, _define, _var, _null, _print, _fn,
+	_enum, _assert, _define, _var, _null, _print, _fn, _match, _matches,
 
 	_eof_
 };
@@ -105,7 +105,7 @@ class Token{
 		}
 
 		TString to_string() {
-			TString str("[Tok ");
+			TString str("[ Tok ");
 			str.append(TString::number(static_cast<int>(ty)));
 			if (literal->trait().is("real"))
 				str.append(" : ").append(TString::number(literal->data().toDouble()));
