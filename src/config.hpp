@@ -1,9 +1,7 @@
 //t_gen - 180510
 #ifndef T_SPECS
 #define T_SPECS
-#if _DEBUG
-#undef _DEBUG
-#endif
+#define T_DBG 0
 #define T_QT 1
 #define T_OSX 1
 #ifndef __GNUC__

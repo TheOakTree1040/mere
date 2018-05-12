@@ -24,8 +24,8 @@
 /// @brief It interprets statements given by the parser.
 class Interpreter final{
 	private:
-		EnvImpl* globals = new EnvImpl();
-		EnvImpl* environment = globals;
+		Environment globals = new EnvImpl();
+		Environment environment = globals;
 
 	public:
 		Interpreter	();
@@ -48,6 +48,7 @@ class Interpreter final{
 
 		void exec_expr		(Stmt,bool);
 		void exec_print		(Stmt,bool);
+		void exec_println	(Stmt,bool);
 		void exec_if		(Stmt,bool);
 		void exec_block		(Stmt,bool,Environment=nullptr);
 		void exec_block		(QVector<Stmt>*,bool,Environment=nullptr);

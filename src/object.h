@@ -229,7 +229,7 @@ class Object{
 		m_ptr(VPTR_INIT),
 		m_onstack(*this),
 		m_trait(){
-#if _DEBUG
+#if T_DBG
             Log << "OBJ_DEFLT_CTOR";
 #endif
 		}
@@ -238,7 +238,7 @@ class Object{
 		m_ptr(o.trait().is_data()?new Var(o.data()):o.ptr()),
 		m_onstack(o.trait().is_ref()?o.m_onstack.get():*this),
 		m_trait(o.m_trait){
-#if _DEBUG
+#if T_DBG
 			Log << "OBJECT CTOR DATA:" << to_string();
 #endif
 		}

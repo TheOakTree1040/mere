@@ -22,13 +22,13 @@ class ASTPrinter final{
 			LFn;
 			for (int i = 0; i != stmts.size(); i++)
 				print(0,stmts[i]);
-#if _DEBUG
+#if T_DBG
 			Log << "end ASTPrinter()";
 #endif
 		}
 
 		TString AST(){
-#if _DEBUG
+#if T_DBG
 			Log << "Getting AST";
 #endif
 			return text;

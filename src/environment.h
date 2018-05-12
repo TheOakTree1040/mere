@@ -18,10 +18,10 @@ class EnvImpl final
 	public:
 		EnvImpl();
 		EnvImpl(EnvPtr);
-		void define(const Token&, const Object&)throw(RuntimeError);
-		void define(const TString&, const Object&)throw(RuntimeError);
-		Object& access(const Token&)throw(RuntimeError);
-		Object& assign(const Token&, const Object&)throw(RuntimeError);
+		void define(const Token&, const Object&);
+		void define(const TString&, const Object&);
+		Object& access(const Token&);
+		Object& assign(const Token&, const Object&);
 };
 typedef EnvPtr Environment;
 #endif // ENVIRONMENT_H

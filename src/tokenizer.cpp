@@ -3,13 +3,13 @@
 #include "tlogger.h"
 Tokenizer::Tokenizer(const TString& src):source(src)
 {
-#if _DEBUG
+#if T_DBG
 	Log << "Source: " << source;
 	TLogHelper::indent();
 #endif
 }
 Tokenizer::~Tokenizer(){
-#if _DEBUG
+#if T_DBG
 	TLogHelper::outdent();
 	Log << "~Tokenizer()";
 #endif
@@ -20,7 +20,7 @@ bool Tokenizer::is_at_end(){
 }
 
 char Tokenizer::advance(){
-#if _DEBUG
+#if T_DBG
 	Log << "  adv:" << TString::number(current);
 	Log << "      " << peek();
 #endif
@@ -34,7 +34,7 @@ void Tokenizer::add_token(Tok ty){
 void Tokenizer::add_token(Tok ty, const Object& lit){
 	LFn;
 	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
-#if _DEBUG
+#if T_DBG
 	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
 	Log << "             Type  :" << (int)tokens.last().ty;
 #endif
@@ -217,7 +217,7 @@ void Tokenizer::number() {
 	int n = num.toInt(&stat,base);
 	add_token(Tok::_real,
 			 Object(Trait("real"),n));
-#if _DEBUG
+#if T_DBG
 	Log << "  Numeral: String:" << num;
 	Log << "           Number:" << n;
 #endif
@@ -274,7 +274,7 @@ void Tokenizer::raw_string(){
 void Tokenizer::scan_token(){
 	LFn;
 	char c = advance();
-#if _DEBUG
+#if T_DBG
 	Log << c;
 #endif
 	switch (c) {
@@ -411,6 +411,7 @@ QHash<TString, Tok> Tokenizer::keywords{
 	{"var"		,	Tok::_var		},
 	{"null"		,	Tok::_null		},
 	{"print"	,	Tok::_print		},
+	{"println"	,	Tok::_println	},
 	{"fn"		,	Tok::_fn		},
 	{"match"	,	Tok::_match		},
 	{"matches"	,	Tok::_matches	}

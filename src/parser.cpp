@@ -6,13 +6,13 @@
 #include <QVector>
 
 Parser::Parser(QVector<Token>& toks):tokens(toks){
-#if _DEBUG
+#if T_DBG
 	Log << "Parser()";
 	TLogHelper::indent();
 #endif
 }
 Parser::~Parser(){
-#if _DEBUG
+#if T_DBG
 	TLogHelper::reset();
 	TLogHelper::outdent();
 #endif
@@ -70,7 +70,7 @@ Token& Parser::prev(){
 
 Token& Parser::advance(){
 	if (!is_at_end()){
-#if _DEBUG
+#if T_DBG
 		Log << "adv: Type" << (int)peek().ty;
 #endif
 		current++;
@@ -78,9 +78,9 @@ Token& Parser::advance(){
 	return prev();
 }
 
-Token& Parser::expect(Tok ty, const TString& errmsg) throw(ParseError){
+Token& Parser::expect(Tok ty, const TString& errmsg){
 	LFn;
-#if _DEBUG
+#if T_DBG
 	Log << "Checking" << errmsg << TString::number(static_cast<int>(ty));
 	Log << TString::number(static_cast<int>(peek().ty));
 #endif
@@ -136,7 +136,11 @@ Stmt Parser::stmt(bool expected_block){
 		}
 		else if (match(Tok::_print	)){
             s = PrintStmt(expression());
-			expect(Tok::semi_colon,"Expected a ';'.");
+			expect(Tok::semi_colon,"Expected a ';' [println_sc]");
+		}
+		else if (match(Tok::_println)) {
+			s = PrintlnStmt(expression());
+			expect(Tok::semi_colon, "Expected a ';' [println_sc]");
 		}
 		else if (match(Tok::_while	)){
 			s = while_stmt();
@@ -335,27 +339,17 @@ Stmt Parser::assert_stmt(){
 //expr
 Expr Parser::expression(bool disable){
 	LFn;
-	Expr exp = refer();//goto next precedence
+	Expr exp = conditional();//goto next precedence
 	if (!disable && check(Tok::comma)){
 		QVector<Expr> cex;
 		cex.append(exp);
 		while(match(Tok::comma)){
-			Expr expr = refer();//goto next precedence
+			Expr expr = conditional();//goto next precedence
 			cex.append(expr);
 		}
 		exp = CSExpr(cex);
 	}
 	LRet exp;
-}
-
-Expr Parser::refer(){
-	LFn;
-	Expr expr = conditional();
-	if (match(Tok::fat_arrow)){
-		Token& op = prev();
-		expr = RefExpr(expr, op, conditional());
-	}
-	LRet expr;
 }
 
 Expr Parser::conditional(){
@@ -439,14 +433,24 @@ Expr Parser::terms(){
 
 Expr Parser::term(){
 	LFn;
-	Expr expr = exponent();
+	Expr expr = refer();
 
 	while (match({Tok::slash,Tok::star})){
 		Token& op = prev();
-		Expr right = exponent();
+		Expr right = refer();
 		expr = BinExpr(expr,op,right);
 	}
 
+	LRet expr;
+}
+
+Expr Parser::refer() {
+	LFn;
+	Expr expr = exponent();
+	if (match(Tok::fat_arrow)) {
+		Token& op = prev();
+		expr = RefExpr(expr, op, conditional());
+	}
 	LRet expr;
 }
 
@@ -479,7 +483,7 @@ Expr Parser::unary(){
 		LRet PrefxExpr(op,right);
 	}
 	else if (peek().is_bin_op(						)){
-		Token& op = prev();
+		Token& op = advance();
 		MereMath::error(peek(),TString("Binary operator").append(op.lexeme).append(" used w/o left operand."));
 
 		Expr right = expression(true);
@@ -508,7 +512,7 @@ Expr Parser::rvalue(){
 	}
 	catch(ParseUnwind&){
 		current = tmp_curr;
-#if _DEBUG
+#if T_DBG
 		Log << (TString)"Unwinded@" + TString::number(current) << "Ty:" << (int)peek().ty;
 #endif
 		Expr e = primary();
@@ -539,7 +543,7 @@ Expr Parser::finish_call(Expr callee){
 		do {
 			arg = expression(true);
 			args.append(arg);
-#if _DEBUG
+#if T_DBG
 			Log << "FINISH_CALL_ARG_TY" << t_cast<int>(arg->type());
 #endif
 		} while (match(Tok::comma));
@@ -660,7 +664,7 @@ Expr Parser::array(){
 	LThw error(t,"Expected termination.");
 }
 
-Expr Parser::accessor(bool unwind) throw(ParseUnwind){
+Expr Parser::accessor(bool unwind){
     LFn;
 	if ((peek().ty!=Tok::identifier) && unwind){
 		LThw ParseUnwind();

@@ -20,7 +20,7 @@ class Parser
 		Token& peek			(int=0							);
 		Token& prev			(								);
 		Token& advance		(								);
-		Token& expect		(Tok, const TString&			) throw(ParseError);
+		Token& expect		(Tok, const TString&			);
 		//error-handling
 		ParseError error	(const Token&, const TString&	);
 		void synchronize	(								);
@@ -40,7 +40,6 @@ class Parser
 		Stmt finish_match	(Expr	);
 
 		Expr expression	(bool=F_);
-		Expr refer		(		);
 		Expr conditional(	    );
 		Expr logical_or	(		);
 		Expr logical_and(		);
@@ -48,6 +47,7 @@ class Parser
 		Expr comparison	(		);
 		Expr terms		(		);
 		Expr term		(		);
+		Expr refer		(		);
 		Expr unary		(		);
 		Expr exponent	(		);
 		Expr call		(		);
@@ -59,7 +59,7 @@ class Parser
 		Expr assoc		(		);
 		Expr map		(		);
 		Expr rvalue		(		);
-		Expr accessor	(bool=F_) throw(ParseUnwind);
+		Expr accessor	(bool=F_);
 		Expr group		(		);
 	public:
 		Parser		(QVector<Token>&);

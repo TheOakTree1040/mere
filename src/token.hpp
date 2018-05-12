@@ -10,9 +10,8 @@ enum class Tok{
 	comma, dot, semi_colon, scope, at_symbol, ques_mk, dollar,
 
 	//UnaryOp
-	incr, decr,
-	minus, plus, slash, star, colon,
-	amp, caret/* ^ */, mod, bang/* ! */, vert,
+	incr, decr,colon,
+	bang/* ! */,
 
 	//BinOp
 	arrow,
@@ -23,7 +22,8 @@ enum class Tok{
 	mod_asgn,
 	minus_asgn, plus_asgn, div_asgn,
 	mult_asgn, exp_asgn,
-	amp_asgn, vert_asgn,
+	amp_asgn, vert_asgn, amp, caret, mod, vert,
+	minus, plus, slash, star,
 
 	fat_arrow,
 
@@ -35,7 +35,7 @@ enum class Tok{
 	_return, _true, _false, _do,
 	_while, _case, _switch, _break,
 	_default, _array, _set,
-	_enum, _assert, _define, _var, _null, _print, _fn, _match, _matches,
+	_enum, _assert, _define, _var, _null, _print, _println, _fn, _match, _matches,
 
 	_eof_
 };
@@ -76,7 +76,7 @@ class Token{
 		Token(const Token& tok){
 			LFn;
 			ty = tok.ty;
-#if _DEBUG
+#if T_DBG
 			Log << (lexeme = tok.lexeme);
 #else
             lexeme = tok.lexeme;
@@ -90,7 +90,7 @@ class Token{
 		Token& operator=(const Token& tok){
 			LFn;
 			ty = tok.ty;
-#if _DEBUG
+#if T_DBG
 			Log << (lexeme = tok.lexeme);
 #else
 			lexeme = tok.lexeme;
@@ -123,7 +123,7 @@ class Token{
 
 		bool is_bin_op()const{
 			int i = static_cast<int>(ty);
-			return (int)Tok::arrow <= i && i <= (int)Tok::vert_asgn;
+			return (int)Tok::arrow <= i && i <= (int)Tok::fat_arrow;
 		}
 
 };

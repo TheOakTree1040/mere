@@ -180,7 +180,6 @@ class MerePrompt{
 						}
 					}
 				}
-				Log1(TString::fromStdString("Input: " + input));
 				if(calc)
 					input = "print (" + input + ");";
 				MereMath::run(TString::fromStdString(input),tok,syn);
@@ -231,11 +230,11 @@ class MereCmder{
 		static constexpr qulonglong
 		h(const char* string)
 		{
-			qulonglong hash = 0xA8UL;
+			qulonglong hash = 0xA8ULL;
 			while (*string)
 			{
-				hash ^= (qulonglong)(*string++);
-				hash *= 0x3C17UL;
+				hash ^= qulonglong(*string++);
+				hash *= qulonglong(0x3C17ULL);
 			}
 
 			return hash;
@@ -261,23 +260,16 @@ class MereCmder{
         bool execute(){
 			LFn;
 			_init();
-			Log1("Before processing");
 			parser.process(App::arguments());
-			Log1("After processing");
 			if (parser.unknownOptionNames().size()){
 				LVd;
 				parser.showHelp(EXIT_FAILURE);
 			}
-			Log1("1");
 			if (parser.isSet("mode")){
-				Log1("In mode");
 				if (parser.isSet("dbg")){
-					Log1("In dbg");
 					QStringList tools({"tok","tree","syn"});
 					QStringList opts = parser.values("dbg");
-					Log1("Parsing");
 					for (int i = 0; i != opts.size(); i++){
-						Log1("Checking");
 						switch(tools.indexOf(opts[i])){
 							case 0:
 								set(Opt::ShwTok);
@@ -291,9 +283,7 @@ class MereCmder{
 								parser.showHelp(EXIT_FAILURE);
 						}
 					}
-					Log1("End dbg");
 				}
-				Log1("Start mode");
 				switch(h(parser.value("mode").toStdString().c_str())){
 					case h("exec"):
 						set(Opt::Exc);
@@ -326,7 +316,6 @@ class MereCmder{
 						LVd;
 						parser.showHelp(EXIT_FAILURE);
 				}
-				Log1("End mode");
 			}
 			else {
 #if T_CLI
@@ -335,7 +324,6 @@ class MereCmder{
 				set(Opt::Edtr);
 #endif
 			}
-			Log1("Init bools.");
 			//execution
 
 			//setup

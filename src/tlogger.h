@@ -3,7 +3,7 @@
 #define T_LOGGER
 #include "config.hpp"
 
-#if _DEBUG
+#if T_DBG
 #if T_GUI
 #include <QDebug>
 #else
@@ -112,5 +112,5 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LThw	throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
 #define Log1(MSG)
-#endif // _DEBUG (else)
+#endif // T_DBG (else)
 #endif // T_LOGGER

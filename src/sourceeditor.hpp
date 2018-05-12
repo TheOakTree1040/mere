@@ -48,7 +48,7 @@ class SourceEditor : public QWidget{
 	public slots:
 		void exec_clicked(){
 			MereMath::run(editor->toPlainText(),chk_tok->isChecked(),chk_syn->isChecked());
-#if _DEBUG
+#if T_DBG
 			Log << "clicked";
 #endif
 		}

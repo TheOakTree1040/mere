@@ -9,8 +9,6 @@
 
 #if T_GUI
 #include <QMessageBox>
-#else
-
 #endif // T_UI_Conf == T_UI_GUI
 #include <ctime>
 #include <cmath>
@@ -336,7 +334,7 @@ Object Interpreter::eval_call(Expr expr, bool dd){
 	LRet mc->call(*this,args);
 }
 Object Interpreter::evaluate(Expr expr, bool dd){
-#if _DEBUG
+#if T_DBG
 	LFn << "Evaluating expr-" << TString::number((int)expr->type());
 #endif
 	Object o;
@@ -406,14 +404,33 @@ void Interpreter::exec_print(Stmt stmt, bool dd){
 	}
 	Object obj = evaluate(ex,dd);
     TString out = obj.to_string()
-              #if _DEBUG
+              #if T_DBG && T_GUI
                   + " : " + TString(obj.data().typeName())
               #endif
                   ;
 #if T_GUI
 	QMessageBox::information(nullptr,"Info",out);
 #else
-	std::cout << out.toStdString() << std::endl;
+	std::cout << out.toStdString();
+#endif // T_UI_Conf == T_UI_GUI
+	LVd;
+}
+void Interpreter::exec_println(Stmt stmt, bool dd) {
+	LFn;
+	Expr ex = stmt->expr;
+	clean_up{
+		stmt->expr = nullptr;
+	}
+	Object obj = evaluate(ex, dd);
+	TString out = obj.to_string()
+#if T_DBG
+		+ " : " + TString(obj.data().typeName())
+#endif
+		;
+#if T_GUI
+	QMessageBox::information(nullptr, "Info", out);
+#else
+	std::cout << (out + "\n").toStdString();
 #endif // T_UI_Conf == T_UI_GUI
 	LVd;
 }
@@ -503,40 +520,32 @@ void Interpreter::exec_match(Stmt stmt, bool dd){
 	Object match = evaluate(stmt->match,dd);
 	QVector<Branch*>* br = stmt->branches;
 	int size = br->size();
-	Log1("1");
 	clean_up{
 		stmt->match = nullptr;
 		stmt->branches = nullptr;
 	}
-	Log1("2");
 	int i = 0;
 	for ( ; i != size; i++){
 		Branch* current = (*br)[i];
 		Object case_ = evaluate(current->expr,dd);
-		Log1("3");
 		if (match.match(case_)){
 			execute(current->stmt,dd);
-			Log1("4");
 			clean_up{
 				current->expr = nullptr;
 				current->stmt = nullptr;
 			}
 			break;
 		}
-		Log1("a");
 		clean_up{
 			current->expr = nullptr;
 			current->stmt = nullptr;
-			Log1("b");
 			delete current;
 		}
 	}
-	Log1("c");
 	clean_up{
 		for (int k = i; k < size; k++){
 			delete (*br)[k];
 		}
-		Log1("d");
 		br->clear();
 		delete br;
 	}
@@ -545,7 +554,7 @@ void Interpreter::exec_match(Stmt stmt, bool dd){
 }
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
-#if _DEBUG
+#if T_DBG
 	Log << "Interpreting stmt" << t_cast<int>(stmt->type());
 #endif
 	if (stmt){
@@ -556,6 +565,9 @@ void Interpreter::execute(Stmt stmt, bool dd){
 					break;
 				case StmtTy::Print:
 					exec_print(stmt,dd);
+					break;
+				case StmtTy::Println:
+					exec_println(stmt, dd);
 					break;
 				case StmtTy::If:
 					exec_if(stmt,dd);
@@ -581,7 +593,6 @@ void Interpreter::execute(Stmt stmt, bool dd){
 					break;
 				case StmtTy::Match:
 					exec_match(stmt,dd);
-					Log1("e");
 					break;
 				default:;
 			}
@@ -591,7 +602,6 @@ void Interpreter::execute(Stmt stmt, bool dd){
 		}
 		clean_up{
 			delete stmt;
-			Log1("f");
 		}
 
 	}

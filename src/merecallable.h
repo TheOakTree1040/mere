@@ -89,13 +89,13 @@ class MereCallable{
 			LFn;
             if (is(Call::OnStack)){
 				if (is(Call::Reg)) {
-#if _DEBUG
+#if T_DBG
 					Log << "!!!==== DELETING M_FN ====!!!";
 #endif
 					delete m_fn;
 				}
 				else if (is(Call::Nat)) {
-#if _DEBUG
+#if T_DBG
 					Log << "!!!==== DELETING M_CL ====!!!";
 #endif
 					delete m_callable;

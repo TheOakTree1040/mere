@@ -39,14 +39,15 @@ Thumbs.db
 ############
 *.autosave
 
-#Qt Stuff#
-##########
+# Qt Stuff #
+############
 *.pro.user
 *.pro.user.*
 *.qmake.stash
 moc_*.*
 *_plugin_import.*
 .qmake.stash
+build-*/
 
 # MSVS #
 ########
@@ -62,16 +63,7 @@ x32/
 *.sln
 *.pdb
 
-# build #
-#########
-build/*.h
-build/*.cpp
-
-# VS Code #
-.vscode
-*.o-*
-
-# Other #
-#########
-*.make
-Makefile
+# Debugging #
+#############
+*-dbg
+*-dbg/

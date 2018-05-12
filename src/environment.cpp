@@ -3,13 +3,13 @@
 EnvImpl::EnvImpl():enclosing(nullptr)
 {}
 EnvImpl::EnvImpl(EnvPtr encl):enclosing(encl){}
-void EnvImpl::define(const Token& t, const Object& o)throw(RuntimeError){
+void EnvImpl::define(const Token& t, const Object& o){
 	LFn;
 	if (values.contains(t.lexeme)){
 		LThw RuntimeError(t,TString("Redefinion of variable '").
 						  append(t.lexeme).append("'."));
 	}
-#if _DEBUG
+#if T_DBG
     Log << "LEXEME SIZE" << t.lexeme.size();
     Log << "LEXEME CONT" << t.lexeme;
 #endif
@@ -21,7 +21,7 @@ void EnvImpl::define(const Token& t, const Object& o)throw(RuntimeError){
 	obj.fn_init();
 	LVd;
 }
-void EnvImpl::define(const TString& t, const Object& o)throw(RuntimeError){
+void EnvImpl::define(const TString& t, const Object& o){
 	LFn;
 	if (values.contains(t)){
 		LThw RuntimeError(Token(Tok::identifier,t,Object(),-1),TString("Redefinion of symbol '").
@@ -35,7 +35,7 @@ void EnvImpl::define(const TString& t, const Object& o)throw(RuntimeError){
 	obj.fn_init();
 	LVd;
 }
-Object& EnvImpl::access(const Token& t)throw(RuntimeError){
+Object& EnvImpl::access(const Token& t){
 	LFn;
 	Log1( "VARS = " + QStringList::fromStdList(values.keys().toStdList()).join(QString(", ")));
 	Log1("ACCESSING " + t.lexeme);
@@ -48,8 +48,8 @@ Object& EnvImpl::access(const Token& t)throw(RuntimeError){
 	LThw RuntimeError(t,TString("Variable '").append(t.lexeme).append("' undefined."));
 }
 
-Object& EnvImpl::assign(const Token& t, const Object& o)throw(RuntimeError){
-#if _DEBUG
+Object& EnvImpl::assign(const Token& t, const Object& o){
+#if T_DBG
 	LFn << t.lexeme << "at ln" << t.ln ;
 #endif
 	if (values.contains(t.lexeme)){

@@ -33,7 +33,7 @@ void MereMath::init_once(){
 #else
 		std::cout << "  > Fatal Internal Error: Failed to register Object comparators\n";
 #endif
-#if _DEBUG
+#if T_DBG
         Log << "Failed registering comparators.";
 #endif
 		abort();
@@ -78,7 +78,6 @@ bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 
 	if (show_syn){
 #if T_GUI
-		Log1("Showing Syntax tree");
 		TString str = ASTPrinter(stmts).AST();
 		QWidget* wnd = new QWidget();
 		QTextEdit* edt = new QTextEdit();
@@ -104,7 +103,7 @@ bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 	auto res = interpreter->interpret(stmts);
 
 	errors.clear();
-#if _DEBUG
+#if T_DBG
 	Log << "End of run";
 #endif
 	return res;

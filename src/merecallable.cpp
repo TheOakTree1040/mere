@@ -18,7 +18,7 @@ Object MereCallable::call(Interpreter& interpreter, QVector<Object>& arguments){
 		}
 		LThw RuntimeError(Token(),"Invalid function call.");
 	} catch(Return& ret){
-#if _DEBUG
+#if T_DBG
 		Log << "RET_VAL" << ret.value().to_string();
 #endif
 		return ret.value();

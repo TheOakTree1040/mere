@@ -10,6 +10,7 @@ enum class StmtTy{
 	If,
 	While,
 	Print,
+	Println,
 	Function,
 	Return,
 	Assert,
@@ -26,7 +27,7 @@ class StmtImpl final
 	public:
 		StmtTy ty;
 		union{
-			Expr expr;// ExprStmt, PrintStmt
+			Expr expr;// ExprStmt, PrintStmt, PrintlnStmt
 			struct{// var_decl
 					Expr init;
 					Expr var_type; // nullptr or ScopeAcsr
@@ -136,6 +137,13 @@ class StmtImpl final
 			return ptr;
 		}
 
+		static SIPtr println_stmt(Expr expr) {
+			SIPtr ptr = create();
+			ptr->ty = StmtTy::Println;
+			ptr->expr = expr;
+			return ptr;
+		}
+
 		static SIPtr ret_stmt(const Token& op, Expr ex){
 			SIPtr ptr = create();
 			ptr->ty = StmtTy::Return;
@@ -198,5 +206,6 @@ struct Branch {
 #define RetStmt		StmtImpl::ret_stmt
 #define AssertStmt	StmtImpl::assert_stmt
 #define MatchStmt	StmtImpl::match_stmt
+#define PrintlnStmt	StmtImpl::println_stmt
 
 #endif // STMT_H
