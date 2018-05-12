@@ -11,6 +11,7 @@ StmtImpl::~StmtImpl(){
 			delete assertion;
 			delete msg;
 			break;
+		case StmtTy::Println:
 		case StmtTy::Print:
 		case StmtTy::Expr:
 			delete expr;

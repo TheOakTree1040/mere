@@ -136,7 +136,7 @@ Stmt Parser::stmt(bool expected_block){
 		}
 		else if (match(Tok::_print	)){
             s = PrintStmt(expression());
-			expect(Tok::semi_colon,"Expected a ';' [println_sc]");
+			expect(Tok::semi_colon,"Expected a ';' [print_sc]");
 		}
 		else if (match(Tok::_println)) {
 			s = PrintlnStmt(expression());

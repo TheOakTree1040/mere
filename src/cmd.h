@@ -181,7 +181,7 @@ class MerePrompt{
 					}
 				}
 				if(calc)
-					input = "print (" + input + ");";
+					input = "println (" + input + ");";
 				MereMath::run(TString::fromStdString(input),tok,syn);
 				if(lines)
 					cout << "\n";
