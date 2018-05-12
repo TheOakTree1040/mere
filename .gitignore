@@ -67,3 +67,8 @@ x32/
 #############
 *-dbg
 *-dbg/
+
+# Other #
+#########
+.vscode/
+Makefile*

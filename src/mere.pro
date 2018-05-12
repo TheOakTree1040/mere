@@ -7,7 +7,8 @@ QT       += core #
 
 #greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = mere
+macx:TARGET = mere-darwin
+win32:TARGET = mere-win32
 TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
