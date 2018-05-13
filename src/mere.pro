@@ -36,7 +36,7 @@ SOURCES += \
     tlogger.cpp \
     natives.cpp \
     runtimeerror.cpp \
-    cmd.cpp
+    shell.cpp
 
 HEADERS += \
     expr.h \
@@ -52,9 +52,9 @@ HEADERS += \
     object.h \
     tlogger.h \
     natives.h \
-    cmd.h \
     sourceeditor.hpp \
     data_storage.hpp \
     token.hpp \
     parseerror.hpp \
-    config.hpp
+    config.hpp \
+    shell.h

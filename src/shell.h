@@ -15,14 +15,20 @@
 #include <QDialog>
 #endif
 
-#include <iostream>
 #include <bitset>
 #include <cstdlib>
 
 #include "mere_math.h"
 #include "sourceeditor.hpp"
 
+
 using std::cout;
+using std::endl;
+using std::cin;
+using std::string;
+using std::getline;
+using std::cout;
+
 typedef std::bitset<8> Options;
 enum class Opt{
 	Exc,//mode
@@ -68,42 +74,109 @@ public:
 class MerePrompt{
 	private:
 		std::string prompt	= " >> ";// The prompt
-		std::string input	= ""	;// The input (accumulated temp's)
+		std::string input	= ""	;// The input (accumulated temps)
 		std::string last	= ""	;// The last piece of code executed
-		std::string temp	= ""	;// input cache
+		std::string temp	= ""	;// User input
 
 		bool print_prompt	= true	;// whether to print the prompt
-		bool syn			= false	;// whether to show the syntax tree
+		bool ast			= false	;// whether to show the syntax tree
 		bool tok			= false	;// whether to show the token
 		bool single			= false	;// whether single or multiline code is expected
 		bool lines			= false	;// whether to print extra lines before and after code execution
 		bool calc			= false	;// calculator mode
+	private:
+		void display_cmds(){
+			cout << "\n\n";
+			cout << "==============================================>\n";
+			cout << "List of Commands:\n"
+					".                       Execute the code you have typed.\n"
+					".exec                   The same as above.\n"
+					".quit                   Quit\n"
+					".exit                   The same as above.\n"
+					".help                   Opens the helper interface.\n"
+					".clear                  Clear screen.\n"
+					".last                   Add the last piece of code executed to the current input.\n"
+					".view                   View the code you have typed (The input)\n"
+					".prompt        [toggle] Print the prompt.\n"
+					".ln            [toggle] Print extra lines before & after the execution.\n"
+					".multi         [toggle] Multi-line / Single-line.\n"
+					".calc          [toggle] Calculator mode; switches into single-line mode; same thing as 'print (INPUT);'\n"
+					".set_prompt             Sets the prompt. You will be prompted to enter on the second line.\n"
+					".ast           [toggle] Display the AST before the execution. It will be turned off after execution.\n"
+					".tok           [toggle] Display the tokens before the execution. It will be turned off after execution.\n";
+			cout << "==============================================>\n";
+			cout << "\n\n";
+		}
+		void tutor(){
+			cout << "\n\n";
+			cout << "===============================>\n";
+			cout << "Quick tutorial (Too lazy)\n";
+			cout <<
+					"Data types: real, string, bool, char, null, void\n"
+
+					"To print something:       print \"foo\";\n"
+					"To create a variable:     var bar = 1;\n"
+					"Loops:\n"
+					"    for loop:             for (var i = 0; i != 3; i++){}\n"
+					"    while loop:           while (false){}\n"
+					"Conditional:\n"
+					"    if statement:         if true print true else print false;\n"
+					"    ternary operator:     bar = 3<5?3:5;\n"
+					"Assert:                   assert 1 : \"Assertion failed.\";\n"
+					"    with code:            assert 1 : 0xFF;\n"
+					"    with both:            assert 1 : 0xFF, \"Assertion failed.\";\n"
+					"Function:                 fn a(){ return \"Howdy!\"; }\n"
+					"Reference (=>):           var ref; ref => bar;\n";
+
+			cout << "===============================>\n";
+			cout << "\n\n";
+		}
+
+		void help(){
+			cout << "\n";
+			cout << "Welcome to the helper interface\n";
+			cout << "For a list of commands, type 'cmds'\n"
+					"For a brief tutorial, type 'tutor'\n"
+					"To return to the editor, type 'ret'\n"
+					"\n";
+			string helpstr = "";
+			forever{
+				helpstr = "";
+				cout << "help > ";
+				std::getline(cin,helpstr);
+				if (helpstr == "cmds"){
+					display_cmds();
+				}
+				else if (helpstr == "tutor"){
+					tutor();
+				}
+				else if (helpstr == "ret"){
+					cout << "\n";
+					return;
+				}
+			}
+		}
 
 	public:
 		MerePrompt(){}
 
 		void interface(){
-			using std::cout;
-			using std::endl;
-			using std::cin;
-			using std::string;
-			using std::getline;
 
 			string initial_output = string PROJECT + " " + VERSION + " build " + BUILD + " by " + AUTHOR + "\n\n";
 			initial_output += "Common commands:\n"
 								"	.exec	Execute the code you've typed.\n"
 								"	.help	Display help.\n"
-								"	.quit	Quit.\n"
+								"	.exit	Exit.\n"
 								"\n";
 			cout << initial_output;
 
 			forever{
 				input = temp = "";
-				syn = tok = false;
+				ast = tok = false;
 				forever{
 					if(print_prompt)
 						cout << prompt;
-					getline(cin,temp);
+					std::getline(cin,temp);
 					if(!temp.size()){
 						if((single || calc) && input.size())
 							goto PRE_EXEC;
@@ -119,12 +192,10 @@ class MerePrompt{
 								break;
 						}
 						else if (temp == ".help"){
-							string output = "Help page not available.";
-							cout << output;
-							cin.get();
+							help();
 						}
 						else if (temp == ".clear"){
-#if T_OSX
+#if T_DARWIN
 							system("clear");
 #elif T_WIN32
 							system("cls");
@@ -139,32 +210,37 @@ class MerePrompt{
 							cout << "--beg--\n" << input << "--end--\n";
 						}
 						else if (temp == ".multi"){
-							cout << "  > multi = " << !(single = !single) << "\n";
+							cout << "  > multi = " << (!(single = !single)?"on":"off") << "\n";
 						}
 						else if (temp == ".calc"){
 							input = "";
-							cout << "  > calc = " << (calc = !calc) << "\n";
+							cout << "  > calc = " << ((calc = !calc)?"on":"off") << "\n";
 							single = true;
 							continue;
 						}
 						else if (temp == ".ln"){
-							cout << "  > print_lines = " << (lines = !lines) << "\n";
+							cout << "  > print_lines = " << ((lines = !lines)?"on":"off") << "\n";
 						}
 						else if (temp == ".prompt"){
-							cout << "  > print_prompt = " << (print_prompt = !print_prompt) << "\n";
+							cout << "  > print_prompt = " << ((print_prompt = !print_prompt)?"on":"off") << "\n";
 						}
 						else if (temp == ".set_prompt"){
 							cout << prompt << "prompt = ";
-							getline(cin,temp);
+							std::getline(cin,temp);
 							prompt = temp;
 						}
-						else if (temp == ".syn"){
-							cout << "  > syn = " << (syn = !syn) << "\n";
+						else if (temp == ".ast"){
+							cout << "  > ast = " << ((ast = !ast)?"on":"off") << "\n";
 						}
 						else if (temp == ".tok"){
-							cout << "  > tok = " << (tok = !tok) << "\n";
+							cout << "  > tok = " << ((tok = !tok)?"on":"off") << "\n";
 						}
 						else if	(temp == ".quit" || temp == ".exit") return;
+						else if (temp == "._rst"){
+							cout << "  > Resetting the interpreter...\n";
+							MereMath::reset_intp();
+							cout << "  > Done resetting.\n";
+						}
 						else {
 							goto PRE_EXEC;
 						}
@@ -176,19 +252,27 @@ class MerePrompt{
 						if (single || calc){
 							if(lines)
 								cout << "\n";
+							if(calc)
+								input = "println (" + input + ");";
+
 							break;
 						}
 					}
 				}
-				if(calc)
-					input = "println (" + input + ");";
-				MereMath::run(TString::fromStdString(input),tok,syn);
+				MereMath::run(TString::fromStdString(input),tok,ast);
 				if(lines)
 					cout << "\n";
-				last = input;
+				if(input.size() && temp != ".last"){
+					last = (calc||single)?temp:input;
+				}
 			}
 		}
 };
+
+#define AS
+#define SET_APP_NAME	App::setApplicationName
+#define SET_APP_VER		App::setApplicationVersion
+#define SET_APP_DESCR	parser.setApplicationDescription
 
 class MereCmder{
 		Options options = 0;
@@ -199,11 +283,14 @@ class MereCmder{
 			if (!status){
 				status = 2;
 				MereMath::init_once();
-				App::setApplicationName PROJECT ;
-				App::setApplicationVersion VERSION ;
-				parser.setApplicationDescription DESCRIPTION ;
+
+				SET_APP_NAME AS PROJECT;
+				SET_APP_VER AS VERSION;
+				SET_APP_DESCR AS DESCRIPTION;
+
 				parser.addHelpOption();
 				parser.addVersionOption();
+
 				QCommandLineOption mode_opt({"mode","m"},"The output mode","mode","exec");//handled
 				QCommandLineOption dbg_opt({"dbg","d"},"The debugging tools.","tool-name");//handled
 #if T_GUI
@@ -211,6 +298,7 @@ class MereCmder{
 #endif
 				QCommandLineOption ff_opt({"file","f"},"File input.","filename");//handled
 				QCommandLineOption src_opt({"src","s"},"The source that you want to execute directly.","code");
+
 				parser.addOptions({
 									  mode_opt,
 									  dbg_opt,
@@ -220,6 +308,7 @@ class MereCmder{
 									  ff_opt,
 									  src_opt
 								  });
+
 			}
 			else {
 				status++;

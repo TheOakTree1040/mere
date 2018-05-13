@@ -6,31 +6,29 @@
 #include <QVector>
 
 Parser::Parser(QVector<Token>& toks):tokens(toks){
-#if T_DBG
-	Log << "Parser()";
-	TLogHelper::indent();
-#endif
+	Logp("Parser()");
+	LIndt;
 }
 Parser::~Parser(){
-#if T_DBG
-	TLogHelper::reset();
-	TLogHelper::outdent();
-#endif
+	LRst;
 }
 
 Stmts Parser::parse(){
+	LFn;
 	Stmts stmts;
+	if (tokens.isEmpty())
+		LRet stmts;
 	Stmt temp = nullptr;
 	while(!is_at_end()){
 		if ((temp = stmt()))
 			stmts.append(temp);
 	}
-	return stmts;
+	LRet stmts;
 }
 
 //Helpers
 
-bool Parser::match(const QVector<Tok>& toks){
+bool Parser::match(const QVector<Tokty>& toks){
 	for (int i = 0; i != toks.size(); i++){
 		if (check(toks[i])){
 			advance();
@@ -40,7 +38,7 @@ bool Parser::match(const QVector<Tok>& toks){
 	return false;
 }
 
-bool Parser::match(Tok ty){
+bool Parser::match(Tokty ty){
 	if (check(ty)){
 		advance();
 		return true;
@@ -48,14 +46,14 @@ bool Parser::match(Tok ty){
 	return false;
 }
 
-bool Parser::check(Tok ty){
+bool Parser::check(Tokty ty){
 	if (is_at_end())
 		return false;
 	return peek().ty == ty;
 }
 
 bool Parser::is_at_end(){
-	return peek().ty == Tok::_eof_;
+	return peek().ty == Tok::eof;
 }
 
 Token& Parser::peek(int i){
@@ -70,20 +68,16 @@ Token& Parser::prev(){
 
 Token& Parser::advance(){
 	if (!is_at_end()){
-#if T_DBG
-		Log << "adv: Type" << (int)peek().ty;
-#endif
+		Log l("adv: Type") l((int)peek().ty);
 		current++;
 	}
 	return prev();
 }
 
-Token& Parser::expect(Tok ty, const TString& errmsg){
+Token& Parser::expect(Tokty ty, const TString& errmsg){
 	LFn;
-#if T_DBG
-	Log << "Checking" << errmsg << TString::number(static_cast<int>(ty));
-	Log << TString::number(static_cast<int>(peek().ty));
-#endif
+	Log l("Checking") l(errmsg) l(TString::number(static_cast<int>(ty)));
+	Log l(TString::number(static_cast<int>(peek().ty)));
 	if (peek().ty == ty)
         LRet advance();
 	LThw error(peek(),errmsg);
@@ -100,13 +94,13 @@ void Parser::synchronize(){
 		if (prev().ty == Tok::semi_colon)
 			return;
 		switch(peek().ty){
-			case Tok::_struct:
-			case Tok::_var:
-			case Tok::_for:
-			case Tok::_if:
-			case Tok::_while:
-			case Tok::_return:
-			case Tok::_assert:
+			case Tok::k_struct:
+			case Tok::k_var:
+			case Tok::k_for:
+			case Tok::k_if:
+			case Tok::k_while:
+			case Tok::k_return:
+			case Tok::k_assert:
 				return;
 			default:;
 		}
@@ -128,30 +122,30 @@ Stmt Parser::stmt(bool expected_block){
 		if (expected_block && peek().ty == Tok::l_brace){
 			s = block(false);
 		}
-		else if (match(Tok::_if		)){
+		else if (match(Tok::k_if		)){
 			s = if_stmt();
 		}
-		else if (match(Tok::_for	)){
+		else if (match(Tok::k_for	)){
 			s = for_stmt();
 		}
-		else if (match(Tok::_print	)){
+		else if (match(Tok::k_print	)){
             s = PrintStmt(expression());
 			expect(Tok::semi_colon,"Expected a ';' [print_sc]");
 		}
-		else if (match(Tok::_println)) {
+		else if (match(Tok::k_println)) {
 			s = PrintlnStmt(expression());
 			expect(Tok::semi_colon, "Expected a ';' [println_sc]");
 		}
-		else if (match(Tok::_while	)){
+		else if (match(Tok::k_while	)){
 			s = while_stmt();
 		}
-		else if (match(Tok::_return	)){
+		else if (match(Tok::k_return	)){
 			s = ret_stmt();
 		}
-		else if (match(Tok::_assert	)){
+		else if (match(Tok::k_assert	)){
 			s = assert_stmt();
 		}
-		else if (match(Tok::_match	)){
+		else if (match(Tok::k_match	)){
 			s = match_stmt();
 		}
 		else {
@@ -190,8 +184,8 @@ Stmt Parser::block(bool is_unexpected){
 
 Stmt Parser::decl_stmt(){
 	LFn;
-	Stmt s = match(Tok::_var)?var_decl_stmt():
-							  match(Tok::_fn)?fn_def_stmt():
+	Stmt s = match(Tok::k_var)?var_decl_stmt():
+							  match(Tok::k_fn)?fn_def_stmt():
 											  expr_stmt();
 	LRet s;
 }
@@ -199,7 +193,7 @@ Stmt Parser::decl_stmt(){
 Stmt Parser::var_decl_stmt(bool eaten){
 	LFn;
 	if (!eaten){
-		expect(Tok::_var,"Expected keyword 'var'.");
+		expect(Tok::k_var,"Expected keyword 'var'.");
 	}
 	Token& name = expect(Tok::identifier,"Expected an identifier.");
 	Expr initializer = nullptr;
@@ -216,11 +210,11 @@ Stmt Parser::var_decl_stmt(bool eaten){
 Stmt Parser::if_stmt(){
 	LFn;
 	Expr expr = expression();
-	if (match(Tok::_matches))
+	if (match(Tok::k_matches))
 		LRet finish_match(expr);
 	Stmt i_blk = stmt(true);
 	Stmt e_blk = nullptr;
-	if (match(Tok::_else)){
+	if (match(Tok::k_else)){
 		e_blk = stmt(true);
 	}
 	LRet IfStmt(expr,i_blk,e_blk);
@@ -264,7 +258,7 @@ Stmt Parser::for_stmt(){
 	LFn;
 	expect(Tok::l_paren, "Expected a parenthesis.");
 	Stmt for_init = match(Tok::semi_colon)?nullptr:
-										   match(Tok::_var)?var_decl_stmt():
+										   match(Tok::k_var)?var_decl_stmt():
 															expr_stmt();
 	Expr for_cond = check(Tok::semi_colon)?LitExpr(Object("bool",true)):
 										   expression();
@@ -316,16 +310,16 @@ Stmt Parser::assert_stmt(){
 	msg.append(TString::number(ln)).append("] ");
 	if (match(Tok::colon)){
 		bool has_code = false;
-		if(match(Tok::_real)){
+		if(match(Tok::l_real)){
 			has_code = true;
 			code = peek(-1).literal->as<double>();
 			if (!match(Tok::comma))
 				goto WRAP_UP;
 		}
 		if (!has_code){
-			msg += expect(Tok::_string, "Expected an exit message [AssertMsg]").literal->to_string();
+			msg += expect(Tok::l_string, "Expected an exit message [AssertMsg]").literal->to_string();
 		}
-		else if (match(Tok::_string)){
+		else if (match(Tok::l_string)){
 			msg += peek(-1).literal->to_string();
 		}
 		else msg += "Assertion failed.";
@@ -512,9 +506,7 @@ Expr Parser::rvalue(){
 	}
 	catch(ParseUnwind&){
 		current = tmp_curr;
-#if T_DBG
-		Log << (TString)"Unwinded@" + TString::number(current) << "Ty:" << (int)peek().ty;
-#endif
+		Log l((TString)"Unwinded@" + TString::number(current)) l("Ty:") l((int)peek().ty);
 		Expr e = primary();
 		LRet e;
 	}
@@ -543,9 +535,7 @@ Expr Parser::finish_call(Expr callee){
 		do {
 			arg = expression(true);
 			args.append(arg);
-#if T_DBG
-			Log << "FINISH_CALL_ARG_TY" << t_cast<int>(arg->type());
-#endif
+			Log l("FINISH_CALL_ARG_TY") l(t_cast<int>(arg->type()));
 		} while (match(Tok::comma));
 	}
 	Token& paren = expect(Tok::r_paren, "Expected a ')'.");
@@ -555,24 +545,24 @@ Expr Parser::finish_call(Expr callee){
 Expr Parser::primary(){
 	LFn;
 	Expr ex = nullptr;
-	if		(match(Tok::_null							)){
+	if		(match(Tok::l_null							)){
 		LRet LitExpr(Object(Trait("null"),QVariant(0)));
 	}
 	else if	(check(Tok::identifier						)){
 		ex = VarAcsrExpr(advance());
 		LRet ex;
 	}
-	else if (match(Tok::_true							)){
+	else if (match(Tok::l_true							)){
 		LRet LitExpr(Object(Trait("bool"),QVariant(true)));
 	}
-	else if (match(Tok::_false							)){
+	else if (match(Tok::l_false							)){
 		LRet LitExpr(Object(Trait("bool"),QVariant(false)));
 	}
 	else if (match(Tok::l_brace							)){
 		ex = array();
 		LRet ex;
 	}
-	else if (match({Tok::_string,Tok::_real,Tok::_char}	)){
+	else if (match({Tok::l_string,Tok::l_real,Tok::l_char})){
 		LRet LitExpr(*(prev().literal));
 	}
 	else if (match(Tok::dollar							)){

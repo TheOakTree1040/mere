@@ -36,9 +36,7 @@ void Object::delete_ptr(){
 Object& Object::fn_init(){
 	LFn;
 	if (trait().is_fn()){
-#if T_DBG
-		Log << "Contacting MereCallable";
-#endif
+		Logp("Contacting MereCallable");
         reinterpret_cast<MereCallable*>(m_ptr->data())->set_onstack(trait().is_on_stack());
 	}
 	LRet *this;

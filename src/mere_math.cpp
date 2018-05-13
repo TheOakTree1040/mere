@@ -31,11 +31,9 @@ void MereMath::init_once(){
 #if T_GUI
 		QMessageBox::critical(nullptr,"Fatal Internal Failure","Failed to register Object comparators.");
 #else
-		std::cout << "  > Fatal Internal Error: Failed to register Object comparators\n";
+		std::cerr << "  > Fatal Internal Error: Failed to register Object comparators\n";
 #endif
-#if T_DBG
-        Log << "Failed registering comparators.";
-#endif
+		Logp("Failed registering comparators.");
 		abort();
     }
 	interpreter = new Interpreter();
@@ -43,8 +41,6 @@ void MereMath::init_once(){
 }
 
 bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
-//	Token* tok = new Token();
-//	delete tok;
 	if (src.isEmpty())
 		return false;
 	Stmts stmts;
@@ -103,9 +99,7 @@ bool MereMath::run(const TString& src, bool show_tok, bool show_syn){
 	auto res = interpreter->interpret(stmts);
 
 	errors.clear();
-#if T_DBG
-	Log << "End of run";
-#endif
+	Logp("End of run");
 	return res;
 }
 
@@ -127,7 +121,7 @@ void MereMath::error(const TString & msg){
 }
 
 void MereMath::error(const Token& tok, const TString& msg){
-	if (tok.ty == Tok::_eof_) {
+	if (tok.ty == Tok::eof) {
 		report(tok.ln, "at end", msg);
 	}
 	else {

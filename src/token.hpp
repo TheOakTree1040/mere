@@ -2,86 +2,75 @@
 #define TOKEN_H
 
 #include "object.h"
-enum class Tok{
-	invalid,
-
-	// Characters.
-	l_paren, r_paren, l_brace, r_brace, l_sq_brkt, r_sq_brkt,
-	comma, dot, semi_colon, scope, at_symbol, ques_mk, dollar,
-
-	//UnaryOp
-	incr, decr,colon,
-	bang/* ! */,
-
-	//BinOp
-	arrow,
-	assign, equal, bang_equal,
-	greater, greater_equal,
-	less, less_equal,
-	amp_amp, vert_vert,
-	mod_asgn,
-	minus_asgn, plus_asgn, div_asgn,
-	mult_asgn, exp_asgn,
-	amp_asgn, vert_asgn, amp, caret, mod, vert,
-	minus, plus, slash, star,
-
-	fat_arrow,
-
-	// Literals.
-	identifier, _char, _string, _real,
-
-	// Keywords.
-	_struct, _this, _for, _if, _else,
-	_return, _true, _false, _do,
-	_while, _case, _switch, _break,
-	_default, _array, _set,
-	_enum, _assert, _define, _var, _null, _print, _println, _fn, _match, _matches,
-
-	_eof_
-};
 
 class Token{
 	public:
-		Tok ty;
+		enum tok_type{
+			invalid,
+
+			// Characters.
+			l_paren, r_paren, l_brace, r_brace, l_sq_brkt, r_sq_brkt,
+			comma, dot, semi_colon, scope, at_symbol, ques_mk, dollar,
+
+			//UnaryOp
+			incr, decr,colon,
+			bang/* ! */,
+
+			//BinOp
+			__bin_op_beg__,
+			arrow,
+			assign, equal, bang_equal,
+			greater, greater_equal,
+			less, less_equal,
+			amp_amp, vert_vert,
+			mod_asgn,
+			minus_asgn, plus_asgn, div_asgn,
+			mult_asgn, exp_asgn,
+			amp_asgn, vert_asgn, amp, caret, mod, vert,
+			minus, plus, slash, star, fat_arrow,
+			__bin_op_end__,
+
+			// Literals.
+			identifier, l_char, l_string, l_real, l_null, l_true, l_false,
+
+			// Keywords.
+			k_struct, k_this, k_for, k_if, k_else,
+			k_return, k_do,
+			k_while, k_case, k_switch, k_break,
+			k_default, k_array, k_set,
+			k_enum, k_assert, k_define, k_var, k_print, k_println, k_fn, k_match, k_matches,
+
+			__type_beg__,
+			t_char, t_string, t_real, t_bool,
+			__type_end__,
+
+			eof // End of file
+		} ty;
 		TString lexeme;
 		Object* literal;
 		int ln;
 	public:
 
-		Token(){
-			ln = 0;
-			lexeme = "";
-			literal = new Object();
-			ty = Tok::_eof_;
-		}
+		Token():
+			ty(eof),
+			lexeme(),
+			literal(new Object()),
+			ln(0){}
 
-		Token(Tok type,
+		Token(tok_type type,
 			  const TString& lex,
 			  const Object& lit,
 			  int line):
-		ty(type),
-		lexeme(lex),
-		literal(new Object(lit)),
-		ln(line){}
-
-//		Token(Tok type,
-//			  const TString& lex,
-//			  Object* lit,
-//			  int line):
-//		ty(type),
-//		lexeme(TString(lex)),
-//		literal(lit),
-//		ln(line){}
+			ty(type),
+			lexeme(lex),
+			literal(new Object(lit)),
+			ln(line){}
 
 		Token(const Token& tok){
 			LFn;
 			ty = tok.ty;
-#if T_DBG
-			Log << (lexeme = tok.lexeme);
-#else
-            lexeme = tok.lexeme;
-#endif
-
+			lexeme = tok.lexeme;
+			Logp(lexeme);
 			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
 			LVd;
@@ -90,11 +79,8 @@ class Token{
 		Token& operator=(const Token& tok){
 			LFn;
 			ty = tok.ty;
-#if T_DBG
-			Log << (lexeme = tok.lexeme);
-#else
 			lexeme = tok.lexeme;
-#endif
+			Logp(lexeme);
 			literal = tok.literal?new Object(*(tok.literal)):new Object();
 			ln = tok.ln;
 			LRet *this;
@@ -104,7 +90,7 @@ class Token{
 			delete literal;
 		}
 
-		TString to_string() {
+		TString to_string() const {
 			TString str("[ Tok ");
 			str.append(TString::number(static_cast<int>(ty)));
 			if (literal->trait().is("real"))
@@ -117,17 +103,23 @@ class Token{
 			return str.append(" ]");
 		}
 
-		operator TString()   {
+		operator TString() const {
 			return to_string();
 		}
 
-		bool is_bin_op()const{
-			int i = static_cast<int>(ty);
-			return (int)Tok::arrow <= i && i <= (int)Tok::fat_arrow;
+		bool is_bin_op() const {
+			int i = t_cast<int>(ty);
+			return (int)__bin_op_beg__ < i && i < (int)__bin_op_end__;
+		}
+
+		bool is_type() const {
+			int i = t_cast<int>(ty);
+			return (int)__type_beg__ < i && i < (int)__type_end__;
 		}
 
 };
 typedef QVector<Token> Tokens;
 //Q_DECLARE_METATYPE(Token)
-
+typedef Token Tok;
+typedef Tok::tok_type Tokty;
 #endif // TOKEN_H

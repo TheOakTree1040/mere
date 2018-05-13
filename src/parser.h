@@ -13,14 +13,14 @@ class Parser
 		QVector<Token>& tokens;
 		int current = 0;
 		//Helpers
-		bool match			(const QVector<Tok>&			);
-		bool match			(Tok							);
-		bool check			(Tok							);
+		bool match			(const QVector<Tokty>&			);
+		bool match			(Tokty							);
+		bool check			(Tokty							);
 		bool is_at_end		(								);
 		Token& peek			(int=0							);
 		Token& prev			(								);
 		Token& advance		(								);
-		Token& expect		(Tok, const TString&			);
+		Token& expect		(Tokty, const TString&			);
 		//error-handling
 		ParseError error	(const Token&, const TString&	);
 		void synchronize	(								);

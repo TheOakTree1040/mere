@@ -3,16 +3,12 @@
 #include "tlogger.h"
 Tokenizer::Tokenizer(const TString& src):source(src)
 {
-#if T_DBG
-	Log << "Source: " << source;
-	TLogHelper::indent();
-#endif
+	Log l("Source: ") l(source);
+	LIndt;
 }
 Tokenizer::~Tokenizer(){
-#if T_DBG
-	TLogHelper::outdent();
-	Log << "~Tokenizer()";
-#endif
+	LOdt;
+	Logp("~Tokenizer()");
 }
 
 bool Tokenizer::is_at_end(){
@@ -20,24 +16,20 @@ bool Tokenizer::is_at_end(){
 }
 
 char Tokenizer::advance(){
-#if T_DBG
-	Log << "  adv:" << TString::number(current);
-	Log << "      " << peek();
-#endif
+	Log l("  adv:") l(TString::number(current));
+	Log l("      ") l(peek());
 	return source[current++].toLatin1();
 }
 
-void Tokenizer::add_token(Tok ty){
+void Tokenizer::add_token(Tok::tok_type ty){
 	add_token(ty, Object());
 }
 
-void Tokenizer::add_token(Tok ty, const Object& lit){
+void Tokenizer::add_token(Tokty ty, const Object& lit){
 	LFn;
 	tokens.append(Token(ty,source.mid(start,current-start),lit,line));
-#if T_DBG
-	Log << "Added Token: Lexeme:" << tokens.last().lexeme;
-	Log << "             Type  :" << (int)tokens.last().ty;
-#endif
+	Log l("Added Token: Lexeme:") l(tokens.last().lexeme);
+	Log l("             Type  :") l((int)tokens.last().ty);
 	LVd;
 }
 
@@ -124,7 +116,7 @@ void Tokenizer::string(){
 		MereMath::error(line, "Expected string termination.");
 		return;
 	}
-	add_token(Tok::_string, Object(Trait("string"),QVariant(str)));
+	add_token(Tok::l_string, Object(Trait("string"),QVariant(str)));
 }
 
 void Tokenizer::character(){
@@ -152,7 +144,7 @@ void Tokenizer::character(){
 	else
 		deprecate();
 
-	add_token(Tok::_char,Object(c));
+	add_token(Tok::l_char,Object(c));
 }
 
 bool Tokenizer::is_digit(char ch){
@@ -208,19 +200,17 @@ void Tokenizer::number() {
 			deprecate();
 		}
 
-		add_token(Tok::_real,
+		add_token(Tok::l_real,
 				 Object(Trait("real"),num.toDouble()));
 		LVd;
 		return;
 	}
 	bool stat = false;
 	int n = num.toInt(&stat,base);
-	add_token(Tok::_real,
+	add_token(Tok::l_real,
 			 Object(Trait("real"),n));
-#if T_DBG
-	Log << "  Numeral: String:" << num;
-	Log << "           Number:" << n;
-#endif
+	Log l("  Numeral: String:") l(num);
+	Log l("           Number:") l(n);
 	if (!stat){
 		MereMath::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
 	}
@@ -261,7 +251,7 @@ void Tokenizer::identifier(){
 	advance();
 	while (is_alpha_numeric(peek()))
 		val.append(advance());
-	Tok ty = keywords.value(val, Tok::identifier);
+	Tokty ty = keywords.value(val, Tok::identifier);
 	tokens.append(Token(ty,val,Object(),line));
 	LVd;
 }
@@ -274,9 +264,7 @@ void Tokenizer::raw_string(){
 void Tokenizer::scan_token(){
 	LFn;
 	char c = advance();
-#if T_DBG
-	Log << c;
-#endif
+	Logp(c);
 	switch (c) {
 		case '@': add_token(Tok::at_symbol); break;
 		case '(': add_token(Tok::l_paren); break;
@@ -377,44 +365,50 @@ void Tokenizer::scan_token(){
 }
 
 Tokens Tokenizer::scan_tokens(){
+	LFn;
 	line = current = start = 0;
 	tokens.clear();
+	if(source.isEmpty())
+		LRet tokens;
 	while (!is_at_end()){
 		start = current;
 		scan_token();
 	}
 	start = current = 0;
-	add_token(Tok::_eof_);
-	return tokens;
+	add_token(Tok::eof);
+	LRet tokens;
 }
 
-QHash<TString, Tok> Tokenizer::keywords{
-	{"struct"	,	Tok::_struct	},
-	{"for"		,	Tok::_for		},
-	{"if"		,	Tok::_if		},
-	{"else"		,	Tok::_else		},
-	{"return"	,	Tok::_return	},
-	{"this"		,	Tok::_this		},
-	{"true"		,	Tok::_true		},
-	{"false"	,	Tok::_false		},
-	{"do"		,	Tok::_do		},
-	{"while"	,	Tok::_while		},
-	{"case"		,	Tok::_case		},
-	{"switch"	,	Tok::_switch	},
-	{"break"	,	Tok::_break		},
-	{"default"	,	Tok::_default	},
-	{"enum"		,	Tok::_enum		},
-	{"assert"	,	Tok::_assert	},
-	{"define"	,	Tok::_define	},
-	{"array"	,	Tok::_array		},
-	{"set"		,	Tok::_set		},
-	{"var"		,	Tok::_var		},
-	{"null"		,	Tok::_null		},
-	{"print"	,	Tok::_print		},
-	{"println"	,	Tok::_println	},
-	{"fn"		,	Tok::_fn		},
-	{"match"	,	Tok::_match		},
-	{"matches"	,	Tok::_matches	}
+QHash<TString, Tok::tok_type> Tokenizer::keywords{
+	{"struct"	,	Tok::k_struct	},
+	{"for"		,	Tok::k_for		},
+	{"if"		,	Tok::k_if		},
+	{"else"		,	Tok::k_else		},
+	{"return"	,	Tok::k_return	},
+	{"this"		,	Tok::k_this		},
+	{"true"		,	Tok::l_true		},
+	{"false"	,	Tok::l_false	},
+	{"do"		,	Tok::k_do		},
+	{"while"	,	Tok::k_while	},
+	{"case"		,	Tok::k_case		},
+	{"switch"	,	Tok::k_switch	},
+	{"break"	,	Tok::k_break	},
+	{"default"	,	Tok::k_default	},
+	{"enum"		,	Tok::k_enum		},
+	{"assert"	,	Tok::k_assert	},
+	{"define"	,	Tok::k_define	},
+	{"array"	,	Tok::k_array	},
+	{"set"		,	Tok::k_set		},
+	{"var"		,	Tok::k_var		},
+	{"null"		,	Tok::l_null		},
+	{"print"	,	Tok::k_print	},
+	{"println"	,	Tok::k_println	},
+	{"fn"		,	Tok::k_fn		},
+	{"match"	,	Tok::k_match	},
+	{"matches"	,	Tok::k_matches	},
+	{"char"		,	Tok::t_char		},
+	{"string"	,	Tok::t_string	},
+	{"real"		,	Tok::t_real		}
 };
 
 QHash<QChar,QChar> Tokenizer::escaped{

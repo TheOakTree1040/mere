@@ -11,7 +11,7 @@ class Tokenizer
 		TString source;
 		Tokens tokens;
 
-		static QHash<TString, Tok> keywords;// defined in source
+		static QHash<TString, Tokty> keywords;// defined in source
 		static QHash<QChar,QChar> escaped;
 
 		int start = 0;
@@ -26,8 +26,8 @@ class Tokenizer
 		char advance();
 		void deprecate();
 
-		void add_token(Tok);
-		void add_token(Tok, const Object&);
+		void add_token(Tokty);
+		void add_token(Tokty, const Object&);
 
 		void raw_string();
 		void string();

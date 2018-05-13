@@ -229,18 +229,14 @@ class Object{
 		m_ptr(VPTR_INIT),
 		m_onstack(*this),
 		m_trait(){
-#if T_DBG
-            Log << "OBJ_DEFLT_CTOR";
-#endif
+			LCtor("OBJ_DEFLT_CTOR");
 		}
 
 		Object(const Object& o):
 		m_ptr(o.trait().is_data()?new Var(o.data()):o.ptr()),
 		m_onstack(o.trait().is_ref()?o.m_onstack.get():*this),
 		m_trait(o.m_trait){
-#if T_DBG
-			Log << "OBJECT CTOR DATA:" << to_string();
-#endif
+			Log l("OBJECT CTOR DATA:") l(to_string());
 		}
 
 		//getters
@@ -274,7 +270,7 @@ class Object{
 			LRet *this;
 		}
 
-		//ctor
+		//ctor from Trait & Variant
 		Object(const Trait& trt, const Var& var):
 			m_ptr(nullptr),
 			m_onstack(*this),
@@ -288,6 +284,7 @@ class Object{
 		{
 			set(var);
 		}
+
 		//ctor from literals
 		Object(bool b):
 			m_ptr(nullptr),
@@ -337,7 +334,7 @@ class Object{
 			return m_ptr->value<T>();
 		}
 
-		TString to_string() {
+		TString to_string() const {
 //			LFn;
 			if (!m_ptr)
 				return "[UNALLOCATED_OBJECT]";

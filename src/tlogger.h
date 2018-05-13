@@ -88,9 +88,11 @@ TLogger& TLogger::operator<<(const TString& s);
 template<>
 TLogger& TLogger::operator<<(const char& ch);
 
+#define LRst	TLogHelper::reset()
 #define LIndt	TLogger().indent()
 #define LOdt	TLogger().outdent()
 #define Log		TLogger()
+#define l(L)	<< (L)
 #define LFn_	Log.begw(">") << __PRETTY_FUNCTION__ << "started on line" << TString::number((long)__LINE__)
 #define LFn		(LFn_, LIndt)
 #define LRet	return \
@@ -100,10 +102,14 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LThw	(Log.begw("<") << __PRETTY_FUNCTION__ << "threw on line" << TString::number((long)__LINE__)), LOdt; throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){LThw ex;}
 #define Log1(MSG) TLogger() << MSG
+#define Logd(MSG) TLogger() << MSG
+#define LCtor(MSG) TLogger() << MSG
 #else
+#define LRst
 #define LIndt
 #define LOdt
 #define Log
+#define l(L)
 #define LFn_
 #define LFn
 #define LRet	return
@@ -112,5 +118,7 @@ TLogger& TLogger::operator<<(const char& ch);
 #define LThw	throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
 #define Log1(MSG)
+#define Logp(MSG)
+#define LCtor(MSG)
 #endif // T_DBG (else)
 #endif // T_LOGGER

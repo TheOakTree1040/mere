@@ -219,7 +219,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 Object Interpreter::eval_logical(Expr expr, bool dd){
 	LFn;
 	Expr ex = expr->expr;
-	Tok ty = expr->op->ty;
+	Tokty ty = expr->op->ty;
 	clean_up{
 		expr->expr = nullptr;
 	}
@@ -249,7 +249,7 @@ Object Interpreter::eval_var_acsr(Expr expr, bool){
 Object Interpreter::eval_asgn(Expr expr, bool dd){
 	LFn;
 	Expr l = expr->asgn_left, r = expr->asgn_right;
-	Tok ty = expr->asgn_op->ty;
+	Tokty ty = expr->asgn_op->ty;
 	int ln = (expr->asgn_op->ln);
 	Token op(*(expr->asgn_op));
 	clean_up{
@@ -265,7 +265,7 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 	if (!ref.trait().is_dynamic() && !ref.trait().has_type_of(right.trait())){
 		LThw RuntimeError(*(expr->op), "Attempting to re-type a fixed-type variable.");
 	}
-	Tok right_val_op = Tok::invalid;
+	Tokty right_val_op = Tok::invalid;
 	switch(ty){
 		case Tok::assign:
 			ref.recv(right);
@@ -333,10 +333,29 @@ Object Interpreter::eval_call(Expr expr, bool dd){
 
 	LRet mc->call(*this,args);
 }
+//Object Interpreter::eval_cast(Expr, bool){
+//#error Implement CAST
+//#error Put cast into the switch in Intp::evaluate
+//}
+Object Interpreter::eval_ternary(Expr expr, bool dd){
+	Expr condit = expr->condition;
+	Expr l_br = expr->l_branch;
+	Expr r_br = expr->r_branch;
+	clean_up {
+		expr->condition = nullptr;
+		expr->l_branch = nullptr;
+		expr->r_branch = nullptr;
+	}
+	bool c = evaluate(condit,dd).to_bool();
+	clean_up {
+		delete (c?r_br:l_br);
+	}
+	return c?evaluate(l_br,dd):evaluate(r_br,dd);
+}
+
 Object Interpreter::evaluate(Expr expr, bool dd){
-#if T_DBG
-	LFn << "Evaluating expr-" << TString::number((int)expr->type());
-#endif
+	LFn;
+	Log l("Evaluating expr-") l(TString::number((int)expr->type()));
 	Object o;
 	if (expr){
 		try{
@@ -370,6 +389,9 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 					break;
 				case ExprTy::FuncCall:
 					o = eval_call(expr,dd);
+					break;
+				case ExprTy::Conditional:
+					o = eval_ternary(expr,dd);
 					break;
 				default:
 					LThw RuntimeError(Token(Tok::invalid,"",Object(),0),
@@ -554,9 +576,7 @@ void Interpreter::exec_match(Stmt stmt, bool dd){
 }
 void Interpreter::execute(Stmt stmt, bool dd){
 	LFn;
-#if T_DBG
-	Log << "Interpreting stmt" << t_cast<int>(stmt->type());
-#endif
+	Log l("Interpreting stmt") l(t_cast<int>(stmt->type()));
 	if (stmt){
 		try{
 			switch(stmt->type()){
@@ -610,7 +630,8 @@ void Interpreter::execute(Stmt stmt, bool dd){
 
 bool Interpreter::interpret(Stmts stmts){
 	LFn;
-
+	if (stmts.isEmpty())
+		LRet false;
 	try{
 		int sz = stmts.size();
 		for (int i = 0; i != sz; i++){

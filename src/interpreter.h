@@ -45,6 +45,8 @@ class Interpreter final{
 		Object eval_asgn	(Expr,bool);
 		Object eval_refer	(Expr,bool);
 		Object eval_call	(Expr,bool);
+		Object eval_ternary	(Expr,bool);
+//		Object eval_cast	(Expr,bool);
 
 		void exec_expr		(Stmt,bool);
 		void exec_print		(Stmt,bool);

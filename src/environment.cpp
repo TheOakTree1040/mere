@@ -9,10 +9,8 @@ void EnvImpl::define(const Token& t, const Object& o){
 		LThw RuntimeError(t,TString("Redefinion of variable '").
 						  append(t.lexeme).append("'."));
 	}
-#if T_DBG
-    Log << "LEXEME SIZE" << t.lexeme.size();
-    Log << "LEXEME CONT" << t.lexeme;
-#endif
+	Log l("LEXEME SIZE") l(t.lexeme.size());
+	Log l("LEXEME CONT") l(t.lexeme);
 	if (t.lexeme.isEmpty()){
 		LThw RuntimeError(t,"Defining variable with no identifier.");
 	}
@@ -49,9 +47,8 @@ Object& EnvImpl::access(const Token& t){
 }
 
 Object& EnvImpl::assign(const Token& t, const Object& o){
-#if T_DBG
-	LFn << t.lexeme << "at ln" << t.ln ;
-#endif
+	LFn;
+	Log l(t.lexeme) l("at ln") l(t.ln);
 	if (values.contains(t.lexeme)){
 		LRet values[t.lexeme].recv(o);
 	}
