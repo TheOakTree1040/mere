@@ -1,9 +1,8 @@
-#ifndef ASTPRINTER_H
+#if !defined(ASTPRINTER_H) && AST_PRINTER_FIXED
 #define ASTPRINTER_H
 
 #include "stmt.h"
 namespace mere{
-#if AST_PRINTER_FIXED // implement to_string in stmt_fields & expr_fields
 	class ASTPrinter final{
 		private:
 			TString text;
@@ -217,7 +216,6 @@ namespace mere{
 				}
 			}
 	};
-#endif
 }
 
 #endif // ASTPRINTER_H

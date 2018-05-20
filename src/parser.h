@@ -40,6 +40,7 @@ namespace mere {
 			Stmt assert_stmt	(		);
 			Stmt match_stmt		(		);
 			Stmt finish_match	(Expr	);
+			Stmt run_stmt		(		);
 
 			Expr expression	(bool=F_);
 			Expr conditional(	    );

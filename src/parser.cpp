@@ -101,6 +101,7 @@ namespace mere {
 				case Tok::k_while:
 				case Tok::k_return:
 				case Tok::k_assert:
+				case Tok::k_run:
 					return;
 				default:;
 			}
@@ -126,6 +127,15 @@ namespace mere {
 			else if (match(Tok::k_for	)){
 				LRet for_stmt();
 			}
+			else if (match(Tok::k_return	)){
+				LRet ret_stmt();
+			}
+			else if (match(Tok::k_while	)){
+				LRet while_stmt();
+			}
+			else if (match(Tok::k_match	)){
+				LRet match_stmt();
+			}
 			else if (match(Tok::k_print	)){
 				Stmt s = PrintStmt(expression());
 				expect(Tok::semi_colon,"Expected a ';' [print_sc]");
@@ -136,17 +146,11 @@ namespace mere {
 				expect(Tok::semi_colon, "Expected a ';' [println_sc]");
 				LRet s;
 			}
-			else if (match(Tok::k_while	)){
-				LRet while_stmt();
-			}
-			else if (match(Tok::k_return	)){
-				LRet ret_stmt();
-			}
 			else if (match(Tok::k_assert	)){
 				LRet assert_stmt();
 			}
-			else if (match(Tok::k_match	)){
-				LRet match_stmt();
+			else if (match(Tok::k_run)){
+				LRet run_stmt();
 			}
 			else {
 				LRet (peek().ty == Tok::dollar && peek(1).ty == Tok::l_brace)?block(true):decl_stmt();
@@ -198,6 +202,13 @@ namespace mere {
 		Expr initializer = match(Tok::assign)?expression():LitExpr(Object());
 		expect(Tok::semi_colon, "Expected a ';' after declaration.");
 		LRet VarDeclStmt(initializer,name);
+	}
+
+	Stmt Parser::run_stmt(){
+		LFn;
+		TString str = expect(Tokty::l_string, "Expected a filename.").lexeme;
+		expect(Tokty::semi_colon,"Expected a ';' [run_stmt]");
+		LRet RunStmt(str);
 	}
 
 	Stmt Parser::if_stmt(){

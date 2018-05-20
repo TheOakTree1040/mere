@@ -59,7 +59,8 @@ namespace mere {
 				Function,
 				Return,
 				Assert,
-				Match
+				Match,
+				Run
 			};
 			class stmt_fields{
 				private:
@@ -388,6 +389,15 @@ namespace mere {
 					empty_fields(){}
 					~empty_fields() override {}
 			};
+			class run_fields : public stmt_fields {
+					TString m_filename;
+				public:
+					run_fields(const TString& fn):
+						m_filename(fn){}
+					TString filename(){
+						return m_filename;
+					}
+			};
 
 		private: // members
 			mutable bool m_handled = false;
@@ -411,6 +421,7 @@ namespace mere {
 			FieldsGetter(println_fields,println)
 			FieldsGetter(empty_fields,empty)
 			FieldsGetter(invalid_fields,invalid)
+			FieldsGetter(run_fields,run)
 
 			stmt_fields* data() const {
 				return m_fields;
@@ -443,17 +454,18 @@ namespace mere {
 
 	typedef std::vector<Stmt> Stmts;
 
-#define ExprStmt(EXPR)					Stmt(Stmt::ExprStmt,ptr_cast<Stmt::stmt_fields*>(new Stmt::expr_fields(EXPR)))
-#define VarDeclStmt(INIT,NAME)			Stmt(Stmt::VarDecl,ptr_cast<Stmt::stmt_fields*>(new Stmt::var_decl_fields(INIT,NAME)))
-#define NullStmt()						Stmt(Stmt::Empty,ptr_cast<Stmt::stmt_fields*>(new Stmt::empty_fields))
-#define BlockStmt(BLOCK)				Stmt(Stmt::Block,ptr_cast<Stmt::stmt_fields*>(new Stmt::block_fields(BLOCK)))
-#define IfStmt(CONDIT,IF,ELSE)			Stmt(Stmt::If,ptr_cast<Stmt::stmt_fields*>(new Stmt::if_stmt_fields(CONDIT,IF,ELSE)))
-#define WhileStmt(CONDIT,BLOCK)			Stmt(Stmt::While,ptr_cast<Stmt::stmt_fields*>(new Stmt::while_stmt_fields(CONDIT,BLOCK)))
-#define PrintStmt(EXPR)					Stmt(Stmt::Print,ptr_cast<Stmt::stmt_fields*>(new Stmt::print_fields(EXPR)))
-#define FnStmt(NAME,PARAMS,BODY)		Stmt(Stmt::Function,ptr_cast<Stmt::stmt_fields*>(new Stmt::fn_decl_fields(NAME,PARAMS,BODY)))
-#define RetStmt(VALUE,KEYWORD)			Stmt(Stmt::Return,ptr_cast<Stmt::stmt_fields*>(new Stmt::ret_stmt_fields(VALUE,KEYWORD)))
-#define AssertStmt(VALUE,CODE,MESSAGE)	Stmt(Stmt::Assert,ptr_cast<Stmt::stmt_fields*>(new Stmt::assert_stmt_fields(VALUE,CODE,MESSAGE)))
-#define MatchStmt(MATCH,BRANCHES)		Stmt(Stmt::Match,ptr_cast<Stmt::stmt_fields*>(new Stmt::match_stmt_fields(MATCH,BRANCHES)))
-#define PrintlnStmt(EXPR)				Stmt(Stmt::Println,ptr_cast<Stmt::stmt_fields*>(new Stmt::println_fields(EXPR)))
+#define ExprStmt(EXPR)					Stmt(Stmt::ExprStmt,new Stmt::expr_fields(EXPR))
+#define VarDeclStmt(INIT,NAME)			Stmt(Stmt::VarDecl,new Stmt::var_decl_fields(INIT,NAME))
+#define NullStmt()						Stmt(Stmt::Empty,new Stmt::empty_fields)
+#define BlockStmt(BLOCK)				Stmt(Stmt::Block,new Stmt::block_fields(BLOCK))
+#define IfStmt(CONDIT,IF,ELSE)			Stmt(Stmt::If,new Stmt::if_stmt_fields(CONDIT,IF,ELSE))
+#define WhileStmt(CONDIT,BLOCK)			Stmt(Stmt::While,new Stmt::while_stmt_fields(CONDIT,BLOCK))
+#define PrintStmt(EXPR)					Stmt(Stmt::Print,new Stmt::print_fields(EXPR))
+#define FnStmt(NAME,PARAMS,BODY)		Stmt(Stmt::Function,new Stmt::fn_decl_fields(NAME,PARAMS,BODY))
+#define RetStmt(VALUE,KEYWORD)			Stmt(Stmt::Return,new Stmt::ret_stmt_fields(VALUE,KEYWORD))
+#define AssertStmt(VALUE,CODE,MESSAGE)	Stmt(Stmt::Assert,new Stmt::assert_stmt_fields(VALUE,CODE,MESSAGE))
+#define MatchStmt(MATCH,BRANCHES)		Stmt(Stmt::Match,new Stmt::match_stmt_fields(MATCH,BRANCHES))
+#define PrintlnStmt(EXPR)				Stmt(Stmt::Println,new Stmt::println_fields(EXPR))
+#define RunStmt(FILENAME)				Stmt(Stmt::Run,new Stmt::run_fields(FILENAME))
 }
 #endif // STMT_H

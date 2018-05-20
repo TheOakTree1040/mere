@@ -27,7 +27,7 @@ namespace mere {
 		public:
 			static void init_once();
 			static bool run(const TString&, bool=false, bool=false);
-			static bool run_file(QFile&);
+			static bool run(QFile&);
 			static void error(int, const TString&);
 			static void error(const TString&);
 			static void report(int, const TString&, const TString&, bool=true);

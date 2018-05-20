@@ -408,7 +408,9 @@ namespace mere {
 		{"matches"	,	Tok::k_matches	},
 		{"char"		,	Tok::t_char		},
 		{"string"	,	Tok::t_string	},
-		{"real"		,	Tok::t_real		}
+		{"real"		,	Tok::t_real		},
+		{"bool"		,	Tok::t_bool		},
+		{"run"		,	Tok::k_run		}
 	};
 
 	QHash<QChar,QChar> Tokenizer::escaped{

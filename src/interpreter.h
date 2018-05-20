@@ -61,6 +61,7 @@ namespace mere {
 			void exec_fn_decl	(C_STMT_REF,bool);
 			void exec_ret		(C_STMT_REF,bool);
 			void exec_assert	(C_STMT_REF,bool);
+			void exec_run		(C_STMT_REF,bool);
 			void exec_match		(C_STMT_REF,bool);
 		public:
 			Object evaluate		(C_EXPR_REF,bool);

@@ -105,7 +105,7 @@ bool Core::run(const TString& src, bool show_tok, bool show_syn){
 	return res;
 }
 
-bool Core::run_file(QFile & file){
+bool Core::run(QFile & file){
 	return run(file.readAll());
 }
 

@@ -17,10 +17,8 @@ DEFINES += STATIC
 CONFIG += console
 CONFIG += static
 CONFIG += c++14
-
-macx{
-    CONFIG -= app_bundle
-}
+CONFIG -= import_plugins
+macx:CONFIG -= app_bundle
 
 SOURCES += \
         main.cpp \
@@ -59,3 +57,5 @@ HEADERS += \
     shell.h \
     utils.h \
     core.h
+
+#QTPLUGIN.platforms = qminimal

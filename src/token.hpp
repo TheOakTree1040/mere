@@ -38,7 +38,8 @@ namespace mere {
 				k_return, k_do,
 				k_while, k_case, k_switch, k_break,
 				k_default, k_array, k_set,
-				k_enum, k_assert, k_define, k_var, k_print, k_println, k_fn, k_match, k_matches,
+				k_enum, k_assert, k_define, k_var,
+				k_print, k_println, k_fn, k_match, k_matches, k_run,
 
 				__type_beg__,
 				t_char, t_string, t_real, t_bool,
@@ -103,9 +104,9 @@ namespace mere {
 				return str.append(" ]");
 			}
 
-			operator TString() const {
-				return to_string();
-			}
+//			operator TString() const {
+//				return to_string();
+//			}
 
 			bool is_bin_op() const {
 				int i = t_cast<int>(ty);

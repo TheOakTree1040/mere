@@ -447,6 +447,21 @@ void Interpreter::exec_assert(C_STMT_REF stmt, bool dd){
 	}
 	LVd;
 }
+
+void Interpreter::exec_run(C_STMT_REF stmt, bool) {
+	LFn;
+	QFile file(stmt.run().filename());
+	if (!file.open(QIODevice::ReadOnly)){
+		LThw Abort(0x01," run stmt: failed to open file.");
+	}
+	Core::run(file);
+	file.close();
+#if T_GUI
+#error Take care of the event-loop stuff
+#endif
+	LVd;
+}
+
 void Interpreter::exec_match(C_STMT_REF stmt, bool dd){
 	LFn;
 	Object match = evaluate(stmt.match().match(),dd);
@@ -503,7 +518,11 @@ void Interpreter::execute(C_STMT_REF stmt, bool dd){
 				case Stmt::Match:
 					exec_match(stmt,dd);
 					break;
-				default:;
+				case Stmt::Run:
+					exec_run(stmt,dd);
+					break;
+				default:
+					std::cout << "  > interpreter: Unknown statement.\n";
 			}
 		} catch(RuntimeError& re){
 			stmt.handle();//Same thing applies here (check out interpret(Expr))
