@@ -1,5 +1,7 @@
 
 #include "environment.h"
+
+using namespace mere;
 EnvImpl::EnvImpl():enclosing(nullptr)
 {}
 EnvImpl::EnvImpl(EnvPtr encl):enclosing(encl){}
@@ -9,8 +11,8 @@ void EnvImpl::define(const Token& t, const Object& o){
 		LThw RuntimeError(t,TString("Redefinion of variable '").
 						  append(t.lexeme).append("'."));
 	}
-	Log l("LEXEME SIZE") l(t.lexeme.size());
-	Log l("LEXEME CONT") l(t.lexeme);
+	Log ls("LEXEME SIZE") ls(t.lexeme.size());
+	Log ls("LEXEME CONT") ls(t.lexeme);
 	if (t.lexeme.isEmpty()){
 		LThw RuntimeError(t,"Defining variable with no identifier.");
 	}
@@ -48,7 +50,7 @@ Object& EnvImpl::access(const Token& t){
 
 Object& EnvImpl::assign(const Token& t, const Object& o){
 	LFn;
-	Log l(t.lexeme) l("at ln") l(t.ln);
+	Log ls(t.lexeme) ls("at ln") ls(t.ln);
 	if (values.contains(t.lexeme)){
 		LRet values[t.lexeme].recv(o);
 	}
@@ -57,3 +59,4 @@ Object& EnvImpl::assign(const Token& t, const Object& o){
 	}
 	LThw RuntimeError(t,TString("Variable '").append(t.lexeme).append("' undefined."));
 }
+

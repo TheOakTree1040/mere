@@ -1,72 +1,66 @@
 #include "stmt.h"
-StmtImpl::StmtImpl(){
-	ty = StmtTy::Invalid;
-	_inv = true;
-}
 
-StmtImpl::~StmtImpl(){
-	LFn;
-	switch(ty){
-		case StmtTy::Assert:
-			delete assertion;
-			delete msg;
-			break;
-		case StmtTy::Println:
-		case StmtTy::Print:
-		case StmtTy::Expr:
-			delete expr;
-			break;
-		case StmtTy::VarDecl:
-			delete var_name;
-			delete init;
-			delete var_type;
-			break;
-		case StmtTy::If:
-			delete if_block;
-			delete else_block;
-			delete condition;
-			break;
-		case StmtTy::Block:
-			if (block){
-				for (int i = block->size() - 1; i >= 0; i--)
-					delete block->takeAt(i);
-				delete block;
-			}
-			break;
-		case StmtTy::Function:
-			if (fn_params){
-				for (int i = fn_params->size() - 1; i >= 0; i--)
-					delete fn_params->takeAt(i);
-				delete fn_params;
-			}
-			if (fn_body){
-				for (int i = fn_body->size() - 1; i >= 0; i--)
-					delete fn_body->takeAt(i);
-				delete fn_body;
-			}
-			delete fn_name;
-			break;
-		case StmtTy::While:
-			delete cont_condit;
-			delete while_block;
-			break;
-		case StmtTy::Return:
-			delete retval;
-			delete retop;
-			break;
-		case StmtTy::Empty:
-			break;
-		case StmtTy::Invalid:
-			break;
-		case StmtTy::Match:
-			delete match;
-			if (branches){
-				for (int i = branches->size() - 1; i >= 0; i--){
-					delete branches->takeAt(i);
-				}
-				delete branches;
-			}
-			break;
+namespace mere {
+	Branch::Branch(const Expr& ex, const Stmt& st):
+		m_expr(new Expr(ex)),
+		m_stmt(new Stmt(st)){}
+
+	Branch::~Branch(){
+		LFn;
+		if(!m_handled){
+			delete m_expr;
+			delete m_stmt;
+		}
+		LVd;
 	}
-	LVd;
+
+	Branch& Branch::operator=(const Branch& other){
+		delete m_expr;
+		delete m_stmt;
+		m_expr = other.m_expr;
+		m_stmt = other.m_stmt;
+		other.m_handled = true;
+		return *this;
+	}
+
+	bool Stmt::is_handled() const {
+		return m_handled;
+	}
+
+	void Stmt::set_handled() const {
+		m_handled = true;
+	}
+
+	Stmt::Stmt():
+		m_type(Invalid),
+		m_fields(nullptr){
+		m_type = Invalid;
+		set_handled();
+	}
+
+	Stmt::Stmt(Stmt::stmt_type t, Stmt::stmt_fields* fields):
+		m_type(t),
+		m_fields(fields){}
+
+	Stmt::Stmt(const Stmt& other):
+		m_type(other.type()),
+		m_fields(other.data()){
+		other.set_handled();
+	}
+
+	Stmt::~Stmt(){
+		//LFn;
+		handle();
+		//LVd;
+	}
+
+	void Stmt::handle() const {
+		//LFn;
+		if(!m_handled){
+			delete m_fields;
+			m_handled = true;
+			m_fields = nullptr;
+		}
+		//LVd;
+	}
 }

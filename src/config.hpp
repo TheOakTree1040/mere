@@ -4,6 +4,7 @@
 #if _DEBUG
 #undef _DEBUG
 #endif
+//#define T_DBG 1
 #define T_QT 1
 #ifdef _WIN32
 #define T_WIN32 1
@@ -20,6 +21,7 @@ typedef QString TString;
 #error Implementation for TString is required.
 #endif // T_QT
 #define t_cast static_cast
+#define ptr_cast dynamic_cast
 #define T_CLI 1
 #define App QCoreApplication
 #include <iostream>
@@ -28,5 +30,5 @@ typedef QString TString;
 #define AUTHOR ("TheOakCode")
 #define EMAIL ("theoaktree1040@gmail.com")
 #define DESCRIPTION ("An interpreter for the scripting language Mere.")
-#define BUILD ("6 (180512)")
+#define BUILD ("7-a (180519)")
 #endif // T_SPECS

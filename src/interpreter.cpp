@@ -1,7 +1,7 @@
 
 #include "natives.h"
 #include "interpreter.h"
-#include "mere_math.h"
+#include "core.h"
 #include "environment.h"
 #include "merecallable.h"
 
@@ -16,56 +16,53 @@
 #define GOTO_OP_ASGN(TOK) right_val_op = TOK; goto RET_OP_ASGN;
 #define define_native_function(NAME,NAT) globals->define(NAME,Object(Trait("function").as_fn(),Var::fromValue(NAT)))
 #define clean_up if(dd)
+using namespace mere;
 Interpreter::Interpreter(){
-    LFn;
+	LFn;
 	define_native_function("sin", MereCallable(CALLABLE{
-		Q_UNUSED(interpreter);
-	    CHECK("sin", QVector<TString>{"real"});
-	    return Object(::sin(arguments[0].as<double>()));
-    }).set_arity(1));
+												   Q_UNUSED(interpreter);
+												   CHECK("sin", std::vector<TString>{"real"});
+												   return Object(::sin(arguments[0].as<double>()));
+											   }).set_arity(1));
 	define_native_function("cos", MereCallable(CALLABLE{
-		Q_UNUSED(interpreter);
-	    CHECK("cos",QVector<TString>{"real"});
-	    return Object(::cos(arguments[0].as<double>()));
-    }).set_arity(1));
+												   Q_UNUSED(interpreter);
+												   CHECK("cos",std::vector<TString>{"real"});
+												   return Object(::cos(arguments[0].as<double>()));
+											   }).set_arity(1));
 	define_native_function("sqrt", MereCallable(CALLABLE{
-		Q_UNUSED(interpreter);
-		CHECK("sqrt",QVector<TString>{"real"});
-		return Object(::sqrt(arguments[0].as<double>()));
-	}).set_arity(1));
+													Q_UNUSED(interpreter);
+													CHECK("sqrt",std::vector<TString>{"real"});
+													return Object(::sqrt(arguments[0].as<double>()));
+												}).set_arity(1));
 	define_native_function("tan", MereCallable(CALLABLE{
-		Q_UNUSED(interpreter);
-		Q_UNUSED(arguments);
-	    CHECK("tan",QVector<TString>{"real"});
-	    return Object(::tan(arguments[0].as<double>()));
-    }).set_arity(1));
+												   Q_UNUSED(interpreter);
+												   Q_UNUSED(arguments);
+												   CHECK("tan",std::vector<TString>{"real"});
+												   return Object(::tan(arguments[0].as<double>()));
+											   }).set_arity(1));
 	define_native_function("clock", MereCallable(CALLABLE{
-		Q_UNUSED(interpreter);
-		Q_UNUSED(arguments);
-	    CHECK("clock", QVector<TString>{});
-		return Object(t_cast<double>(::clock()));
-    }));
+													 Q_UNUSED(interpreter);
+													 Q_UNUSED(arguments);
+													 CHECK("clock", std::vector<TString>{});
+													 return Object(t_cast<double>(::clock()));
+												 }));
 	define_native_function("time", MereCallable(CALLABLE{
-		Q_UNUSED(interpreter);
-	    CHECK("time", QVector<TString>{});
-	    return Object(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-	}));
+													Q_UNUSED(interpreter);
+													CHECK("time", std::vector<TString>{});
+													return Object(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+												}));
+
 	LVd;
 }
 
 
-Object Interpreter::eval_pstfx(Expr expr, bool dd){
+Object Interpreter::eval_pstfx(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr rex = expr->expr;
-	clean_up{
-		expr->expr = nullptr;
-	}
-	Object r = evaluate(rex,dd);
-	Token op(*(expr->op));
+	Object r = evaluate(expr.unary().expr(),dd);
 	if (!r.trait().is_lvalue()){
-		LThw RuntimeError(op,"Expected a lvalue.");
+		LThw RuntimeError(expr.unary().op(),"Expected a lvalue.");
 	}
-	switch(op.ty){
+	switch(expr.unary().op().ty){
 		case Tok::incr:
 			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.postfix(1);
@@ -80,20 +77,13 @@ Object Interpreter::eval_pstfx(Expr expr, bool dd){
 	}
 	TString errmsg = "Operand type mismatch: '";
 	errmsg.append(r.trait().id()).append("' [");
-	errmsg += op.lexeme + "].";
-	LThw RuntimeError(op,errmsg);
+	errmsg += expr.unary().op().lexeme + "].";
+	LThw RuntimeError(expr.unary().op(),errmsg);
 }
-Object Interpreter::eval_prefx(Expr expr, bool dd){
+Object Interpreter::eval_prefx(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr ex = expr->expr;
-	Token* tptr = expr->op;
-	clean_up{
-		expr->expr = nullptr;
-	}
-	Object r = evaluate(ex, dd);
-	Token op(*tptr);
-
-	switch(op.ty){
+	Object r = evaluate(expr.unary().expr(), dd);
+	switch(expr.unary().op().ty){
 		case Tok::minus:
 			if (IS_NUM){
 				LRet -(r.as<double>());
@@ -106,7 +96,7 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 			break;
 		case Tok::incr:
 			if (!r.trait().is_lvalue()){
-				LThw RuntimeError(op, "Expected an lvalue.");
+				LThw RuntimeError(expr.unary().op(), "Expected an lvalue.");
 			}
 			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.prefix(1);
@@ -114,7 +104,7 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 			break;
 		case Tok::decr:
 			if (!r.trait().is_lvalue()){
-				LThw RuntimeError(op, "Expected an lvalue.");
+				LThw RuntimeError(expr.unary().op(), "Expected an lvalue.");
 			}
 			if(IS_NUM && r.trait().is_lvalue()){
 				LRet r.prefix(-1);
@@ -123,34 +113,22 @@ Object Interpreter::eval_prefx(Expr expr, bool dd){
 		default:;
 	}
 	TString errmsg = "Operand type mismatch: [";
-	errmsg.append(op.lexeme).append("] '").append(r.trait().id()).append("'.");
-	LThw RuntimeError(op,errmsg);
+	errmsg.append(expr.unary().op().lexeme).append("] '").append(r.trait().id()).append("'.");
+	LThw RuntimeError(expr.unary().op(),errmsg);
 }
-Object Interpreter::eval_lit(Expr expr, bool){
+Object Interpreter::eval_lit(C_EXPR_REF expr, bool){
 	LFn;
-    Object ro(*(expr->lit));
-	LRet ro;
+	LRet expr.lit().lit();
 }
-Object Interpreter::eval_group(Expr expr, bool dd){
+Object Interpreter::eval_group(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr group = expr->expr;
-	clean_up{
-		expr->expr = nullptr;
-	}
-	LRet evaluate(group,dd);
+	LRet evaluate(expr.group().expr(),dd);
 }
-Object Interpreter::eval_binary(Expr expr, bool dd){
+Object Interpreter::eval_binary(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr ex = expr->expr;
-	Expr rex = expr->right;
-	clean_up{
-		expr->expr = nullptr;
-		expr->right = nullptr;
-	}
-	Object l = evaluate(ex, dd);
-	Object r = evaluate(rex, dd);
-	Token op(*expr->op);
-	switch(op.ty){
+	Object l = evaluate(expr.bin().left(), dd);
+	Object r = evaluate(expr.bin().right(), dd);
+	switch(expr.bin().op().ty){
 		case Tok::plus:
 
 			if (ARE_NUM){
@@ -178,7 +156,7 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 		case Tok::slash:
 			if (ARE_NUM){
 				if (r.as<double>() == 0){
-					LThw RuntimeError(op,"Division by 0 Error!");
+					LThw RuntimeError(expr.bin().op(),"Division by 0 Error!");
 				}
 				LRet OP(double,/);
 			}
@@ -208,22 +186,18 @@ Object Interpreter::eval_binary(Expr expr, bool dd){
 			}
 			break;
 		default:
-			LThw RuntimeError(op,"Undefined Binary Operation.");
+			LThw RuntimeError(expr.bin().op(),"Undefined Binary Operation.");
 
 	}
 	TString errmsg = "Operand type mismatch: '";
-	errmsg.append(l.trait().id()).append("' ").append(op.lexeme)
+	errmsg.append(l.trait().id()).append("' ").append(expr.bin().op().lexeme)
 			.append(" '").append(r.trait().id()).append("'.");
-	LThw RuntimeError(op,errmsg);
+	LThw RuntimeError(expr.bin().op(),errmsg);
 }
-Object Interpreter::eval_logical(Expr expr, bool dd){
+Object Interpreter::eval_logical(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr ex = expr->expr;
-	Tokty ty = expr->op->ty;
-	clean_up{
-		expr->expr = nullptr;
-	}
-	Object l = evaluate(ex, dd);
+	Tokty ty = expr.logical().op().ty;
+	Object l = evaluate(expr.logical().left(), dd);
 	if (ty == Tok::vert_vert){
 		if (l.to_bool()){
 			LRet l;
@@ -232,30 +206,21 @@ Object Interpreter::eval_logical(Expr expr, bool dd){
 	else if (!l.to_bool()){
 		LRet l;
 	}
-	Expr rex = expr->right;
-	clean_up{
-		expr->right = nullptr;
-	}
-	Object r = evaluate(rex,dd);
-	LRet r;
+	LRet evaluate(expr.logical().right(),dd);
 }
-Object Interpreter::eval_var_acsr(Expr expr, bool){
+Object Interpreter::eval_var_acsr(C_EXPR_REF expr, bool){
 	LFn;
 	Object o;
-	Object& ref = environment->access(*(expr->var_acsr));//DO NOT TOUCH! Keep this line for catching exceptions
+	Object& ref = environment->access(expr.var().accessor());//DO NOT TOUCH! Keep this line for catching exceptions
 	o.as_acsr_of(ref);
 	LRet o;
 }
-Object Interpreter::eval_asgn(Expr expr, bool dd){
+Object Interpreter::eval_asgn(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr l = expr->asgn_left, r = expr->asgn_right;
-	Tokty ty = expr->asgn_op->ty;
-	int ln = (expr->asgn_op->ln);
-	Token op(*(expr->asgn_op));
-	clean_up{
-		expr->asgn_left = nullptr;
-		expr->asgn_right = nullptr;
-	}
+	Token& op = expr.assign().op();
+	Expr l = expr.assign().left(), r = expr.assign().right();
+	Tokty ty = op.ty;
+	int ln = op.ln;
 	Object ref(evaluate(l,dd));
 	Object right(evaluate(r,dd));
 
@@ -263,7 +228,7 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 		LThw RuntimeError(op,"Expected an lvalue.");
 	}
 	if (!ref.trait().is_dynamic() && !ref.trait().has_type_of(right.trait())){
-		LThw RuntimeError(*(expr->op), "Attempting to re-type a fixed-type variable.");
+		LThw RuntimeError(op, "Attempting to re-type a fixed-type variable.");
 	}
 	Tokty right_val_op = Tok::invalid;
 	switch(ty){
@@ -283,50 +248,40 @@ Object Interpreter::eval_asgn(Expr expr, bool dd){
 		default:
 			LThw RuntimeError(op,"No such assignment operator.");
 	}
-	RET_OP_ASGN:;
+RET_OP_ASGN:;
 	Expr lex = LitExpr(ref);
 	Expr rex = LitExpr(right);
 	LRet ref.recv(evaluate(BinExpr(lex,Token(right_val_op,op.lexeme,Object(),ln),rex),dd));
 }
-Object Interpreter::eval_refer(Expr expr, bool dd){
+Object Interpreter::eval_refer(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr refl = expr->refer_left;
-	Expr refr = expr->refer_right;
-	clean_up{
-		expr->refer_right = nullptr;
-		expr->refer_left = nullptr;
-	}
-	Object rl = evaluate(refl,dd);
-	Object rr = evaluate(refr,dd);
+	Object rl = evaluate(expr.ref().left(),dd);
+	Object rr = evaluate(expr.ref().right(),dd);
 	if (!rl.trait().is_lvalue()){
-		LThw RuntimeError(*expr->refer_op, "Expected an lvalue.");
+		LThw RuntimeError(expr.ref().op(), "Expected an lvalue.");
 	}
 	if (!rr.trait().is_lvalue()){
-		LThw RuntimeError(*expr->refer_op, "Expected an lvalue (...on the right side, I know.)");
+		LThw RuntimeError(expr.ref().op(), "Expected an lvalue (...on the right side, I know.)");
 	}
 	LRet rl.as_ref_of(rr);
 }
-Object Interpreter::eval_call(Expr expr, bool dd){
+Object Interpreter::eval_call(C_EXPR_REF expr, bool dd){
 	LFn;
-	Expr callee_expr = expr->callee;
-	int sz = expr->arguments->size();
-    QVector<Object> args(sz);
+	std::vector<Ref<Expr>> args_exprs = expr.call().arguments();
+	int sz = args_exprs.size();
+	std::vector<Object> args(sz);
 	Object o;
-    for (int i = 0; i != sz; i++){
-        o = evaluate(expr->arguments->at(i),dd);
-        args[i] = o;
+	for (int i = 0; i != sz; i++){
+		o = evaluate(args_exprs[i].get(),dd);
+		args[i] = o;
 	}
-	clean_up{
-		expr->callee = nullptr;
-		expr->arguments->clear();
-	}
-	Object callee = evaluate(callee_expr,dd);
+	Object callee = evaluate(expr.call().callee(),dd);
 	if (!callee.trait().is_fn()){
-		LThw RuntimeError(*(expr->call_paren),"Invalid callee! [CalleeType]");
+		LThw RuntimeError(expr.call().op(),"Invalid callee! [CalleeType]");
 	}
-	MereCallable* mc = reinterpret_cast<MereCallable*>(callee.data().data());
+	MereCallable* mc = t_cast<MereCallable*>(callee.data().data());
 	if (sz != mc->arity()){
-		LThw RuntimeError(*(expr->call_paren),TString("Expected ") +
+		LThw RuntimeError(expr.call().op(),TString("Expected ") +
 						  TString::number(mc->arity()) +
 						  " argument(s), but " + TString::number(sz) + " was provided. [CallArity]");
 	}
@@ -337,60 +292,50 @@ Object Interpreter::eval_call(Expr expr, bool dd){
 //#error Implement CAST
 //#error Put cast into the switch in Intp::evaluate
 //}
-Object Interpreter::eval_ternary(Expr expr, bool dd){
-	Expr condit = expr->condition;
-	Expr l_br = expr->l_branch;
-	Expr r_br = expr->r_branch;
-	clean_up {
-		expr->condition = nullptr;
-		expr->l_branch = nullptr;
-		expr->r_branch = nullptr;
-	}
-	bool c = evaluate(condit,dd).to_bool();
-	clean_up {
-		delete (c?r_br:l_br);
-	}
-	return c?evaluate(l_br,dd):evaluate(r_br,dd);
+Object Interpreter::eval_ternary(C_EXPR_REF expr, bool dd){
+	bool b = evaluate(expr.ternary().condition(),dd).to_bool();
+	return b?evaluate(expr.ternary().left(),dd):
+			 evaluate(expr.ternary().right(),dd);
 }
 
-Object Interpreter::evaluate(Expr expr, bool dd){
+Object Interpreter::evaluate(C_EXPR_REF expr, bool dd){
 	LFn;
-	Log l("Evaluating expr-") l(TString::number((int)expr->type()));
+	Log ls("Evaluating expr-") ls(TString::number((short)expr.type()));
 	Object o;
-	if (expr){
+	if (!expr.is(Expr::Empty)){
 		try{
-			switch(expr->type()){
-				case ExprTy::Group:
+			switch(expr.type()){
+				case Expr::Group:
 					o = eval_group(expr,dd);
 					break;
-				case ExprTy::Binary:
+				case Expr::Binary:
 					o = eval_binary(expr,dd);
 					break;
-				case ExprTy::Postfix:
+				case Expr::Postfix:
 					o = eval_pstfx(expr,dd);
 					break;
-				case ExprTy::Prefix:
+				case Expr::Prefix:
 					o = eval_prefx(expr,dd);
 					break;
-				case ExprTy::Literal:
+				case Expr::Literal:
 					o = eval_lit(expr,dd);
 					break;
-				case ExprTy::Logical:
+				case Expr::Logical:
 					o = eval_logical(expr,dd);
 					break;
-				case ExprTy::VarAcsr:
+				case Expr::VarAcsr:
 					o = eval_var_acsr(expr,dd);
 					break;
-				case ExprTy::Assign:
+				case Expr::Assign:
 					o = eval_asgn(expr,dd);
 					break;
-				case ExprTy::Refer:
+				case Expr::Refer:
 					o = eval_refer(expr,dd);
 					break;
-				case ExprTy::FuncCall:
+				case Expr::FuncCall:
 					o = eval_call(expr,dd);
 					break;
-				case ExprTy::Conditional:
+				case Expr::Conditional:
 					o = eval_ternary(expr,dd);
 					break;
 				default:
@@ -398,230 +343,174 @@ Object Interpreter::evaluate(Expr expr, bool dd){
 									  "Failed to evaluate expr.");
 			}
 		} catch(RuntimeError& re){
-			delete expr;//not checking do_del 'cause when an error is thrown, it will be del'd by dtor
+			expr.handle();//not checking do_del 'cause when an error is thrown, it will be del'd by dtor
 			LThw re;
 		}
 		clean_up{
-			delete expr;
+			expr.handle();
 		}
 
 	}
 	LRet o;
 }
 
-void Interpreter::exec_expr(Stmt stmt, bool dd){
+void Interpreter::exec_expr(C_STMT_REF stmt, bool dd){
 	LFn;
-	Expr ex = stmt->expr;
-	clean_up{
-		stmt->expr = nullptr;
-	}
-	evaluate(ex,dd);
+	evaluate(stmt.expr().expr(),dd);
 	LVoid;
 }
-void Interpreter::exec_print(Stmt stmt, bool dd){
+void Interpreter::exec_print(C_STMT_REF stmt, bool dd){
 	LFn;
-	Expr ex = stmt->expr;
-	clean_up{
-		stmt->expr = nullptr;
-	}
-	Object obj = evaluate(ex,dd);
-    TString out = obj.to_string()
-              #if T_DBG && T_GUI
-                  + " : " + TString(obj.data().typeName())
-              #endif
-                  ;
+	Object obj = evaluate(stmt.print().expr(),dd);
+	TString out = obj.to_string()
+			  #if T_DBG && T_GUI
+				  + " : " + TString(obj.data().typeName())
+			  #endif
+				  ;
 #if T_GUI
 	QMessageBox::information(nullptr,"Info",out);
 #else
 	std::cout << out.toStdString();
-#endif // T_UI_Conf == T_UI_GUI
+#endif // T_GUI
 	LVd;
 }
-void Interpreter::exec_println(Stmt stmt, bool dd) {
+void Interpreter::exec_println(C_STMT_REF stmt, bool dd) {
 	LFn;
-	Expr ex = stmt->expr;
-	clean_up{
-		stmt->expr = nullptr;
-	}
-	Object obj = evaluate(ex, dd);
+	Object obj = evaluate(stmt.println().expr(), dd);
 	TString out = obj.to_string()
-#if T_DBG
-		+ " : " + TString(obj.data().typeName())
-#endif
-		;
+			  #if T_DBG
+				  + " : " + TString(obj.data().typeName())
+			  #endif
+				  ;
 #if T_GUI
 	QMessageBox::information(nullptr, "Info", out);
 #else
 	std::cout << (out + "\n").toStdString();
-#endif // T_UI_Conf == T_UI_GUI
+#endif // T_GUI
 	LVd;
 }
-void Interpreter::exec_if(Stmt stmt, bool dd){
+void Interpreter::exec_if(C_STMT_REF stmt, bool dd){
 	LFn;
-	Expr cond = stmt->condition;
-	clean_up{
-		stmt->condition = nullptr;
+	if (evaluate(stmt.if_else().condition(),dd).to_bool()){
+		execute(stmt.if_else().if_block(),dd);
 	}
-	if (evaluate(cond,dd).to_bool()){
-		Stmt i_blk = stmt->if_block;
-		clean_up{
-			stmt->if_block = nullptr;
-		}
-		execute(i_blk,dd);
+	else {
+		execute(stmt.if_else().else_block(),dd);
 	}
-	else if (stmt->else_block){
-		Stmt e_blk = stmt->else_block;
-		clean_up{
-			stmt->else_block = nullptr;
-		}
-		execute(e_blk,dd);
-	}
+	LVd;
+}
+void Interpreter::exec_block(C_STMT_REF stmt, bool dd, Environment env){
+	LFn;
+	exec_block(stmt.block().block(),dd,env);
 	LVoid;
 }
-void Interpreter::exec_block(Stmt stmt, bool dd, Environment env){
+void Interpreter::exec_block(const std::vector<Ref<Stmt>>& stmts, bool, Environment env){
 	LFn;
-	exec_block(stmt->block,dd,env);
-	LVoid;
-}
-void Interpreter::exec_block(QVector<Stmt> *stmts, bool dd, Environment env){
-	LFn;
-	Q_UNUSED(dd);
-	int sz = stmts->size();
+	int sz = stmts.size();
 	Environment outer = environment;
 	environment = env?env:new EnvImpl(outer);
 	for (int i = 0; i != sz; i++)
-		execute(stmts->at(i),false);
+		execute(stmts[i],false);
 	delete environment;
 	environment = outer;
 	LVd;
 }
-void Interpreter::exec_while(Stmt stmt, bool){
+void Interpreter::exec_while(C_STMT_REF stmt, bool){
 	LFn;
-	while (evaluate(stmt->cont_condit,false).to_bool()){
-		execute(stmt->while_block,false);
+	while (evaluate(stmt.while_loop().condition(),false).to_bool()){
+		execute(stmt.while_loop().block(),false);
 	}
 	LVd;
 }
-void Interpreter::exec_var_decl(Stmt stmt, bool dd){
+void Interpreter::exec_var_decl(C_STMT_REF stmt, bool dd){
 	LFn;
-	Expr expr = stmt->init;
-	clean_up{
-		stmt->init = nullptr;
-    }
-	environment->define(*(stmt->var_name),evaluate(expr,dd));
+	Expr expr = stmt.var().init();
+	environment->define(stmt.var().name(),evaluate(expr,dd));
 	LVd;
 }
-void Interpreter::exec_fn_decl(Stmt stmt, bool){
+void Interpreter::exec_fn_decl(C_STMT_REF stmt, bool){
 	LFn;
 	MereCallable mc(stmt);
-    mc.set_onstack(false);
-	environment->define(*(stmt->fn_name),Object(Trait("function").as_fn(),Var::fromValue(mc)));
+	//		mc.set_onstack(false);
+	environment->define(stmt.fn().name(),Object(Trait("function").as_fn(),Var::fromValue(mc)));
 	LVd;
 }
-void Interpreter::exec_ret(Stmt stmt, bool dd){
+void Interpreter::exec_ret(C_STMT_REF stmt, bool dd){
 	LFn;
-    Object obj = evaluate(stmt->retval,dd);
+	Object obj = evaluate(stmt.ret().value(),dd);
 	LThw Return(obj);
 }
-void Interpreter::exec_assert(Stmt stmt, bool dd){
+void Interpreter::exec_assert(C_STMT_REF stmt, bool dd){
 	LFn;
-	Expr assertion = stmt->assertion;
-	TString msg = *(stmt->msg);
-	clean_up{
-		stmt->assertion = nullptr;
-		delete stmt->msg;
-		stmt->msg = nullptr;
-	}
-	if (!evaluate(assertion,dd).to_bool()){
-		LThw Abort(stmt->code, msg);
+	if (!evaluate(stmt.assertion().value(),dd).to_bool()){
+		LThw Abort(stmt.assertion().code(), stmt.assertion().message());
 	}
 	LVd;
 }
-void Interpreter::exec_match(Stmt stmt, bool dd){
+void Interpreter::exec_match(C_STMT_REF stmt, bool dd){
 	LFn;
-	Object match = evaluate(stmt->match,dd);
-	QVector<Branch*>* br = stmt->branches;
-	int size = br->size();
-	clean_up{
-		stmt->match = nullptr;
-		stmt->branches = nullptr;
-	}
+	Object match = evaluate(stmt.match().match(),dd);
+	std::vector<Branch>& br = stmt.match().branches();
+	int size = br.size();
 	int i = 0;
 	for ( ; i != size; i++){
-		Branch* current = (*br)[i];
-		Object case_ = evaluate(current->expr,dd);
-		if (match.match(case_)){
-			execute(current->stmt,dd);
-			clean_up{
-				current->expr = nullptr;
-				current->stmt = nullptr;
-			}
+		Branch& current = br[i];
+		Object matcher = evaluate(current.expr(),dd);
+		if (match.match(matcher)){
+			execute(current.stmt(),dd);
 			break;
 		}
-		clean_up{
-			current->expr = nullptr;
-			current->stmt = nullptr;
-			delete current;
-		}
 	}
-	clean_up{
-		for (int k = i; k < size; k++){
-			delete (*br)[k];
-		}
-		br->clear();
-		delete br;
-	}
-	stmt->type();
 	LVd;
 }
-void Interpreter::execute(Stmt stmt, bool dd){
+void Interpreter::execute(C_STMT_REF stmt, bool dd){
 	LFn;
-	Log l("Interpreting stmt") l(t_cast<int>(stmt->type()));
-	if (stmt){
+	Log ls("Interpreting stmt") ls(t_cast<int>(stmt.type()));
+	if (!stmt.is(Stmt::Empty) && !stmt.is(Stmt::Invalid)){
 		try{
-			switch(stmt->type()){
-				case StmtTy::Expr:
+			switch(stmt.type()){
+				case Stmt::ExprStmt:
 					exec_expr(stmt,dd);
 					break;
-				case StmtTy::Print:
+				case Stmt::Print:
 					exec_print(stmt,dd);
 					break;
-				case StmtTy::Println:
+				case Stmt::Println:
 					exec_println(stmt, dd);
 					break;
-				case StmtTy::If:
+				case Stmt::If:
 					exec_if(stmt,dd);
 					break;
-				case StmtTy::While:
+				case Stmt::While:
 					exec_while(stmt,dd);
 					break;
-				case StmtTy::Block:
+				case Stmt::Block:
 					exec_block(stmt,dd);
 					break;
-				case StmtTy::VarDecl:
+				case Stmt::VarDecl:
 					exec_var_decl(stmt,dd);
 					break;
-				case StmtTy::Function:
+				case Stmt::Function:
 					exec_fn_decl(stmt,dd);
 					dd=false;
 					break;
-                case StmtTy::Return:
+				case Stmt::Return:
 					exec_ret(stmt,dd);
 					break;
-				case StmtTy::Assert:
+				case Stmt::Assert:
 					exec_assert(stmt,dd);
 					break;
-				case StmtTy::Match:
+				case Stmt::Match:
 					exec_match(stmt,dd);
 					break;
 				default:;
 			}
 		} catch(RuntimeError& re){
-			delete stmt;//Same thing applies here (check out interpret(Expr))
+			stmt.handle();//Same thing applies here (check out interpret(Expr))
 			LThw re;
 		}
 		clean_up{
-			delete stmt;
+			stmt.handle();
 		}
 
 	}
@@ -630,51 +519,52 @@ void Interpreter::execute(Stmt stmt, bool dd){
 
 bool Interpreter::interpret(Stmts stmts){
 	LFn;
-	if (stmts.isEmpty())
+	if (stmts.empty())
 		LRet false;
 	try{
 		int sz = stmts.size();
 		for (int i = 0; i != sz; i++){
-			execute(stmts.takeAt(0),true);
+			execute(stmts[i],true);
 		}
+		stmts.clear();
 		LRet true;
 	}
 
 	catch(RuntimeError& re){
-		MereMath::runtime_error(re);
+		Core::runtime_error(re);
 	}
 	catch(Return& ret){
 		Q_UNUSED(ret);
-		MereMath::error("Invalid Return. [inv_ret]");
+		Core::error("Invalid Return. [inv_ret]");
 	}
 	catch(Abort& abt){
 		TString msg = TString("[Code ") + TString::number(abt.code) + "]" + abt.message;
-		MereMath::error(msg);
+		Core::error(msg);
 	}
 	catch(ArgumentError& arg_err){
 		QString errmsg = "[";
 		errmsg.append(arg_err.callee).append("] ");
 		errmsg.append("Expected a ").append(arg_err.expect).append(" instance but a ");
 		errmsg.append(arg_err.received).append(" instance was provided. [arg_err]");
-		MereMath::error(errmsg);
+		Core::error(errmsg);
 	}
 	catch(ArityMismatchError& ame){
 		QString errmsg = "[";
 		errmsg.append(ame.callee).append("] ");
 		errmsg.append("Expected ").append(TString::number(ame.expect)).append(" argument(s) ");
 		errmsg.append("but ").append(TString::number(ame.received)).append(" was provided.");
-		MereMath::error(errmsg);
+		Core::error(errmsg);
 	}
 
 	catch(std::runtime_error& re){
-		MereMath::error(TString(re.what()) + " [runtime_err]");
+		Core::error(TString(re.what()) + " [runtime_err]");
 	}
-    catch(std::bad_alloc& ba){
-		MereMath::error(TString(ba.what()) + " [bad_alloc]");
-    }
+	catch(std::bad_alloc& ba){
+		Core::error(TString(ba.what()) + " [bad_alloc]");
+	}
 	catch(std::exception& ex){
-		MereMath::error(TString(ex.what()) + " [exception]");
-    }
+		Core::error(TString(ex.what()) + " [exception]");
+	}
 
 	LRet false;
 }
@@ -692,3 +582,4 @@ void Interpreter::reset(Environment envptr){
 	delete globals;
 	globals = environment = envptr;
 }
+

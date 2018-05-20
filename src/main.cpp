@@ -1,10 +1,9 @@
-#include "sourceeditor.hpp"
 #include "shell.h"
 
 int main(int argc, char *argv[]) {
 	App a(argc, argv);
 
-	MereCmder cmder;
+	mere::MereCmder cmder;
 #if T_GUI
 	int r = cmder.execute()?(a.quit(),a.exec()):EXIT_SUCCESS;
 	Log1("Exited main event loop");

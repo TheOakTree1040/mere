@@ -25,7 +25,6 @@ macx{
 SOURCES += \
         main.cpp \
     tokenizer.cpp \
-    mere_math.cpp \
     parser.cpp \
     interpreter.cpp \
     environment.cpp \
@@ -35,13 +34,13 @@ SOURCES += \
     merecallable.cpp \
     tlogger.cpp \
     natives.cpp \
-    runtimeerror.cpp \
-    shell.cpp
+    shell.cpp \
+    utils.cpp \
+    core.cpp
 
 HEADERS += \
     expr.h \
     tokenizer.h \
-    mere_math.h \
     parser.h \
     interpreter.h \
     environment.h \
@@ -57,4 +56,6 @@ HEADERS += \
     token.hpp \
     parseerror.hpp \
     config.hpp \
-    shell.h
+    shell.h \
+    utils.h \
+    core.h

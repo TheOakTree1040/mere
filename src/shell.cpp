@@ -1,3 +1,6 @@
 #include "shell.h"
-QCommandLineParser MereCmder::parser;
-short MereCmder::status = 0;
+
+namespace mere {
+	QCommandLineParser MereCmder::parser;
+	short MereCmder::status = 0;
+}
