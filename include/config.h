@@ -33,5 +33,5 @@ typedef QString TString;
 #define AUTHOR ("TheOakCode")
 #define EMAIL ("theoaktree1040@gmail.com")
 #define DESCRIPTION ("An interpreter for the scripting language Mere.")
-#define BUILD ("7-c (180520)")
+#define BUILD ("7-d (180520)")
 #endif // T_SPECS

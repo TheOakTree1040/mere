@@ -331,7 +331,7 @@ Object& Object::fn_init(){
 bool Object::match(const Object& other){
 	if (other.trait().is("void"))
 		return true;
-	if (!other.trait().has_type_of(other.trait()))
+	if (!trait().has_type_of(other.trait()))
 		return false;
 	return data() == other.data();
 }
