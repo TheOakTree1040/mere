@@ -3,25 +3,23 @@
 //#include <QSharedPointer>
 
 #include <QHash>
-
-#include "object.h"
-#include "runtimeerror.h"
+#include "config.hpp"
 
 #define EnvPtr EnvImpl*/*QSharedPointer<EnvImpl>*/
 
 namespace mere {
-
-	typedef TString Identifier;
-	class EnvImpl final
-	{
-		private:
+	class Token;
+	class Object;
+	typedef QString Identifier;
+	class EnvImpl final{
+		private_fields:
 			EnvPtr enclosing;
 			QHash<Identifier,Object> values;
-		public:
+		public_methods:
 			EnvImpl();
 			EnvImpl(EnvPtr);
 			void define(const Token&, const Object&);
-			void define(const TString&, const Object&);
+			void define(const QString&, const Object&);
 			Object& access(const Token&);
 			Object& assign(const Token&, const Object&);
 	};

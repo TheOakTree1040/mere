@@ -1,5 +1,6 @@
-
+#include "object.h"
 #include "environment.h"
+#include "runtimeerror.h"
 
 using namespace mere;
 EnvImpl::EnvImpl():enclosing(nullptr)

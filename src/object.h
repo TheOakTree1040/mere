@@ -1,9 +1,11 @@
 #ifndef OBJECT_H
 #define OBJECT_H
+
 #include <QVariant>
-#include "tlogger.h"
 #include <functional>
 #include <bitset>
+#include "tlogger.h"
+
 using std::pair;
 
 namespace mere {
@@ -27,7 +29,6 @@ namespace mere {
 
 	//defines the trait of the object
 	enum class TraitIndex{
-
 		//Type Trait
 		Object = 0,	//1
 		Function,	//0
@@ -42,415 +43,133 @@ namespace mere {
 	struct TraitMatcher;
 
 	class Trait{
-		private://member fn
-			void _reset_(){
-				set(TraitIndex::Object		,	true	);
-				set(TraitIndex::Function	,	false	);
-				set(TraitIndex::Data		,	true	);
-				set(TraitIndex::Accessor	,	false	);
-				set(TraitIndex::Reference	,	false	);
-				set(TraitIndex::Dynamic		,	true	);
-				set(TraitIndex::OnStack		,	false	);
-				set(Ty::Void);
-				set("void",false);
-			}
-
-		private://fields
+		private_fields:
 			std::bitset<8> m_traits;
 			Ty m_ty;
 			TString m_id;
 
-		private://static data
 			static std::vector<TraitMatcher> type_lookup;
 			static int default_traits;
 
-		public://static fn
+		public_methods://static fn
 			static Ty type_of(const TString&);
 
-		public://member fn
-			Trait():
-				m_traits(default_traits),
-				m_ty(Ty::Void),
-				m_id("void"){}
-
-			Trait(const Trait& other):
-				m_traits(other.traits()),
-				m_ty(other.type()),
-				m_id(other.id()){}
-
-			Trait(const TString& id):
-				m_traits(default_traits),
-				m_ty(type_of(id)),
-				m_id(id){}
+			Trait();
+			Trait(const Trait& other);
+			Trait(const TString& id);
 			//setters
-			Trait& set(TraitIndex i, bool val = true){
-				m_traits.set(static_cast<size_t>(i),val);
-				return *this;
-			}
-			Trait& set(const TString& id, bool searches = true){
-				m_id = id;
-				return searches?set(type_of(id)):*this;
-			}
-			Trait& set(Ty t) noexcept {
-				m_ty = t;
-				return *this;
-			}
-			Trait& reset() {
-				m_traits = std::bitset<8>(default_traits);
-				set("void",false);
-				set(Ty::Void);
-				return *this;
-			}
+			Trait& set(TraitIndex i, bool val = true);
+			Trait& set(const TString& id, bool searches = true);
+			Trait& set(Ty t) noexcept;
+			Trait& reset();
 
 			//bit getters
-			bool is(TraitIndex i) const {
-				return m_traits.test(static_cast<size_t>(i));
-			}
-			bool is_obj		() const {return is(TraitIndex::Object		);}
-			bool is_fn		() const {return is(TraitIndex::Function	);}
-			bool is_data	() const {return is(TraitIndex::Data		);}
-			bool is_acsr	() const {return is(TraitIndex::Accessor	);}
-			bool is_ref		() const {return is(TraitIndex::Reference	);}
-			bool is_dynamic	() const {return is(TraitIndex::Dynamic	);}
-			bool is_on_stack() const {return is(TraitIndex::OnStack	);}
+			bool is(TraitIndex i) const { return m_traits.test(static_cast<size_t>(i));}
+			bool is_obj		() const { return is(TraitIndex::Object		); }
+			bool is_fn		() const { return is(TraitIndex::Function	); }
+			bool is_data	() const { return is(TraitIndex::Data		); }
+			bool is_acsr	() const { return is(TraitIndex::Accessor	); }
+			bool is_ref		() const { return is(TraitIndex::Reference	); }
+			bool is_dynamic	() const { return is(TraitIndex::Dynamic	); }
+			bool is_on_stack() const { return is(TraitIndex::OnStack	); }
 
 			//field getters
-			std::bitset<8> traits() const noexcept {
-				return m_traits;
-			}
-			TString id() const noexcept {
-				return m_id;
-			}
-			Ty type() const noexcept {
-				return m_ty;
-			}
-			bool is(Ty ty) const noexcept {
-				return m_ty == ty;
-			}
-			bool is(const TString& i) const noexcept {
-				return m_id == i;
-			}
+			std::bitset<8> traits() const noexcept { return m_traits; }
+			TString id() const noexcept { return m_id; }
+			Ty type() const noexcept { return m_ty; }
+			bool is(Ty ty) const noexcept { return m_ty == ty; }
+			bool is(const TString& i) const noexcept { return m_id == i; }
 
 			//bit setters
-			Trait& as_obj(){
-				return set(TraitIndex::Function,false)
-						.set(TraitIndex::Object);
-			}
-			Trait& as_fn (){
-				return set(TraitIndex::Object,false)
-						.set(TraitIndex::Function);
-			}
-			Trait& as_data(){
-				return	 set(TraitIndex::Data)
-						.set(TraitIndex::Accessor,false)
-						.set(TraitIndex::Reference,false);
-			}
-			Trait& as_acsr(){
-				return set(TraitIndex::Accessor)
-						.set(TraitIndex::Data,false)
-						.set_on_stack(false);
-			}
-			Trait& as_ref(){
-				return set(TraitIndex::Reference)
-						.set(TraitIndex::Data,false);
-			}
-			Trait& as_temp(){
-				return set_on_stack(false).as_data();
-			}
+			Trait& as_obj();
+			Trait& as_fn ();
+			Trait& as_data();
+			Trait& as_acsr();
+			Trait& as_ref();
+			Trait& as_temp();
 
-			Trait& set_dynamic(bool val = true){
-				return set(TraitIndex::Dynamic,val);
-			}
-			Trait& set_on_stack(bool val = true){
-				return set(TraitIndex::OnStack,val);
-			}
+			Trait& set_dynamic(bool val = true);
+			Trait& set_on_stack(bool val = true);
 
-			Trait& recv(const Trait& other){
-				return set(TraitIndex::Object, other.is_obj())
-						.set(TraitIndex::Function, other.is_fn())
-						.set(other.type())
-						.set(other.id());
-			}
-			Trait& as_ref_of(const Trait& other){
-				return recv(other).as_ref();
-			}
+			Trait& recv(const Trait& other);
+			Trait& as_ref_of(const Trait& other);
 
-			bool is_number() const {
-				return is(Ty::Real) ||
-						is(Ty::Bool) ||
-						is(Ty::Char) ||
-						is(Ty::Null);
-			}
-			bool is_lvalue() const {
-				return is_acsr() || is_ref() || is_on_stack();
-			}
-			bool has_type_of(const Trait& other) const {
-				return	(other.id() == id()) &&
-						(other.type() == type()) &&
-						(other.is_obj() == is_obj());
-
-			}
+			bool is_number() const;
+			bool is_lvalue() const;
+			bool has_type_of(const Trait& other) const;
 
 			//operator
-			bool operator==(const Trait& other) const {
-				return traits() == other.traits() &&
-						id() == other.id() &&
-						type() == other.type();
-			}
-			bool operator!=(const Trait& other) const {
-				return !(*this == other);
-			}
+			bool operator==(const Trait& other) const;
+			bool operator!=(const Trait& other) const { return !(*this == other); }
 	};
 
 	struct TraitMatcher{
+		public_fields:
 			TString type_id;
 			Ty type;
+		public_methods:
+			TraitMatcher();
+			TraitMatcher(const TString& tid, Ty type);
 
-			TraitMatcher():
-				type_id("void"),
-				type(Ty::Void){}
-
-			TraitMatcher(const TString& tid, Ty type):
-				type_id(tid),
-				type(type){}
-
-			bool match(const TString& id){
-				return type_id == id;
-			}
+			bool match(const TString& id){ return type_id == id; }
 	};
 
+	class EnvImpl;
 	class Object{
-		private://fields
+			friend class EnvImpl;
+		private_fields:
 			Var* m_ptr;
 			std::reference_wrapper<Object> m_onstack;
 			Trait m_trait;
-		private://member fn
+		private_methods:
 			void delete_ptr();
-		public:
-			Object():
-				m_ptr(VPTR_INIT),
-				m_onstack(*this),
-				m_trait(){
-				LCtor("OBJ_DEFLT_CTOR");
-			}
+			Object& fn_init();
+		public_methods:
+			Object();
+			Object(const Object& o);
+			Object(const Trait& trt, const Var& var);
+			Object(const TString& id, const Var& var);
+			Object(bool b);
+			Object(char c);
+			Object(double d);
+			Object(const TString& str);
+			static Object null();
 
-			Object(const Object& o):
-				m_ptr(o.trait().is_data()?new Var(o.data()):o.ptr()),
-				m_onstack(o.trait().is_ref()?o.m_onstack.get():*this),
-				m_trait(o.m_trait){
-				Log ls("OBJECT CTOR DATA:") ls(to_string());
-			}
+			~Object(){ delete_ptr(); }
 
 			//getters
-			Var& data() {
-				return m_ptr?*m_ptr:
-							 *(trait().as_data(),m_ptr = VPTR_INIT);
-			}
-			Var& data() const {
-				return *m_ptr;
-			}
-			Var* ptr() const {
-				return m_ptr;
-			}
-			Trait& trait() {
-				return m_trait;
-			}
-			const Trait& trait() const {
-				return m_trait;
-			}
+			Var& data();
+			Var& data() const { return *m_ptr; }
+			Var* ptr() const { return m_ptr; }
+			Trait& trait() { return m_trait; }
+			const Trait& trait() const { return m_trait; }
 
 			//setters - pure assignment
-			Object& set(const Trait& t){
-				LFn;
-				m_trait = t;
-				LRet *this;
-			}
-			Object& set(const Var& var){
-				delete_ptr();
-				m_ptr = new Var(var);
-				fn_init();
-				LRet *this;
-			}
+			Object& set(const Trait& t);
+			Object& set(const Var& var);
 
-			//ctor from Trait & Variant
-			Object(const Trait& trt, const Var& var):
-				m_ptr(nullptr),
-				m_onstack(*this),
-				m_trait(trt){
-				set(var);
-			}
-			Object(const TString& id, const Var& var):
-				m_ptr(nullptr),
-				m_onstack(*this),
-				m_trait(Trait(id))
-			{
-				set(var);
-			}
+			template <typename T> T as() { return data().value<T>(); }
+			template <typename T> T as() const { return m_ptr->value<T>(); }
 
-			//ctor from literals
-			Object(bool b):
-				m_ptr(nullptr),
-				m_onstack(*this),
-				m_trait(Trait("bool")){
-				set(Var(b));
-			}
-			Object(char c):
-				m_ptr(nullptr),
-				m_onstack(*this),
-				m_trait(Trait("char")){
-				set(Var(c));
-			}
-			Object(double d):
-				m_ptr(nullptr),
-				m_onstack(*this),
-				m_trait(Trait("real")){
-				LFn;
-				set(Var(d));
-				LVd;
-			}
-			Object(const TString& str):
-				m_ptr(nullptr),
-				m_onstack(*this),
-				m_trait(Trait("string")){
-				set(Var(str));
-			}
-			static Object null(){
-				Object ret;
-				ret.trait().set(Ty::Null);
-				return ret;
-			}
+			TString to_string() const;
+			bool to_bool() const;
 
-			//dtor
-			~Object(){
-				delete_ptr();
-			}
+			Object postfix(int i);
+			Object prefix(int i);
 
-			template <typename T>
-			T as() {
-				//LFn;
-				return data().value<T>();
-			}
+			Object& referenced();
 
-			template <typename T>
-			T as() const {
-				return m_ptr->value<T>();
-			}
+			Object& as_ref_of(Object& dest);
+			Object& as_acsr_of(Object& stk_var);
+			Object& recv(const Object& obj);
 
-			TString to_string() const {
-				//			LFn;
-				if (!m_ptr)
-					return "[UNALLOCATED_OBJECT]";
-				switch(trait().type()){
-					case Ty::String:
-						return as<TString>();
-					case Ty::Real:
-						return TString::number(as<double>(),'g',10);
-					case Ty::Bool:
-						return as<bool>()?"true":"false";
-					case Ty::Null:
-						return "null";
-					case Ty::Char:
-						return TString(as<char>());
-					case Ty::Void:
-						return "[Void]";
-					default:
-						return TString("[").append(trait().id()).append(" instance]");
-				}
+			bool match(const Object& other);
 
-			}
-
-			bool to_bool() {
-				return trait().is_number()?
-							as<bool>():
-							trait().is(Ty::String)?
-								as<TString>().size():
-								true;
-			}
-
-			Object postfix(int i){
-				if (!trait().is_lvalue() || !trait().is_number())
-					return *this;
-				double old = as<double>();
-				Object copy(Trait(trait()).as_temp(),Var(old));
-				data() = Var(old+i);
-				return copy;
-			}
-
-			Object prefix(int i) {
-				if (!trait().is_number() || !trait().is_lvalue())
-					return *this;
-				data() = Var(as<double>()+i);
-				return *this;
-			}
-
-			//copy
-			Object& operator=(const Object& other){
-				set(other.trait());
-				if (other.trait().is_data()){
-					set(other.data());
-				}
-				else{
-					delete_ptr();
-					m_ptr = other.ptr();
-				}
-				m_onstack = other.trait().is_ref()?other.m_onstack.get():*this;
-				return *this;
-			}
-
-			Object& recv(const Object& obj){
-				LFn;
-				data() = obj.data();
-				trait().recv(obj.trait());
-				if (trait().is_ref()){
-					referenced().trait().recv(trait());
-				}
-				LRet *this;
-			}
-			Object& referenced(){
-				return trait().is_on_stack()?*this:m_onstack.get().referenced();
-			}
-
-			Object& as_ref_of(Object& dest){
-				delete_ptr();//if acsr, deletes the stackvar's ptr, else deletes
-				//this->ptr (as m_onstack is init'd w/ *this)
-				(trait().is_acsr()?referenced():*this).trait().as_ref_of(dest.trait());
-				(trait().is_acsr()?referenced().m_onstack:m_onstack) = dest.referenced();
-				m_ptr = dest.ptr();
-				if (trait().is_acsr()){
-					referenced().delete_ptr();
-					trait() = referenced().trait();
-					trait().as_acsr();
-					referenced().m_ptr = m_ptr;
-				}
-				return *this;
-			}
-			Object& as_acsr_of(Object& stk_var){
-				as_ref_of(stk_var).trait().as_acsr();
-				return *this;
-			}
-
-			Object& fn_init();
-
-			bool match(const Object& other){
-				if (other.trait().is("void"))
-					return true;
-				return data() == other.data();
-			}
-
-			bool operator==(const Object& other) const {
-				return trait().has_type_of(other.trait()) && data() == other.data();
-			}
-			bool operator==(Object& other) {
-				return trait().has_type_of(other.trait()) && data() == other.data();
-			}
-			bool operator>(const Object& other) const {
-				return trait().is_number() && other.trait().is_number()?
-							as<double>() > other.as<double>():false;
-			}
-			bool operator<(const Object& other) const {
-				return trait().is_number() && other.trait().is_number()?
-							as<double>() < other.as<double>():false;
-			}
+			Object& operator=(const Object& other);
+			bool operator==(const Object& other) const;
+			bool operator==(Object& other);
+			bool operator>(const Object& other) const;
+			bool operator<(const Object& other) const;
 	};
 }
 Q_DECLARE_METATYPE(mere::Object)

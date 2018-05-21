@@ -33,8 +33,10 @@ SOURCES += \
     tlogger.cpp \
     natives.cpp \
     shell.cpp \
-    utils.cpp \
-    core.cpp
+    core.cpp \
+    data_storage.cpp \
+    runtimeerror.cpp \
+    token.cpp
 
 HEADERS += \
     expr.h \
@@ -50,12 +52,11 @@ HEADERS += \
     tlogger.h \
     natives.h \
     sourceeditor.hpp \
-    data_storage.hpp \
-    token.hpp \
     parseerror.hpp \
     config.hpp \
     shell.h \
-    utils.h \
-    core.h
+    core.h \
+    data_storage.h \
+    token.h
 
 #QTPLUGIN.platforms = qminimal

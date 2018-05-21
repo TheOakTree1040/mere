@@ -1,48 +1,48 @@
 #ifndef RUNTIMEERROR_H
 #define RUNTIMEERROR_H
+
 #include <stdexcept>
-#include "token.hpp"
+#include "token.h"
 
 namespace mere {
+
 	class RuntimeError : public std::runtime_error{
-		public:
+		public_fields:
 			TString msg;
 			Token tok;
+		public_methods:
 			RuntimeError():std::runtime_error("UnknownRuntimeError"),msg("UnknownRuntimeError"),tok(){}
 			RuntimeError(const Token& t, const TString& m) : std::runtime_error(m.toStdString()), msg(m), tok(t){}
 	};
+
 	class ArgumentError : public std::runtime_error{
-		public:
+		public_fields:
 			TString expect;
 			TString received;
 			TString callee;
+		public_methods:
 			ArgumentError():std::runtime_error("UnknownArgError"),expect("null"),received("void"),callee("internal"){}
-			ArgumentError(TString exp,TString rec, const TString c = "internal"):
-				std::runtime_error("ArgError"),
-				expect(exp),
-				received(rec),
-				callee(c){}
+			ArgumentError(const TString& exp, const TString& rec, const TString c = "internal");
 	};
+
 	class ArityMismatchError : public std::runtime_error{
-		public:
+		public_fields:
 			int expect;
 			int received;
 			TString callee;
+		public_methods:
 			ArityMismatchError():std::runtime_error("UnknownAME"),expect(0),received(0),callee("internal"){}
-			ArityMismatchError(int expect, int received, const TString c = "internal"):
-				std::runtime_error("AMError"),
-				expect(expect),
-				received(received),
-				callee(c){}
+			ArityMismatchError(int expect, int received, const TString c = "internal");
 	};
+
 	class Abort : public std::runtime_error{
-			//public:
-			//static const QHash<int, TString> abort_codes;
-		public:
+		public_fields:
 			int code;
 			TString message;
-			Abort(int code,const TString& msg):std::runtime_error(msg.toStdString()),code(code),message(msg){}
+		public_methods:
+			Abort(int code, const TString& msg);
 	};
+
 }
 
 #endif // RUNTIMEERROR_H

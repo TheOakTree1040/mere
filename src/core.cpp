@@ -20,14 +20,19 @@
 #include "parser.h"
 #include "astprinter.hpp"
 #include "natives.h"
+#include "runtimeerror.h"
 
 using namespace mere;
 Interpreter* Core::interpreter = nullptr;
+bool Core::intd = false;
 
 std::vector<Core::Error> Core::errors{};
 
 void Core::init_once(){
 	LFn;
+	if (intd){
+		LVd;
+	}
 	if (!QMetaType::registerComparators<Object>()){
 #if T_GUI
 		QMessageBox::critical(nullptr,"Fatal Internal Failure","Failed to register Object comparators.");
@@ -38,12 +43,14 @@ void Core::init_once(){
 		abort();
 	}
 	interpreter = new Interpreter();
+	intd = true;
 	LVd;
 }
 
 bool Core::run(const TString& src, bool show_tok, bool show_syn){
 	if (src.isEmpty())
 		return false;
+	if (!intd) Core::init_once();
 	Stmts stmts;
 	{
 		Tokens tokens = Tokenizer(src).scan_tokens();
@@ -168,7 +175,7 @@ void Core::show_errors(){
 	}
 
 	TString error_text = "\n";
-	for (int i = 0; i != errors.size(); i++){
+	for (uint i = 0u; i != errors.size(); i++){
 		error_text.append(TString("    > ") + errors.at(i).msg);
 		error_text.append("\n");
 	}

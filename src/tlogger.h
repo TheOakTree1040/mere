@@ -4,91 +4,42 @@
 #include "config.hpp"
 
 #if T_DBG
-#if T_GUI
-#include <QDebug>
-#else
-#include <iostream>
-#endif // T_GUI
-
 namespace mere {
 	class TLogHelper{
+		private_fields:
 			static int indentation;
-		public:
-			static void indent(){
-				indentation++;
-			}
-			static void outdent(){
-				indentation--;
-			}
-			static TString startln(const TString& starter){
-				TString out = "";
-				if (indentation < 0)
-					indentation = 0;
-				for (int i = indentation; i > 0; i--){
-					out += "  ";
-				}
-				return out + " " + starter + " ";
-			}
-			static void reset(){
-				indentation = 0;
-			}
+		public_methods:
+			static void indent(){ indentation++; }
+			static void outdent(){ indentation--; }
+			static TString startln(const TString& starter);
+			static void reset(){ indentation = 0; }
 	};
 
 	class TLogger{
-		private:
+		private_fields:
 			TString out = "";
 			TString st = "|";
 			bool noln = false;
-		public:
-			TLogger(){
-			}
+		public_methods:
+			TLogger(){ }
 
-			TLogger& put(const TString& s){
-				out += s + " ";
-				return *this;
-			}
+			TLogger& put(const TString& s){ out += s + " "; return *this; }
+
 			template<typename Num>
-			TLogger& operator<<(const Num& d){
-				return put(TString::number(d));
-			}
+			TLogger& operator<<(const Num& d) { return put(TString::number(d)); }
 
-			TLogger& operator<<(const char str[]){
-				return put(TString(str));
-			}
+			TLogger& operator<<(const char str[]){ return put(TString(str)); }
 
-			TLogger& indent(){
-				TLogHelper::indent();
-				return *this;
-			}
-			TLogger& outdent(){
-				TLogHelper::outdent();
-				return *this;
-			}
-			TLogger& noline(){
-				noln = true;
-				return *this;
-			}
-			TLogger& begw(const TString& str){
-				st = str;
-				return *this;
-			}
+			TLogger& indent(){ TLogHelper::indent(); return *this; }
+			TLogger& outdent(){ TLogHelper::outdent(); return *this; }
+			TLogger& noline(){ noln = true; return *this; }
+			TLogger& begw(const TString& str){ st = str; return *this; }
 
-			~TLogger(){
-				if (out.size()){
-#if T_GUI
-					qDebug().noquote() << TLogHelper::startln(st) << out;
-#elif T_CLI
-					std::cout << (TLogHelper::startln(st) + " " + out + "\n").toStdString();
-#endif // T_UI_Conf == T_UI_GUI
-				}
-			}
+			~TLogger();
 	};
-	//template<>
-	//TLogger& TLogger::operator<<(const TBuiltinString& s);
-	template<>
-	TLogger& TLogger::operator<<(const TString& s);
-	template<>
-	TLogger& TLogger::operator<<(const char& ch);
+
+	template<> TLogger& TLogger::operator<<(const TString& s);
+	template<> TLogger& TLogger::operator<<(const char& ch);
 }
 
 #define LRst	TLogHelper::reset()

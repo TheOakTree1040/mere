@@ -1,9 +1,8 @@
 
 #include "parser.h"
 #include "core.h"
-#include "data_storage.hpp"
+#include "data_storage.h"
 #include "merecallable.h"
-#include <vector>
 
 namespace mere {
 	Parser::Parser(std::vector<Token>& toks):tokens(toks){
@@ -56,8 +55,8 @@ namespace mere {
 		return peek().ty == Tok::eof;
 	}
 
-	Token& Parser::peek(int i){
-		if ((current + i) > (tokens.size()-1))
+	Token& Parser::peek(short i){
+		if (unsigned(current + i) > (tokens.size()-1))
 			return tokens[tokens.size()-1];
 		return tokens[current + i];
 	}

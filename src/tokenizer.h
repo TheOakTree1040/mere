@@ -1,15 +1,14 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
-#include "token.hpp"
+
+#include "token.h"
 #include "core.h"
-#include "object.h"
-#include <vector>
-#include <QChar>
+
+class QChar;
 
 namespace mere {
-	class Tokenizer
-	{
-		private:
+	class Tokenizer {
+		private_fields:
 			TString source;
 			Tokens tokens;
 
@@ -19,10 +18,10 @@ namespace mere {
 			int start = 0;
 			int current = 0;
 			int line = 0;
-		private:
+		private_methods:
 			bool is_at_end();
 			bool is_digit(char c);
-			char peek(int=0);
+			char peek(short=0);
 			bool match(char expct);
 			bool match(TString expct);
 			char advance();
@@ -43,7 +42,7 @@ namespace mere {
 
 			void identifier();
 			void scan_token();
-		public:
+		public_fields:
 			Tokenizer(const TString&);
 			~Tokenizer();
 			Tokens scan_tokens();

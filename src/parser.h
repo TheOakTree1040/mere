@@ -1,6 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
-#include "expr.h"
+#include "token.h"
 #include "parseerror.hpp"
 #include "stmt.h"
 
@@ -8,18 +8,16 @@
 #define F_ false
 
 namespace mere {
-	class Parser
-	{
-		private:
-			//vars
+	class Parser {
+		private_fields:
 			std::vector<Token>& tokens;
 			int current = 0;
-			//Helpers
+		private_methods:
 			bool match			(const std::vector<Tokty>&		);
 			bool match			(Tokty							);
 			bool check			(Tokty							);
 			bool is_at_end		(								);
-			Token& peek			(int=0							);
+			Token& peek			(short=0						);
 			Token& prev			(								);
 			Token& advance		(								);
 			Token& expect		(Tokty, const TString&			);
@@ -63,10 +61,10 @@ namespace mere {
 			Expr map		(		);
 			Expr rvalue		(		);
 			Expr group		(		);
-		public:
+		public_methods:
 			Parser		(std::vector<Token>&);
-			~Parser		(				);
-			Stmts parse	(				);
+			~Parser		(					);
+			Stmts parse	(					);
 	};
 }
 

@@ -35,7 +35,7 @@ namespace mere {
 		LVd;
 	}
 
-	char Tokenizer::peek(int i) {
+	char Tokenizer::peek(short i) {
 		if (!source.size())
 			return '\0';
 		if (is_at_end() && i < 0 && (current + i) >= 0)
