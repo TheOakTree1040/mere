@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "token.h"
-#include "parseerror.hpp"
+#include "parseerror.h"
 #include "stmt.h"
 
 #define T_ true

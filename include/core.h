@@ -1,7 +1,7 @@
 #ifndef MERE_MATH_FWD_H
 #define MERE_MATH_FWD_H
 
-#include "config.hpp"
+#include "config.h"
 #include <vector>
 
 class QFile;

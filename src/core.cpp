@@ -1,7 +1,7 @@
 #ifndef MERE_MATH_H
 #define MERE_MATH_H
 
-#include "config.hpp"
+#include "config.h"
 
 #include <QFile>
 #include <vector>
@@ -18,7 +18,7 @@
 #include "tokenizer.h"
 #include "interpreter.h"
 #include "parser.h"
-#include "astprinter.hpp"
+#include "astprinter.h"
 #include "natives.h"
 #include "runtimeerror.h"
 

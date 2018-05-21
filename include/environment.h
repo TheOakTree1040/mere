@@ -3,7 +3,7 @@
 //#include <QSharedPointer>
 
 #include <QHash>
-#include "config.hpp"
+#include "config.h"
 
 #define EnvPtr EnvImpl*/*QSharedPointer<EnvImpl>*/
 

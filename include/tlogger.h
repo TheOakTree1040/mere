@@ -1,7 +1,7 @@
 
 #ifndef T_LOGGER
 #define T_LOGGER
-#include "config.hpp"
+#include "config.h"
 
 #if T_DBG
 namespace mere {

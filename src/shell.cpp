@@ -10,7 +10,7 @@
 #include "shell.h"
 
 #include "core.h"
-#include "sourceeditor.hpp"
+#include "sourceeditor.h"
 
 using namespace mere;
 
@@ -341,6 +341,7 @@ bool MereCmder::execute(){
 				set(Opt::Prompt);
 				break;
 			default:
+				std::cout << "  > Unrecognized mode; showing help.\n";
 				parser.showHelp(EXIT_FAILURE);
 		}
 	}
@@ -368,12 +369,12 @@ bool MereCmder::execute(){
 #endif
 			if (test(Opt::FFile)) {
 				QFile file(parser.value("file"));
-				if (file.isOpen()) {
+				if (file.open(QIODevice::ReadOnly)) {
 					source = file.readAll();
 					file.close();
 				}
 				else {
-					source = "print \"Invalid Filename!\";";
+					source = "println \"mere: failed to open file.\";";
 				}
 			}
 			else if (test(Opt::Src)){

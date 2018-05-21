@@ -10,7 +10,7 @@
 #include <QDialog>
 #endif
 
-#include "config.hpp"
+#include "config.h"
 
 typedef std::bitset<8> Options;
 
