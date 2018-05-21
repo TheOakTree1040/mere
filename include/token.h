@@ -5,7 +5,7 @@
 
 namespace mere {
 	class Token{
-		public_decls:
+		public:
 			enum tok_type{
 				invalid,
 
@@ -48,12 +48,12 @@ namespace mere {
 
 				eof // End of file
 			};
-		public_fields:
+		public:
 			tok_type ty;
 			TString lexeme;
 			Object* literal;
 			int ln;
-		public_methods:
+		public:
 			Token();
 			Token(const Token& tok);
 			Token(tok_type type, const TString& lex, const Object& lit, int line);

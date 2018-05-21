@@ -43,7 +43,7 @@ namespace mere {
 	struct TraitMatcher;
 
 	class Trait{
-		private_fields:
+		private:
 			std::bitset<8> m_traits;
 			Ty m_ty;
 			TString m_id;
@@ -51,7 +51,7 @@ namespace mere {
 			static std::vector<TraitMatcher> type_lookup;
 			static int default_traits;
 
-		public_methods://static fn
+		public://static fn
 			static Ty type_of(const TString&);
 
 			Trait();
@@ -104,10 +104,10 @@ namespace mere {
 	};
 
 	struct TraitMatcher{
-		public_fields:
+		public:
 			TString type_id;
 			Ty type;
-		public_methods:
+		public:
 			TraitMatcher();
 			TraitMatcher(const TString& tid, Ty type);
 
@@ -117,14 +117,14 @@ namespace mere {
 	class EnvImpl;
 	class Object{
 			friend class EnvImpl;
-		private_fields:
+		private:
 			Var* m_ptr;
 			std::reference_wrapper<Object> m_onstack;
 			Trait m_trait;
-		private_methods:
+		private:
 			void delete_ptr();
 			Object& fn_init();
-		public_methods:
+		public:
 			Object();
 			Object(const Object& o);
 			Object(const Trait& trt, const Var& var);

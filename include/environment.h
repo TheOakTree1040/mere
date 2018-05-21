@@ -12,10 +12,10 @@ namespace mere {
 	class Object;
 	typedef QString Identifier;
 	class EnvImpl final{
-		private_fields:
+		private:
 			EnvPtr enclosing;
 			QHash<Identifier,Object> values;
-		public_methods:
+		public:
 			EnvImpl();
 			EnvImpl(EnvPtr);
 			void define(const Token&, const Object&);

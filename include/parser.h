@@ -9,10 +9,10 @@
 
 namespace mere {
 	class Parser {
-		private_fields:
+		private:
 			std::vector<Token>& tokens;
 			int current = 0;
-		private_methods:
+		private:
 			bool match			(const std::vector<Tokty>&		);
 			bool match			(Tokty							);
 			bool check			(Tokty							);
@@ -61,7 +61,7 @@ namespace mere {
 			Expr map		(		);
 			Expr rvalue		(		);
 			Expr group		(		);
-		public_methods:
+		public:
 			Parser		(std::vector<Token>&);
 			~Parser		(					);
 			Stmts parse	(					);

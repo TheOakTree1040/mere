@@ -8,11 +8,11 @@ namespace mere {
 #define sptr Stmt*
 
 	struct Branch {
-		private_fields:
+		private:
 			mutable bool m_handled = false;
 			eptr m_expr;
 			sptr m_stmt;
-		public_methods:
+		public:
 			Branch();
 			Branch(const Expr& ex, const Stmt& st);
 			Branch(const Branch& other);
@@ -29,7 +29,7 @@ namespace mere {
 	 */
 	class Stmt {
 			friend class Interpreter;
-		public_decls:
+		public:
 			/*!
 			 * \brief The stmt_type enum
 			 */
@@ -50,19 +50,19 @@ namespace mere {
 				Run
 			};
 			class stmt_fields{
-				private_methods:
+				private:
 					stmt_fields& operator=(const stmt_fields&) = delete;
 					stmt_fields(const stmt_fields&) = delete;
-				protected_methods:
+				protected:
 					stmt_fields(){}
-				public_methods:
+				public:
 					virtual ~stmt_fields(){}
 			};
 			class var_decl_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_init;
 					Token* m_var_name;
-				public_methods:
+				public:
 					var_decl_fields(const Expr& ini, const Token& name);
 
 					~var_decl_fields() override;
@@ -73,11 +73,11 @@ namespace mere {
 					void set_name(const Token& tok);
 			};
 			class if_stmt_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_condition;
 					sptr m_if_block;
 					sptr m_else_block;
-				public_methods:
+				public:
 					if_stmt_fields(const Expr& condit, const Stmt& if_blk, const Stmt& else_blk);
 					~if_stmt_fields() override;
 
@@ -90,10 +90,10 @@ namespace mere {
 					void set_else(const Stmt& e);
 			};
 			class while_stmt_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_condition;
 					sptr m_block;
-				public_methods:
+				public:
 					while_stmt_fields(const Expr& condit, const Stmt& block);
 					~while_stmt_fields() override;
 
@@ -104,9 +104,9 @@ namespace mere {
 					void set_block(const Stmt& block);
 			};
 			class block_fields : public stmt_fields {
-				private_fields:
+				private:
 					std::vector<sptr>* m_block;
-				public_methods:
+				public:
 					block_fields(const std::vector<Stmt>& b);
 					~block_fields() override;
 
@@ -114,9 +114,9 @@ namespace mere {
 					void set_block(const std::vector<Stmt>& b);
 			};
 			class expr_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_expr;
-				public_methods:
+				public:
 					expr_fields(const Expr& expr):m_expr(new Expr(expr)){}
 					~expr_fields() override { delete m_expr; }
 
@@ -124,19 +124,19 @@ namespace mere {
 					void set_expr(const Expr& expr);
 			};
 			class print_fields : public expr_fields {
-				public_methods:
+				public:
 					print_fields(const Expr& ex) : expr_fields(ex){}
 			};
 			class println_fields : public expr_fields {
-				public_methods:
+				public:
 					println_fields(const Expr& ex) : expr_fields(ex){}
 			};
 			class fn_decl_fields : public stmt_fields {
-				private_fields:
+				private:
 					Token* m_name;
 					std::vector<Token*>* m_params;
 					sptr m_body;
-				public_methods:
+				public:
 					fn_decl_fields(const Token& n, const std::vector<Token>& p, const Stmt& b);
 					~fn_decl_fields() override;
 
@@ -149,10 +149,10 @@ namespace mere {
 					void set_params(const std::vector<Token>& p);
 			};
 			class ret_stmt_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_val;
 					Token* m_keyword;
-				public_methods:
+				public:
 					ret_stmt_fields(const Expr& v, const Token& op);
 					~ret_stmt_fields() override;
 
@@ -163,11 +163,11 @@ namespace mere {
 					void set_keyword(const Token& keywd);
 			};
 			class assert_stmt_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_value;
 					int m_code;
 					TString m_msg;
-				public_methods:
+				public:
 					assert_stmt_fields(const Expr& val, int code, const TString& msg);
 					~assert_stmt_fields() override { delete m_value; }
 
@@ -180,10 +180,10 @@ namespace mere {
 					void set_message(const TString& message);
 			};
 			class match_stmt_fields : public stmt_fields {
-				private_fields:
+				private:
 					eptr m_match;
 					std::vector<Branch>* m_branches;
-				public_methods:
+				public:
 					match_stmt_fields(const Expr& match, const std::vector<Branch>& br);
 					~match_stmt_fields() override;
 
@@ -194,31 +194,31 @@ namespace mere {
 					void set_branches(const std::vector<Branch>& br);
 			};
 			class invalid_fields : public stmt_fields {
-				public_methods:
+				public:
 					invalid_fields(){}
 					~invalid_fields() override {}
 			};
 			class empty_fields : public stmt_fields {
-				public_methods:
+				public:
 					empty_fields(){}
 					~empty_fields() override {}
 			};
 			class run_fields : public stmt_fields {
-				private_fields:
+				private:
 					TString m_filename;
-				public_methods:
+				public:
 					run_fields(const TString& fn) : m_filename(fn){}
 					const TString& filename() const { return m_filename; }
 			};
 
-		private_fields: // members
+		private: // members
 			mutable bool m_handled = false;
 			stmt_type m_type;
 			mutable stmt_fields* m_fields;
-		private_methods:
+		private:
 			void set_handled() const;
 			void handle() const;
-		public_methods:
+		public:
 			FieldsGetter(expr_fields,expr)
 			FieldsGetter(var_decl_fields,var)
 			FieldsGetter(block_fields,block)

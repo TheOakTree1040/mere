@@ -20,11 +20,11 @@ namespace mere {
 	/// @class Interpreter
 	/// @brief It interprets statements given by the parser.
 	class Interpreter final{
-		private_fields:
+		private:
 			EnvImpl* globals = new EnvImpl();
 			EnvImpl* environment = globals;
 
-		public_methods:
+		public:
 			Interpreter	();
 			~Interpreter();
 

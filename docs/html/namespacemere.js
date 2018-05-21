@@ -1,0 +1,27 @@
+var namespacemere =
+[
+    [ "Abort", "classmere_1_1_abort.html", "classmere_1_1_abort" ],
+    [ "ArgumentError", "classmere_1_1_argument_error.html", "classmere_1_1_argument_error" ],
+    [ "ArityMismatchError", "classmere_1_1_arity_mismatch_error.html", "classmere_1_1_arity_mismatch_error" ],
+    [ "Branch", "structmere_1_1_branch.html", "structmere_1_1_branch" ],
+    [ "Core", "classmere_1_1_core.html", "classmere_1_1_core" ],
+    [ "EnvImpl", "classmere_1_1_env_impl.html", "classmere_1_1_env_impl" ],
+    [ "Expr", "classmere_1_1_expr.html", "classmere_1_1_expr" ],
+    [ "HashMap", "classmere_1_1_hash_map.html", "classmere_1_1_hash_map" ],
+    [ "Interpreter", "classmere_1_1_interpreter.html", "classmere_1_1_interpreter" ],
+    [ "invalid_access", "classmere_1_1invalid__access.html", "classmere_1_1invalid__access" ],
+    [ "MereCallable", "classmere_1_1_mere_callable.html", "classmere_1_1_mere_callable" ],
+    [ "MereCmder", "classmere_1_1_mere_cmder.html", "classmere_1_1_mere_cmder" ],
+    [ "MerePrompt", "classmere_1_1_mere_prompt.html", "classmere_1_1_mere_prompt" ],
+    [ "Object", "classmere_1_1_object.html", "classmere_1_1_object" ],
+    [ "ObjectAssoc", "classmere_1_1_object_assoc.html", "classmere_1_1_object_assoc" ],
+    [ "ParseError", "classmere_1_1_parse_error.html", "classmere_1_1_parse_error" ],
+    [ "Parser", "classmere_1_1_parser.html", "classmere_1_1_parser" ],
+    [ "Return", "classmere_1_1_return.html", "classmere_1_1_return" ],
+    [ "RuntimeError", "classmere_1_1_runtime_error.html", "classmere_1_1_runtime_error" ],
+    [ "Stmt", "classmere_1_1_stmt.html", "classmere_1_1_stmt" ],
+    [ "Token", "classmere_1_1_token.html", "classmere_1_1_token" ],
+    [ "Tokenizer", "classmere_1_1_tokenizer.html", "classmere_1_1_tokenizer" ],
+    [ "Trait", "classmere_1_1_trait.html", "classmere_1_1_trait" ],
+    [ "TraitMatcher", "structmere_1_1_trait_matcher.html", "structmere_1_1_trait_matcher" ]
+];

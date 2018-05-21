@@ -25,13 +25,13 @@ namespace mere {
 	class Token;
 
 	class invalid_access : std::runtime_error{
-		public_methods:
+		public:
 			invalid_access(const std::string& where):std::runtime_error(where){}
 	};
 
 	class Expr {
 			friend class Interpreter;
-		public_decls:
+		public:
 			enum expr_type : char {
 				Empty,
 				Group,
@@ -54,19 +54,19 @@ namespace mere {
 			};
 
 			class expr_fields {
-				private_methods:
+				private:
 					expr_fields& operator=(const expr_fields&) = delete;
 					expr_fields(const expr_fields&);
-				protected_methods:
+				protected:
 					expr_fields(){}
-				public_methods:
+				public:
 					virtual ~expr_fields(){}
 			};
 
 			class nested_expr_fields : virtual public expr_fields {
-				protected_fields:
+				protected:
 					eptr m_expr;
-				public_methods:
+				public:
 					nested_expr_fields(const Expr& ex);
 					virtual ~nested_expr_fields() override;
 
@@ -74,23 +74,23 @@ namespace mere {
 					void set_expr(const Expr& ex);
 			};
 			class operator_fields : virtual public expr_fields {
-				protected_fields:
+				protected:
 					Token* m_op;
-				protected_methods:
+				protected:
 					operator_fields(const Token& op);
 					virtual ~operator_fields() override;
-				public_methods:
+				public:
 					Token& op() const;
 					void set_op(const Token& o);
 			};
 			class unary_fields : public nested_expr_fields, public operator_fields {
-				public_methods:
+				public:
 					unary_fields(const Expr& operand, const Token& op);
 			};
 			class binary_fields : public unary_fields {
-				protected_fields:
+				protected:
 					eptr m_right;
-				public_methods:
+				public:
 					binary_fields(const Expr& left, const Token& op, const Expr& right);
 					~binary_fields() override;
 
@@ -101,14 +101,14 @@ namespace mere {
 					void set_right(const Expr& right);
 			};
 			class logical_fields : public binary_fields {
-				public_methods:
+				public:
 					logical_fields(const Expr& left, const Token& op, const Expr& right):
 					binary_fields(left,op,right){}
 			};
 			class array_fields : public expr_fields {
-				protected_fields:
+				protected:
 					std::vector<eptr>* m_array;//array
-				public_methods:
+				public:
 					array_fields(const std::vector<Expr>& arr);
 					~array_fields() override;
 
@@ -116,13 +116,13 @@ namespace mere {
 					void set_array(const std::vector<Expr>& arr);
 			};
 			class pair_vector_fields : public expr_fields {
-				protected_decls:
+				protected:
 					using Data =  std::vector<std::pair<eptr,eptr>> ;
-				protected_fields:
+				protected:
 					Data* m_data;
-				protected_methods:
+				protected:
 					pair_vector_fields(const std::vector<std::pair<Expr,Expr>>& dat);
-				public_methods:
+				public:
 					~pair_vector_fields() override;
 
 					void set_data(const std::vector<std::pair<Expr,Expr>>& dat);
@@ -131,7 +131,7 @@ namespace mere {
 
 			};
 			class map_fields : public pair_vector_fields {
-				public_methods:
+				public:
 					map_fields(const std::vector<std::pair<Expr,Expr>>& map):
 						pair_vector_fields(map){}
 
@@ -142,7 +142,7 @@ namespace mere {
 					{ set_data(map); }
 			};
 			class hash_fields : public pair_vector_fields {
-				public_methods:
+				public:
 					hash_fields(const std::vector<std::pair<Expr,Expr>>& map):
 						pair_vector_fields(map){}
 
@@ -153,9 +153,9 @@ namespace mere {
 					{ set_data(hash); }
 			};
 			class var_acsr_fields : public expr_fields {
-				protected_fields:
+				protected:
 					Token* m_var_acsr;
-				public_methods:
+				public:
 					var_acsr_fields(const Token& acsr);
 					~var_acsr_fields() override;
 
@@ -163,9 +163,9 @@ namespace mere {
 					void set_accessor(const Token& tok);
 			};
 			class lit_fields : public expr_fields {
-				protected_fields:
+				protected:
 					Object* m_lit; //literal
-				public_methods:
+				public:
 					lit_fields(const Object& lit) : m_lit(new Object(lit)){}
 					lit_fields(Object* lit) : m_lit(lit){}
 					~lit_fields() override { delete m_lit; }
@@ -174,10 +174,10 @@ namespace mere {
 					void set_lit(const Object& p_lit);
 			};
 			class call_fields : public operator_fields {
-				protected_fields:
+				protected:
 					eptr m_callee;
 					std::vector<eptr>* m_arguments;
-				public_methods:
+				public:
 					call_fields(const Expr& callee, const std::vector<Expr>& args, const Token& paren);
 					~call_fields() override;
 
@@ -188,21 +188,21 @@ namespace mere {
 					void set_args(const std::vector<Expr>& args);
 			};
 			class refer_fields : public binary_fields {
-				public_methods:
+				public:
 					refer_fields(const Expr& left, const Token& op, const Expr& right):
 						binary_fields(left,op,right){}
 			};
 			class assign_fields : public binary_fields {
-				public_methods:
+				public:
 					assign_fields(const Expr& left, const Token& op, const Expr& right):
 						binary_fields(left,op,right){}
 			};
 			class ternary_fields : public expr_fields {
-				protected_fields:
+				protected:
 					eptr m_condition;
 					eptr m_left;
 					eptr m_right;
-				public_methods:
+				public:
 					ternary_fields(const Expr& condit, const Expr& lft, const Expr& rt):
 						m_condition(new Expr(condit)),
 						m_left(new Expr(lft)),
@@ -218,9 +218,9 @@ namespace mere {
 					void set_right(const Expr& rt);
 			};
 			class cs_fields : public expr_fields {
-				protected_fields:
+				protected:
 					std::vector<eptr>* m_exprs;
-				public_methods:
+				public:
 					cs_fields(const std::vector<Expr>& cs_exprs);
 					~cs_fields() override;
 
@@ -229,30 +229,30 @@ namespace mere {
 					void set_exprs(const std::vector<Expr>& cs_exprs);
 			};
 			class lambda_fields : public expr_fields {
-				protected_fields:
+				protected:
 					MereCallable* m_callable;
-				public_methods:
+				public:
 					lambda_fields(MereCallable* c) : m_callable(c){}
 					~lambda_fields();
 
 					MereCallable& callable() const { return *m_callable; }
 			};
 			class empty_fields : public expr_fields {
-				public_methods:
+				public:
 					empty_fields() = default;
 			};
 
 			typedef nested_expr_fields group_fields;
 
-		private_fields:
+		private:
 			expr_type m_type;
 			mutable expr_fields* m_fields;
 			mutable bool m_handled = false;
-		private_methods:
+		private:
 			void set_handled() const { m_handled = true; }
 			expr_fields* data() const { return m_fields; }
 			void handle() const;
-		public_methods:
+		public:
 			Expr();
 			Expr(const Expr & expr);
 			Expr(expr_type t, expr_fields* f);

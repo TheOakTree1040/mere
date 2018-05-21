@@ -14,11 +14,11 @@ namespace mere {
 
 	class SourceEditor : public QWidget{
 			Q_OBJECT
-		private_fields:
+		private:
 			QTextEdit* editor = nullptr;
 			QCheckBox* chk_tok = nullptr;
 			QCheckBox* chk_syn = nullptr;
-		public_methods:
+		public:
 			SourceEditor(QWidget* parent = nullptr):QWidget(parent){
 				LFn;
 				editor = new QTextEdit();

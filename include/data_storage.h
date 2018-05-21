@@ -7,10 +7,10 @@
 namespace mere {
 	typedef std::vector<std::pair<Object,Object>> ObjectAssocData;
 	class ObjectAssoc final{
-		private_methods:
+		private:
 			typedef ObjectAssocData OADat;
 			OADat m_data;
-		public_methods:
+		public:
 			ObjectAssoc(const OADat& d):m_data(d){}
 			ObjectAssoc():m_data(){}
 
@@ -26,9 +26,9 @@ namespace mere {
 
 	template <typename Key>
 	class HashMap final{
-		private_fields:
+		private:
 			QHash<Key,Object> map;
-		public_methods:
+		public:
 			HashMap():map(){}
 			HashMap(const QHash<Key,Object>& m):map(m){}
 

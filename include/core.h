@@ -12,21 +12,21 @@ namespace mere {
 	class Interpreter;
 
 	class Core{
-		public_decls:
+		public:
 			struct Error{
 					Error():ln(0),msg(""){}
 					Error(int l, const TString& m):ln(l),msg(m){}
 					int ln;
 					TString msg;
 			};
-		public_fields:
+		public:
 			static Interpreter* interpreter;
-		private_methods:
+		private:
 			static void init_once();
-		private_fields:
+		private:
 			static std::vector<Error> errors;
 			static bool intd;
-		public_methods:
+		public:
 			static bool run(const TString&, bool=false, bool=false);
 			static bool run(QFile&);
 			static void error(int, const TString&);

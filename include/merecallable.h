@@ -17,9 +17,9 @@ namespace mere{
 	typedef std::function<Object(Interpreter&,std::vector<Object>&)> Callable;
 
 	class Return : public std::runtime_error{
-		protected_fields:
+		protected:
 			Object obj;
-		public_methods:
+		public:
 			Return(const Object& obj):std::runtime_error("_mere_return_"),obj(obj){}
 			Object value() const { return obj; }
 	};
@@ -27,7 +27,7 @@ namespace mere{
 	class MereCallable{
 			friend class Interpreter;
 
-		private_fields:
+		private:
 			std::bitset<4> m_traits;
 			static int default_traits; // [REG:1][REF:0][NAT:0][___:0]
 			union {
@@ -36,13 +36,13 @@ namespace mere{
 			};
 			int m_arity = 0;
 
-		private_methods:
+		private:
 			MereCallable& set_arity(int i);
 			Stmt& function() const { return *m_fn; }
 
 			Object call(Interpreter&, std::vector<Object>&);
 
-		public_fields:// return type at 0;
+		public:// return type at 0;
 			MereCallable& set(Call ind, bool val = true);
 
 			MereCallable& as_reg(){ return set(Call::Reg).set(Call::Nat,false); }

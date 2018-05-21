@@ -8,7 +8,7 @@ class QChar;
 
 namespace mere {
 	class Tokenizer {
-		private_fields:
+		private:
 			TString source;
 			Tokens tokens;
 
@@ -18,7 +18,7 @@ namespace mere {
 			int start = 0;
 			int current = 0;
 			int line = 0;
-		private_methods:
+		private:
 			bool is_at_end();
 			bool is_digit(char c);
 			char peek(short=0);
@@ -42,7 +42,7 @@ namespace mere {
 
 			void identifier();
 			void scan_token();
-		public_fields:
+		public:
 			Tokenizer(const TString&);
 			~Tokenizer();
 			Tokens scan_tokens();

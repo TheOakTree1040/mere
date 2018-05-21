@@ -6,9 +6,9 @@
 #if T_DBG
 namespace mere {
 	class TLogHelper{
-		private_fields:
+		private:
 			static int indentation;
-		public_methods:
+		public:
 			static void indent(){ indentation++; }
 			static void outdent(){ indentation--; }
 			static TString startln(const TString& starter);
@@ -16,11 +16,11 @@ namespace mere {
 	};
 
 	class TLogger{
-		private_fields:
+		private:
 			TString out = "";
 			TString st = "|";
 			bool noln = false;
-		public_methods:
+		public:
 			TLogger(){ }
 
 			TLogger& put(const TString& s){ out += s + " "; return *this; }

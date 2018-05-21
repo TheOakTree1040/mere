@@ -20,18 +20,6 @@ typedef QString TString;
 #error Implementation for TString is required.
 #endif // T_QT
 
-#define public_methods public
-#define private_methods private
-#define protected_methods protected
-
-#define public_fields public
-#define private_fields private
-#define protected_fields protected
-
-#define public_decls public
-#define private_decls private
-#define protected_decls protected
-
 #define t_cast static_cast
 #define ptr_cast dynamic_cast
 

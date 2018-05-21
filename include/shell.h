@@ -29,9 +29,9 @@ namespace mere {
 #if T_GUI
 	class SrcEdit : public QDialog {
 			Q_OBJECT
-		private_fields
+		private
 			QTextEdit* editor;
-		public_methods:
+		public:
 			SrcEdit():QDialog(),editor(new QTextEdit()){
 				QVBoxLayout* layout = new QVBoxLayout();
 
@@ -57,7 +57,7 @@ namespace mere {
 	};
 #endif
 	class MerePrompt{
-		private_fields:
+		private:
 			std::string prompt	= " >> ";// The prompt
 			std::string input	= ""	;// The input (accumulated temps)
 			std::string last	= ""	;// The last piece of code executed
@@ -69,27 +69,27 @@ namespace mere {
 			bool single			= false	;// whether single or multiline code is expected
 			bool lines			= false	;// whether to print extra lines before and after code execution
 			bool calc			= false	;// calculator mode
-		private_methods:
+		private:
 			void help();
 			void display_cmds();
 			void tutor();
 
-		public_methods:
+		public:
 			MerePrompt(){}
 			void interface();
 	};
 
 	class MereCmder{
-		private_fields:
+		private:
 			Options options = 0;
 			static QCommandLineParser parser;
-		private_methods:
+		private:
 			static short status;
 			static void _init();
 			void set(Opt index, bool _val = true);
 			bool test(Opt index) const;
 
-		public_methods:
+		public:
 			~MereCmder() { clean_up(); }
 			static void clean_up();
 			bool execute();
