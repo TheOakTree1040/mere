@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef CMDPARSER_H
 #define CMDPARSER_H
 
@@ -51,7 +53,7 @@ namespace mere {
 
 				connect(exec_button, &QPushButton::clicked, this, &SrcEdit::accept);
 			}
-			TString text() {
+			QString text() {
 				return editor->toPlainText();
 			}
 	};
@@ -67,7 +69,7 @@ namespace mere {
 			bool ast			= false	;// whether to show the syntax tree
 			bool tok			= false	;// whether to show the token
 			bool single			= false	;// whether single or multiline code is expected
-			bool lines			= false	;// whether to print extra lines before and after code execution
+			bool print_lines			= false	;// whether to print extra lines before and after code execution
 			bool calc			= false	;// calculator mode
 		private:
 			void help();

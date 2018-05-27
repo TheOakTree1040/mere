@@ -36,7 +36,8 @@ SOURCES += \
     src/stmt.cpp \
     src/tlogger.cpp \
     src/token.cpp \
-    src/tokenizer.cpp
+    src/tokenizer.cpp \
+    src/src.cpp
 
 HEADERS += \
     include/core.h \
@@ -57,7 +58,8 @@ HEADERS += \
     include/astprinter.h \
     include/config.h \
     include/parseerror.h \
-    include/sourceeditor.h
+    include/sourceeditor.h \
+    include/src.h
 
 INCLUDEPATH += $$PWD/include
 #QTPLUGIN.platforms = qminimal

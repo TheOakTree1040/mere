@@ -1,45 +1,20 @@
+#pragma once
+
 #ifndef DATA_STORAGE_H
 #define DATA_STORAGE_H
 
-#include <QHash>
-#include "object.h"
+template <class Key, class T>
+class QHash;
+
+#include <vector>
 
 namespace mere {
-	typedef std::vector<std::pair<Object,Object>> ObjectAssocData;
-	class ObjectAssoc final{
-		private:
-			typedef ObjectAssocData OADat;
-			OADat m_data;
-		public:
-			ObjectAssoc(const OADat& d):m_data(d){}
-			ObjectAssoc():m_data(){}
+	class Object;
 
-			void push_back(const Object& k, const Object& val);
-
-			Object value(const Object& k) const;
-			bool contains(const Object& k) const;
-			Object key(const Object& val) const;
-
-			int size() const { return m_data.size(); }
-	};
-	typedef ObjectAssoc Map;
+	using ORelation = std::vector<std::pair<Object,Object>>;
 
 	template <typename Key>
-	class HashMap final{
-		private:
-			QHash<Key,Object> map;
-		public:
-			HashMap():map(){}
-			HashMap(const QHash<Key,Object>& m):map(m){}
-
-			auto insert(const Key& k, const Object& o){ return map.insert(k,o); }
-			int remove(const Key& k){ return map.remove(k); }
-
-			bool contains(const Key& k) const { return map.contains(k); }
-			int size() const { return map.size(); }
-
-			Object& operator[](const Key& k) const { return map[k]; }
-	};
+	using OHash = QHash<Key,Object>;
 }
 
 

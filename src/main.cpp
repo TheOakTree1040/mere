@@ -1,6 +1,9 @@
-#include "shell.h"
-#define NO_TEST 1
+#include "tokenizer.h"
+#include "parser.h"
+#include <iostream>
+#define NO_TEST 0
 #if NO_TEST
+#include "shell.h"
 int entry(int argc, char* argv[]){
 	App a(argc, argv);
 
@@ -22,9 +25,15 @@ int main(int argc, char *argv[]) {
 	return entry(argc,argv);
 #else
 	using namespace mere;
-	QFile file ("/Users/TheOakTree/mere/mere-interpreter/tests/test.mr");
-	file.open(QIODevice::ReadOnly);
-	Core::run(file);
-	return 0;
+	QString test =
+R"(var a = 1+1;
+var b;
+c=>a;)";
+	Tokens toks = Tokenizer(test).scan_tokens();
+	std::cout << toks.to_string("\n").toStdString();
+	std::cout << "\n\n";
+	Stmts stmt = Parser(toks).parse();
+	Core::show_errors();
+	return !stmt.size();
 #endif
 }

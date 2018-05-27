@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
@@ -7,7 +9,7 @@
 #define C_EXPR_REF const Expr&
 #define C_STMT_REF const Stmt&
 
-#define STR(ARG) TString(ARG)
+#define STR(ARG) QString(ARG)
 #define ARE(TY) l.trait().is( TY ) && r.trait().is( TY )
 #define IS(TY) r.trait().is( TY )
 #define ARE_NUM l.trait().is_number() && r.trait().is_number()
@@ -17,8 +19,10 @@
 
 namespace mere {
 	class EnvImpl;
-	/// @class Interpreter
-	/// @brief It interprets statements given by the parser.
+	/**
+	 * \class Interpreter
+	 * \brief It interprets statements given by the parser.
+	 */
 	class Interpreter final{
 		private:
 			EnvImpl* globals = new EnvImpl();

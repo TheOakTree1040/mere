@@ -12,7 +12,7 @@ using namespace mere;
 int TLogHelper::indentation = 0;
 
 template<>
-TLogger& TLogger::operator<<(const TString& s){
+TLogger& TLogger::operator<<(const QString& s){
 	return put(s);
 }
 
@@ -21,8 +21,8 @@ TLogger& TLogger::operator<<(const char& ch){
 	return put(QChar(ch));
 }
 
-TString mere::TLogHelper::startln(const TString& starter){
-	TString out = "";
+QString mere::TLogHelper::startln(const QString& starter){
+	QString out = "";
 	if (indentation < 0)
 		indentation = 0;
 	for (int i = indentation; i > 0; i--){

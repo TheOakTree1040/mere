@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef PARSEERROR_H
 #define PARSEERROR_H
 

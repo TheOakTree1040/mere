@@ -1,7 +1,10 @@
+#pragma once
+
 #ifndef TOKEN_H
 #define TOKEN_H
 
 #include "object.h"
+#include "src.h"
 
 namespace mere {
 	class Token{
@@ -35,12 +38,14 @@ namespace mere {
 				identifier, l_char, l_string, l_real, l_null, l_true, l_false,
 
 				// Keywords.
+				__keywd_beg__,
 				k_struct, k_this, k_for, k_if, k_else,
 				k_return, k_do,
 				k_while, k_case, k_switch, k_break,
 				k_default, k_array, k_set,
 				k_enum, k_assert, k_define, k_var,
 				k_print, k_println, k_fn, k_match, k_matches, k_run,
+				__keywd_end__,
 
 				__type_beg__,
 				t_char, t_string, t_real, t_bool,
@@ -48,27 +53,64 @@ namespace mere {
 
 				eof // End of file
 			};
-		public:
-			tok_type ty;
-			TString lexeme;
-			Object* literal;
-			int ln;
+		private:
+			tok_type m_ty;
+			QString m_lexeme;
+			Object* m_literal;
+			srcloc_t m_loc;
 		public:
 			Token();
 			Token(const Token& tok);
-			Token(tok_type type, const TString& lex, const Object& lit, int line);
+			Token(tok_type type, const QString& lex, const Object& lit, srcloc_t loc);
 
-			~Token(){ delete literal; }
+			~Token(){ delete m_literal; }
 
 			Token& operator=(const Token& tok);
 
-			TString to_string() const;
+			QString to_string() const;
 
-			bool is_bin_op() const;
-			bool is_type() const;
+			bool is_bin_op() const noexcept;
+			bool is_type() const noexcept;
+			bool is_keyword() const noexcept;
 
+			tok_type type() const noexcept { return m_ty; }
+			QString lexeme() const noexcept { return m_lexeme; }
+			const Object& literal() const noexcept { return *m_literal; }
+			uint line() const noexcept { return m_loc.line; }
+			uint col() const noexcept { return m_loc.col; }
+			const srcloc_t& loc() const noexcept { return m_loc; }
 	};
-	typedef std::vector<Token> Tokens;
+	class Tokens : public std::vector<Token>{
+		private:
+			QString m_source;
+			std::vector<uint> m_line_indices;
+		public:
+			Tokens(const std::vector<Token>& toks,
+				   const QString& src,
+				   const std::vector<uint>& indices) :
+			std::vector<Token>(toks),
+				m_source(src),
+				m_line_indices(indices) {}
+
+			Tokens(const Tokens& toks):
+			std::vector<Token>(toks),
+			m_source(toks.m_source),
+			m_line_indices(toks.m_line_indices){}
+
+			Tokens(const QString& src):
+				std::vector<Token>(),
+				m_source(src),
+				m_line_indices{0ul/*placeholder*/, 0ul/*line 1 starts @ 0*/} {}
+			Tokens():
+				std::vector<Token>(),
+				m_source(),
+				m_line_indices{0ul/*placeholder*/, 0ul/*line 1 starts @ 0*/} {}
+
+			void newline(uint i) { m_line_indices.push_back(i); }
+			uint last_line() const { return *m_line_indices.end(); }
+			uint index_at(uint line) const { return m_line_indices[line]; }
+			QString to_string(QString delim = "") const;
+	};
 	//Q_DECLARE_METATYPE(Token)
 	typedef Token Tok;
 	typedef Tok::tok_type Tokty;

@@ -1,6 +1,10 @@
+
+#include <vector>
+
 #include "stmt.h"
 #include "merecallable.h"
 #include "token.h"
+#include "object.h"
 
 using namespace mere;
 
@@ -179,6 +183,10 @@ std::vector<std::pair<Ref<Expr>, Ref<Expr>>> Expr::pair_vector_fields::data() co
 }
 
 // ================== Expr::lit_fields ==================
+Expr::lit_fields::lit_fields(const Object& lit) : m_lit(new Object(lit)){}
+
+Expr::lit_fields::~lit_fields() { delete m_lit; }
+
 void Expr::lit_fields::set_lit(const Object& p_lit){
 	delete m_lit;
 	m_lit = new Object(p_lit);

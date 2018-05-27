@@ -1,16 +1,17 @@
 
-#include <cstdlib>
-
 #include <QFile>
 #include <QTextStream>
 #include <QTimer>
 #include <QDate>
 #include <QStringList>
 
+#include "tlogger.h"
 #include "shell.h"
-
 #include "core.h"
 #include "sourceeditor.h"
+
+#include <cstdlib>
+#include <iostream>
 
 using namespace mere;
 
@@ -82,12 +83,12 @@ void MerePrompt::tutor(){
 }
 
 void MerePrompt::help(){
-	cout << "\n";
-	cout << "  " << "Welcome to the helper interface\n";
-	cout << "  " << "For a list of commands, type 'cmds'\n"
-					"  ""For a brief tutorial, type 'tutor'\n"
-					"  ""To return to the editor, type 'ret'\n"
-					"\n";
+	cout << "\n"
+			"  ""Welcome to the helper interface\n"
+			"  ""For a list of commands, type 'cmds'\n"
+			"  ""For a brief tutorial, type 'tutor'\n"
+			"  ""To return to the editor, type 'ret'\n"
+			"\n";
 	string helpstr = "";
 	forever{
 		helpstr = "";
@@ -132,7 +133,7 @@ void MerePrompt::interface(){
 			if (temp[0] == '.'){
 				temp = QString::fromStdString(temp).trimmed().toStdString();
 				if		(temp == "." || temp == ".exec") {
-					if(lines)
+					if(print_lines)
 						cout << "\n";
 					if (!single && !calc)
 						break;
@@ -165,7 +166,7 @@ void MerePrompt::interface(){
 					continue;
 				}
 				else if (temp == ".ln"){
-					cout << "  > print_lines = " << ((lines = !lines)?"on":"off") << "\n";
+					cout << "  > print_lines = " << ((print_lines = !print_lines)?"on":"off") << "\n";
 				}
 				else if (temp == ".prompt"){
 					cout << "  > print_prompt = " << ((print_prompt = !print_prompt)?"on":"off") << "\n";
@@ -196,7 +197,7 @@ PRE_EXEC:
 				input += temp + (calc||single?"":"\n");
 EXEC:
 				if (single || calc){
-					if(lines)
+					if(print_lines)
 						cout << "\n";
 					if(calc)
 						input = "println (" + input + ");";
@@ -205,8 +206,8 @@ EXEC:
 				}
 			}
 		}
-		Core::run(TString::fromStdString(input),tok,ast);
-		if(lines)
+		Core::run(QString::fromStdString(input),tok,ast);
+		if(print_lines)
 			cout << "\n";
 		if(input.size() && temp != ".last"){
 			last = (calc||single)?temp:input;
@@ -357,7 +358,7 @@ bool MereCmder::execute(){
 	//setup
 	bool tok = test(Opt::ShwTok), syn = test(Opt::ShwSyn);
 	if (test(Opt::Exc)) {
-		TString source = "";
+		QString source = "";
 #if T_GUI
 		if (test(Opt::Edtr)) {
 			SrcEdit* edt = new SrcEdit;

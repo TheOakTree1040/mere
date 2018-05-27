@@ -5,7 +5,7 @@
 #include "merecallable.h"
 
 namespace mere {
-	Parser::Parser(std::vector<Token>& toks):tokens(toks){
+	Parser::Parser(const Tokens& toks):tokens(toks){
 		Logp("Parser()");
 		LIndt;
 	}
@@ -48,11 +48,11 @@ namespace mere {
 	bool Parser::check(Tokty ty){
 		if (is_at_end())
 			return false;
-		return peek().ty == ty;
+		return peek().type() == ty;
 	}
 
 	bool Parser::is_at_end(){
-		return peek().ty == Tok::eof;
+		return peek().type() == Tok::eof;
 	}
 
 	Token& Parser::peek(short i){
@@ -67,32 +67,36 @@ namespace mere {
 
 	Token& Parser::advance(){
 		if (!is_at_end()){
-			Log ls("adv: Type") ls((int)peek().ty);
+			Log ls("adv: Type") ls((int)peek().type());
 			current++;
 		}
 		return prev();
 	}
 
-	Token& Parser::expect(Tokty ty, const TString& errmsg){
+	Token& Parser::expect(Tokty ty, const QString& errmsg){
 		LFn;
-		Log ls("Checking") ls(errmsg) ls(TString::number(static_cast<int>(ty)));
-		Log ls(TString::number(static_cast<int>(peek().ty)));
-		if (peek().ty == ty)
+		Log ls("Checking") ls(errmsg) ls(QString::number(static_cast<int>(ty)));
+		Log ls(QString::number(static_cast<int>(peek().type())));
+		if (peek().type() == ty)
 			LRet advance();
-		LThw error(peek(),errmsg);
+		LThw make_error(peek(),errmsg);
 	}
 
-	ParseError Parser::error(const Token& tok, const TString& errmsg){
-		Core::error(tok,errmsg);
+	ParseError Parser::make_error(const Token& tok, const QString& errmsg){
+		error(tok,errmsg);
 		return ParseError();
+	}
+
+	void Parser::error(const Token& tok, const QString& errmsg) const {
+		Core::error(errloc_t(tok.loc(),tokens.index_at(tok.line())),errmsg);
 	}
 
 	void Parser::synchronize(){
 		advance();
 		while(!is_at_end()){
-			if (prev().ty == Tok::semi_colon)
+			if (prev().type() == Tok::semi_colon)
 				return;
-			switch(peek().ty){
+			switch(peek().type()){
 				case Tok::k_struct:
 				case Tok::k_var:
 				case Tok::k_for:
@@ -117,10 +121,15 @@ namespace mere {
 				while(match(Tok::semi_colon));
 				LRet NullStmt();
 			}
-			if (expected_block && peek().ty == Tok::l_brace){
+			if (expected_block && check(Tok::l_brace)){
 				LRet block(false);
 			}
-			else if (match(Tok::k_if		)){
+			if (!peek().is_keyword()) {
+				LRet
+				(peek().type() == Tok::dollar && peek(1).type() == Tok::l_brace)?
+							block(true):decl_stmt();
+			}
+			if (match(Tok::k_if		)){
 				LRet if_stmt();
 			}
 			else if (match(Tok::k_for	)){
@@ -151,18 +160,13 @@ namespace mere {
 			else if (match(Tok::k_run)){
 				LRet run_stmt();
 			}
-			else {
-				LRet (peek().ty == Tok::dollar && peek(1).ty == Tok::l_brace)?block(true):decl_stmt();
-			}
 		}
-		catch(ParseError& pe){
-			Q_UNUSED(pe)
-		}
+		catch(ParseError&) {}
 		catch(std::exception& ex){
-			Core::error(prev().ln,TString("Exception caught @ Parser::stmt(): ").append(ex.what()));
+			error(prev(),QString("Exception caught @ Parser::stmt(): ").append(ex.what()));
 		}
 		catch(...){
-			Core::error(prev().ln,TString("Exception caught @ Parser::stmt()."));
+			error(prev(),QString("Exception caught @ Parser::stmt()."));
 		}
 		synchronize();
 		LRet NullStmt();
@@ -181,7 +185,7 @@ namespace mere {
 			}
 			blk.push_back(stmt());
 		}
-		LThw error(prev(),"Expected a '}'");
+		LThw make_error(prev(),"Expected a '}'");
 	}
 
 	Stmt Parser::decl_stmt(){
@@ -205,7 +209,7 @@ namespace mere {
 
 	Stmt Parser::run_stmt(){
 		LFn;
-		TString str = expect(Tokty::l_string, "Expected a filename.").lexeme;
+		QString str = expect(Tokty::l_string, "Expected a filename.").lexeme();
 		expect(Tokty::semi_colon,"Expected a ';' [run_stmt]");
 		LRet RunStmt(str);
 	}
@@ -296,23 +300,23 @@ namespace mere {
 	}
 
 	Stmt Parser::assert_stmt(){
-		int ln = peek(-1).ln + 1;
+		uint ln = peek(-1).line() + 1;
 		Expr expr = expression();
 		int code = 0xFF;
-		TString msg = "[Ln " + TString::number(ln) + "] ";
+		QString msg = "[Ln " + QString::number(ln) + "] ";
 		if (match(Tok::colon)){
 			bool has_code = false;
 			if(match(Tok::l_real)){
 				has_code = true;
-				code = peek(-1).literal->as<double>();
+				code = peek(-1).literal().as<double>();
 				if (!match(Tok::comma))
 					goto WRAP_UP;
 			}
 			if (!has_code){
-				msg += expect(Tok::l_string, "Expected an exit message [AssertMsg]").literal->to_string();
+				msg += expect(Tok::l_string, "Expected an exit message [AssertMsg]").literal().to_string();
 			}
 			else if (match(Tok::l_string)){
-				msg += peek(-1).literal->to_string();
+				msg += peek(-1).literal().to_string();
 			}
 			else msg += "Assertion failed.";
 		}
@@ -452,7 +456,7 @@ WRAP_UP:
 		}
 		else if (match(Tok::plus						)){
 			Token& op = prev();
-			Core::error(peek(),TString("Unary operator+")
+			error(peek(),QString("Unary operator `+`")
 						.append(" not supported."));
 			Expr right = unary();
 			LRet PrefxExpr(right,op);
@@ -464,10 +468,10 @@ WRAP_UP:
 		}
 		else if (peek().is_bin_op(						)){
 			Token& op = advance();
-			Core::error(peek(),TString("Binary operator")
-						.append(op.lexeme).append(" used w/o left operand."));
+			error(peek(),QString("Binary operator")
+						.append(op.lexeme()).append(" requires 2 operands but 1 was found."));
 
-			Expr right = expression(true);
+			Expr right = unary();
 			LRet PrefxExpr(right,op);
 		}
 		Expr rval = rvalue();
@@ -538,7 +542,7 @@ WRAP_UP:
 			LRet ex;
 		}
 		else if (match({Tok::l_string,Tok::l_real,Tok::l_char})){
-			LRet LitExpr(*(prev().literal));
+			LRet LitExpr(prev().literal());
 		}
 		else if (match(Tok::dollar							)){
 			Expr ex = spec_data();
@@ -549,7 +553,7 @@ WRAP_UP:
 			LRet ex;
 		}
 		else									  {
-			Core::error(peek(),"Expected an expression.");
+			error(peek(),"Expected an expression.");
 			LRet NullExpr();
 		}
 	}
@@ -571,14 +575,14 @@ WRAP_UP:
 		LFn;
 		//assumes '$' is eaten
 		Token& t = expect(Tok::identifier,"Expected an identifier");
-		switch(h(t.lexeme.toStdString().c_str())){
+		switch(h(t.lexeme().toStdString().c_str())){
 			case h("a"):
 				LRet assoc();
 				break;
 			case h("h"):
 				LRet map();
 			default:
-				LThw error(t,"Invalid data specifier.");
+				LThw make_error(t,"Invalid data specifier.");
 		}
 	}
 
@@ -592,7 +596,7 @@ WRAP_UP:
 				expect(Tok::colon,"Expected a ':'.");
 				Expr y = expression(true);
 				inits.push_back(pair<Expr,Expr>(x,y));
-			}while (!is_at_end() && peek().ty != Tok::r_brace && match(Tok::comma));
+			}while (!is_at_end() && peek().type() != Tok::r_brace && match(Tok::comma));
 		}
 		expect(Tok::r_brace, "Expected a '}'.");
 		LRet AssocExpr(inits);
@@ -608,7 +612,7 @@ WRAP_UP:
 				expect(Tok::colon,"Expected a ':'.");
 				Expr y = expression(true);
 				inits.push_back(pair<Expr,Expr>(x,y));
-			}while (!is_at_end() && peek().ty != Tok::r_brace && match(Tok::comma));
+			}while (!is_at_end() && peek().type() != Tok::r_brace && match(Tok::comma));
 		}
 		expect(Tok::r_brace, "Expected a '}'.");
 		LRet HashExpr(inits);
@@ -626,7 +630,7 @@ WRAP_UP:
 				LRet ArrayExpr(inits);
 			inits.push_back((expect(Tok::comma, "Expected a ','."),expression(true)));
 		}
-		LThw error(t,"Expected termination.");
+		LThw make_error(t,"Expected termination.");
 	}
 
 	Expr Parser::group(){

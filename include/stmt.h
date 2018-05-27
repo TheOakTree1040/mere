@@ -1,6 +1,10 @@
+#pragma once
+
 #ifndef STMT_H
 #define STMT_H
+
 #include "expr.h"
+#include <QString>
 
 namespace mere {
 	class Stmt;
@@ -166,18 +170,18 @@ namespace mere {
 				private:
 					eptr m_value;
 					int m_code;
-					TString m_msg;
+					QString m_msg;
 				public:
-					assert_stmt_fields(const Expr& val, int code, const TString& msg);
+					assert_stmt_fields(const Expr& val, int code, const QString& msg);
 					~assert_stmt_fields() override { delete m_value; }
 
 					Expr& value() const { return *m_value; }
 					const int& code() const { return m_code; }
-					const TString& message() const { return m_msg; }
+					const QString& message() const { return m_msg; }
 
 					void set_value(const Expr& value);
 					void set_code(int code);
-					void set_message(const TString& message);
+					void set_message(const QString& message);
 			};
 			class match_stmt_fields : public stmt_fields {
 				private:
@@ -205,10 +209,10 @@ namespace mere {
 			};
 			class run_fields : public stmt_fields {
 				private:
-					TString m_filename;
+					QString m_filename;
 				public:
-					run_fields(const TString& fn) : m_filename(fn){}
-					const TString& filename() const { return m_filename; }
+					run_fields(const QString& fn) : m_filename(fn){}
+					const QString& filename() const { return m_filename; }
 			};
 
 		private: // members

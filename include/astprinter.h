@@ -1,3 +1,5 @@
+#pragma once
+
 #if !defined(ASTPRINTER_H) && AST_PRINTER_FIXED
 #define ASTPRINTER_H
 
@@ -5,7 +7,7 @@
 namespace mere{
 	class ASTPrinter final{
 		private:
-			TString text;
+			QString text;
 		public:
 			ASTPrinter(Stmts stmts):
 				text(""){
@@ -15,12 +17,12 @@ namespace mere{
 				Log ls("end ASTPrinter()");
 			}
 
-			TString AST(){
+			QString AST(){
 				Log ls("Getting AST");
 				return text;
 			}
 		private:
-			void write_ln(int lvls, const TString& ln){
+			void write_ln(int lvls, const QString& ln){
 				for (int i = lvls; i != 0; i--)
 					text.append("\t");
 				text.append(ln).append("\n");
@@ -40,7 +42,7 @@ namespace mere{
 				print(lvls,expr.assign().left());
 			}
 			void print_binary(int lvls, Expr expr){
-				TString s = "BinExpr ";
+				QString s = "BinExpr ";
 				s.append(expr.bin().op().lexeme).append(":");
 				write_ln(lvls,s);
 				write_ln(lvls+1,"Left:");
@@ -49,7 +51,7 @@ namespace mere{
 				print(lvls+2,expr.bin().right());
 			}
 			void print_literal(int lvls, Expr expr){
-				TString s = "[";
+				QString s = "[";
 				s.append(expr.lit().lit().trait().id()).append("] Literal:");
 				write_ln(lvls,s);
 				write_ln(lvls+1,expr.lit().lit().to_string());
@@ -67,19 +69,19 @@ namespace mere{
 				print(lvls+1,expr->expr);
 			}
 			void print_prefx(int lvls, Expr expr){
-				TString s = "UnaryExpr [";
+				QString s = "UnaryExpr [";
 				s.append(expr->op->lexeme).append("var]:");
 				write_ln(lvls,s);
 				print(lvls+1,expr->expr);
 			}
 			void print_pstfx(int lvls, Expr expr){
-				TString s = "UnaryExpr [var";
+				QString s = "UnaryExpr [var";
 				s.append(expr->op->lexeme).append("]:");
 				write_ln(lvls,s);
 				print(lvls+1,expr->expr);
 			}
 			void print_var(int lvls, Expr expr){
-				TString s = "[Variable ";
+				QString s = "[Variable ";
 				s.append(expr->var_acsr->lexeme).append("]");
 				write_ln(lvls,s);
 			}
@@ -171,7 +173,7 @@ namespace mere{
 						print_conditional(lvls,expr);
 						break;
 					default:
-						write_ln(lvls,TString("[EXPR-").append(TString::number((int)expr->type())).append("]"));
+						write_ln(lvls,QString("[EXPR-").append(QString::number((int)expr->type())).append("]"));
 						break;
 				}
 			}
@@ -211,7 +213,7 @@ namespace mere{
 						print_ret_stmt(lvls,stmt);
 						break;
 					default:
-						write_ln(lvls,TString("[STMT-").append(TString::number((int)stmt->type())).append("]"));
+						write_ln(lvls,QString("[STMT-").append(QString::number((int)stmt->type())).append("]"));
 						break;
 				}
 			}

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef RUNTIMEERROR_H
 #define RUNTIMEERROR_H
 
@@ -8,39 +10,39 @@ namespace mere {
 
 	class RuntimeError : public std::runtime_error{
 		public:
-			TString msg;
+			QString msg;
 			Token tok;
 		public:
 			RuntimeError():std::runtime_error("UnknownRuntimeError"),msg("UnknownRuntimeError"),tok(){}
-			RuntimeError(const Token& t, const TString& m) : std::runtime_error(m.toStdString()), msg(m), tok(t){}
+			RuntimeError(const Token& t, const QString& m) : std::runtime_error(m.toStdString()), msg(m), tok(t){}
 	};
 
 	class ArgumentError : public std::runtime_error{
 		public:
-			TString expect;
-			TString received;
-			TString callee;
+			QString expect;
+			QString received;
+			QString callee;
 		public:
 			ArgumentError():std::runtime_error("UnknownArgError"),expect("null"),received("void"),callee("internal"){}
-			ArgumentError(const TString& exp, const TString& rec, const TString c = "internal");
+			ArgumentError(const QString& exp, const QString& rec, const QString c = "internal");
 	};
 
 	class ArityMismatchError : public std::runtime_error{
 		public:
 			int expect;
 			int received;
-			TString callee;
+			QString callee;
 		public:
 			ArityMismatchError():std::runtime_error("UnknownAME"),expect(0),received(0),callee("internal"){}
-			ArityMismatchError(int expect, int received, const TString c = "internal");
+			ArityMismatchError(int expect, int received, const QString c = "internal");
 	};
 
 	class Abort : public std::runtime_error{
 		public:
 			int code;
-			TString message;
+			QString message;
 		public:
-			Abort(int code, const TString& msg);
+			Abort(int code, const QString& msg);
 	};
 
 }

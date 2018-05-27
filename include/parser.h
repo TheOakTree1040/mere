@@ -1,5 +1,8 @@
+#pragma once
+
 #ifndef PARSER_H
 #define PARSER_H
+
 #include "token.h"
 #include "parseerror.h"
 #include "stmt.h"
@@ -10,7 +13,7 @@
 namespace mere {
 	class Parser {
 		private:
-			std::vector<Token>& tokens;
+			Tokens tokens;
 			int current = 0;
 		private:
 			bool match			(const std::vector<Tokty>&		);
@@ -20,9 +23,10 @@ namespace mere {
 			Token& peek			(short=0						);
 			Token& prev			(								);
 			Token& advance		(								);
-			Token& expect		(Tokty, const TString&			);
+			Token& expect		(Tokty, const QString&			);
 			//error-handling
-			ParseError error	(const Token&, const TString&	);
+			ParseError make_error(const Token&, const QString&	);
+			void error			(const Token&, const QString&	) const;
 			void synchronize	(								);
 			//Parse Grammar Rules
 			Stmt stmt			(bool=F_);
@@ -62,7 +66,7 @@ namespace mere {
 			Expr rvalue		(		);
 			Expr group		(		);
 		public:
-			Parser		(std::vector<Token>&);
+			Parser		(const Tokens&		);
 			~Parser		(					);
 			Stmts parse	(					);
 	};

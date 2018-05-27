@@ -4,7 +4,6 @@
 #include "config.h"
 
 #include <QFile>
-#include <vector>
 
 #if T_GUI
 #include <QMessageBox>
@@ -19,20 +18,34 @@
 #include "interpreter.h"
 #include "parser.h"
 #include "astprinter.h"
-#include "natives.h"
 #include "runtimeerror.h"
 
+#include <iostream>
+
 using namespace mere;
-Interpreter* Core::interpreter = nullptr;
-bool Core::intd = false;
 
-std::vector<Core::Error> Core::errors{};
+Interpreter* Core::interpreter = nullptr;///< Note: Initialized in Core::init_once
+bool Core::intd = false;///< \brief Whether Core was initialized
 
+std::vector<Core::Error> Core::errors{};///< \brief It stores all the errors occurred
+
+struct Core::Error{
+		Error():loc(),msg(""){}
+		Error(const errloc_t e, const QString& m):loc(e),msg(m){}
+		errloc_t loc;///< \brief Location of error
+		QString msg;///< \brief The error message
+};
+
+
+/**
+ * \brief This function initializes the necessary resources.
+ */
 void Core::init_once(){
 	LFn;
-	if (intd){
+	if (intd){//Checks whether this function had been called
 		LVd;
 	}
+	//Register the comparator otherwise the interpreter won't work
 	if (!QMetaType::registerComparators<Object>()){
 #if T_GUI
 		QMessageBox::critical(nullptr,"Fatal Internal Failure","Failed to register Object comparators.");
@@ -47,23 +60,25 @@ void Core::init_once(){
 	LVd;
 }
 
-bool Core::run(const TString& src, bool show_tok, bool show_syn){
+/**
+ * \param src The source.
+ * \param show_tok Whether to show the tokens.
+ * \param show_syn Whether to pretty-print the syntax tree
+ * \returns whether there is an error during the process.
+ * \brief A function that takes & interpret the source.
+ */
+bool Core::run(const QString& src, bool show_tok, bool show_syn){
 	if (src.isEmpty())
 		return false;
-	if (!intd) Core::init_once();
+	Core::init_once();
 	Stmts stmts;
 	{
 		Tokens tokens = Tokenizer(src).scan_tokens();
 		if (show_tok){
-			TString str = "";
-			int size = tokens.size();
-			for (int i = 0; i != size; i++){
-				str.append(tokens[i].to_string());
-			}
 #if T_GUI
-			QMessageBox::information(nullptr,"",str);
+			QMessageBox::information(nullptr,"",tokens.to_string());
 #else
-			std::cout << "  > " << str.toStdString() << std::endl;
+			std::cout << "  > " << tokens.to_string().toStdString() << std::endl;
 #endif
 		}
 		if (errors.size()){
@@ -83,7 +98,7 @@ bool Core::run(const TString& src, bool show_tok, bool show_syn){
 	if (show_syn){
 		std::cout << "  > AST Printer broken.\n";
 #if T_GUI && AST_PRINTER_FIXED
-		TString str = ASTPrinter(stmts).AST();
+		QString str = ASTPrinter(stmts).AST();
 		QWidget* wnd = new QWidget();
 		QTextEdit* edt = new QTextEdit();
 		QVBoxLayout* layout = new QVBoxLayout();
@@ -112,51 +127,62 @@ bool Core::run(const TString& src, bool show_tok, bool show_syn){
 	return res;
 }
 
+/**
+ * \brief A function that reads a file & calls Core::run(const QString&,bool,bool).
+ * \param file The file to read (must be opened before calling)
+ * \see mere::Core::run(const QString&, bool, bool)
+ */
 bool Core::run(QFile & file){
 	return run(file.readAll());
 }
 
-void Core::error(int ln, const TString& msg){
-	report(ln, "", TString("Error: ") + msg);
+/**
+ * \brief A function used to report an error on a line.
+ * \param loc The line on which the error ocurred.
+ * \param msg The error message.
+ */
+void Core::error(const errloc_t& loc, const QString& msg){
+	report(loc, QString("Error: ") + msg);
 }
 
-void Core::error(const TString & msg){
-	errors.push_back(Error(-1,msg));
+/**
+ * \brief A function used to report an error w/o line #. (Used during interpretation)
+ * \param msg The error message.
+ */
+void Core::error(const QString & msg){
+	errors.push_back(Error(errloc_t(),msg));//TODO
 #if T_GUI
 	QMessageBox::critical(nullptr, "Error", msg);
 #else
-	std::cout << "  > " << msg.toStdString() << "\n";
+	std::cout << " x> " << msg.toStdString() << "\n";
 #endif
 }
 
-void Core::error(const Token& tok, const TString& msg){
-	if (tok.ty == Tok::eof) {
-		report(tok.ln, "at end", msg);
-	}
-	else {
-		report(tok.ln, (TString)"at '" + tok.lexeme + "'", msg);
-	}
-}
-
-void Core::report(int ln, const TString& loc, const TString& msg, bool is_idx){
-	std::cout << "  > ERROR generated.\n";
-	if (is_idx)
-		ln++;
-	TString p = TString("[Ln ").append(TString::number(ln))
-				.append("] ").append(loc)
-				.append(": ").append(msg);
-	if (!p.endsWith('.'))
-		p.append(".");
-	errors.push_back(Error(ln,p));
+/**
+ * \brief A function that adds the given error to the \c errors vector.
+ * \param loc The source location.
+ * \param msg The error message.
+ */
+void Core::report(const errloc_t& loc, const QString& msg){
+	std::cout << " x> ERROR generated.\n";
+	QString p = QString("[%1:%2]: %3")
+				.arg(QString::number(loc.line))
+				.arg(QString::number(loc.col))
+				.arg(msg);
+	errors.push_back(Error(loc,p));
 #if T_GUI
 	QMessageBox::critical(nullptr,"Error",p);
 #endif
 }
 
+/**
+ * \brief This function adds a \c RuntimeError to \c errors.
+ * \param re The RuntimeError that was generated.
+ */
 void Core::runtime_error(const RuntimeError &re){
-	TString str = "";
-	str.append("[Ln ").append(TString::number(re.tok.ln+1)).append("] ").append(re.msg);
-	errors.push_back(Error(re.tok.ln+1,re.msg));
+	QString str = "";
+	str.append("[Ln ").append(QString::number(re.tok.line())).append("] ").append(re.msg);
+	errors.push_back(Error(errloc_t(re.tok.loc(),0),re.msg));
 #if T_GUI
 	QMessageBox::critical(nullptr,"Runtime Error",str);
 #else
@@ -164,19 +190,23 @@ void Core::runtime_error(const RuntimeError &re){
 #endif
 }
 
+/**
+ * \brief This function shows the errors that had been recorded.
+ */
 void Core::show_errors(){
-	std::cout << "  > Errors";
+	std::cout << "  > Errors\n";
 	if (!errors.size()){
 #if T_GUI
 		QMessageBox::information(nullptr,"Info","0 error recorded.");
 #else
 		std::cout << "    > 0 error recorded.\n";
 #endif
+		return;
 	}
 
-	TString error_text = "\n";
+	QString error_text = "";
 	for (uint i = 0u; i != errors.size(); i++){
-		error_text.append(TString("    > ") + errors.at(i).msg);
+		error_text.append(QString("    > ") + errors.at(i).msg);
 		error_text.append("\n");
 	}
 #if T_GUI
@@ -194,6 +224,10 @@ void Core::show_errors(){
 #endif
 }
 
+/**
+ * \brief This function resets the interpreter.
+ * \see mere::Interpreter::reset(mere::EnvImpl*)
+ */
 void Core::reset_intp(){
 	interpreter->reset();
 }

@@ -1,21 +1,22 @@
+#pragma once
+
 #ifndef EXPR_H
 #define EXPR_H
 
 #include <vector>
 
-#include "tlogger.h"
-#include "object.h"
-
-namespace mere {
 #define eptr Expr*
 
 #define FieldsGetter(TYPE,NAME)\
 	TYPE& NAME() const {\
-	return *ptr_cast<TYPE*>(m_fields);\
+	return *dynamic_cast<TYPE*>(m_fields);\
 }\
 	TYPE* NAME ## _data() const {\
-	return ptr_cast<TYPE*>(m_fields);\
+	return dynamic_cast<TYPE*>(m_fields);\
 }
+
+namespace mere {
+	class Object;
 
 	template <typename T>
 	using Ref = std::reference_wrapper<T>;
@@ -23,11 +24,6 @@ namespace mere {
 
 	class MereCallable;
 	class Token;
-
-	class invalid_access : std::runtime_error{
-		public:
-			invalid_access(const std::string& where):std::runtime_error(where){}
-	};
 
 	class Expr {
 			friend class Interpreter;
@@ -166,9 +162,9 @@ namespace mere {
 				protected:
 					Object* m_lit; //literal
 				public:
-					lit_fields(const Object& lit) : m_lit(new Object(lit)){}
+					lit_fields(const Object& lit);
 					lit_fields(Object* lit) : m_lit(lit){}
-					~lit_fields() override { delete m_lit; }
+					~lit_fields() override;
 
 					Object& lit() const { return *m_lit; }
 					void set_lit(const Object& p_lit);

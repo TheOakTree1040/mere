@@ -1,20 +1,22 @@
+#pragma once
+
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 //#include <QSharedPointer>
 
 #include <QHash>
-#include "config.h"
 
-#define EnvPtr EnvImpl*/*QSharedPointer<EnvImpl>*/
+#define EnvPtr EnvImpl* /*QSharedPointer<EnvImpl>*/
 
 namespace mere {
+
 	class Token;
 	class Object;
-	typedef QString Identifier;
-	class EnvImpl final{
+
+	class EnvImpl final {
 		private:
-			EnvPtr enclosing;
-			QHash<Identifier,Object> values;
+			EnvPtr enclosing; ///< The enclosing (outer) Environment
+			QHash<QString, Object> values; ///< The values table (Identifier to Object)
 		public:
 			EnvImpl();
 			EnvImpl(EnvPtr);

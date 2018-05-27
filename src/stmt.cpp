@@ -66,7 +66,7 @@ Stmt::~Stmt(){
 	//LVd;
 }
 
-Stmt&Stmt::operator*=(const Stmt& rhs){
+Stmt& Stmt::operator*=(const Stmt& rhs){
 	this->m_handled = rhs.m_handled;
 	rhs.set_handled();
 	this->m_type = rhs.m_type;
@@ -260,7 +260,7 @@ void Stmt::ret_stmt_fields::set_keyword(const Token& keywd){
 }
 
 // ================== Stmt::assert_stmt_fields ==================
-Stmt::assert_stmt_fields::assert_stmt_fields(const Expr& val, int code, const TString& msg):
+Stmt::assert_stmt_fields::assert_stmt_fields(const Expr& val, int code, const QString& msg):
 	m_value(new Expr(val)),
 	m_code(code),
 	m_msg(msg){}
@@ -274,7 +274,7 @@ void Stmt::assert_stmt_fields::set_code(int code){
 	m_code = code;
 }
 
-void Stmt::assert_stmt_fields::set_message(const TString& message){
+void Stmt::assert_stmt_fields::set_message(const QString& message){
 	m_msg = message;
 }
 

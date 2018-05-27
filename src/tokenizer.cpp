@@ -2,9 +2,14 @@
 #include "tokenizer.h"
 #include "tlogger.h"
 
+#define NEWLINE()\
+{loc.line++; loc.col = 1; tokens.newline(current);}
+#define MOVE_BACK() {loc.col--;current--;}
+
 namespace mere {
-	Tokenizer::Tokenizer(const TString& src):source(src)
-	{
+	Tokenizer::Tokenizer(const QString& src):
+		source(src),
+		tokens(src){
 		Log ls("Source: ") ls(source);
 		LIndt;
 	}
@@ -13,101 +18,76 @@ namespace mere {
 		Logp("~Tokenizer()");
 	}
 
-	bool Tokenizer::is_at_end(){
-		return current >= source.size();
+	void Tokenizer::error(const QString& errmsg) {
+		Core::error( errloc_t( loc, tokens.last_line() ), errmsg );
+	}
+
+	bool Tokenizer::is_at_end() const {
+		return current >= source.size() || source.isEmpty();
 	}
 
 	char Tokenizer::advance(){
-		Log ls("  adv:") ls(TString::number(current));
+		Log ls("  adv:") ls(QString::number(current));
 		Log ls("      ") ls(peek());
+		loc.col++;
 		return source[current++].toLatin1();
 	}
 
-	void Tokenizer::add_token(Tok::tok_type ty){
+	void Tokenizer::add_token(Tokty ty){
 		add_token(ty, Object());
 	}
 
 	void Tokenizer::add_token(Tokty ty, const Object& lit){
 		LFn;
-		tokens.push_back(Token(ty,source.mid(start,current-start),lit,line));
+		tokens.push_back(Token(ty,source.mid(start,current-start),lit,start_loc));
 		Log ls("Added Token: Lexeme:") ls(tokens[tokens.size()-1].lexeme);
-		Log ls("             Type  :") ls((int)tokens[tokens.size()-1].ty);
+		Log ls("             Type  :") ls((int)tokens[tokens.size()-1].type());
 		LVd;
 	}
 
-	char Tokenizer::peek(short i) {
-		if (!source.size())
+	char Tokenizer::peek(bool ahead) const {
+		if (is_at_end() || (ahead && (current + 1 >= source.size())))
 			return '\0';
-		if (is_at_end() && i < 0 && (current + i) >= 0)
-			return source[current + i].toLatin1();
-		if (is_at_end())
-			return '\0';
-		if (current + i > source.size())
-			return '\0';
-		return source[current + i].toLatin1();
-	}
-	//var i = 0;
-	//0123456789
-	void Tokenizer::deprecate(){
-		if (!is_at_end())
-			source.remove(current,1);
+		return (ahead?source[current+1]:source[current]).toLatin1();
 	}
 
-	bool Tokenizer::match(char expct) {
-		return !is_at_end() && source[current] == expct?current++, true:false;
-		}
-
-		bool Tokenizer::match(TString expct){
-		if (is_at_end())
-		return false;
-		if (current + 1 + expct.size() > source.size())
-			return false;
-		int tmp = current;
-		for (int i = 0; i != expct.size(); i++, tmp++){
-			if (source[tmp] != expct[i])
-				return false;
-		}
-		current = tmp;
-		return true;
+	bool Tokenizer::match(char expect) {
+		return (!is_at_end() && source[current] == expect)?(advance(), true):false;
 	}
 
 	void Tokenizer::string(){
-		TString str = "";
-		current--;
-		deprecate();
+		QString str = "";
 		while (!is_at_end()) {
 			if (peek() == '\n') {
-				Core::error(line, "Expected a closing quotation mark to terminate string.");
+				error("Expected a closing quotation mark to terminate string.");
 				return;
 			}
-			if (peek() == '\\'){
-				QChar ch = escaped.value(QChar(peek(1)),QChar('*'));
-				if (ch == QChar('*')){
-					Core::error(line,"Undefined escape sequence.");
+			if (match('\\')){
+				QChar ch = escaped.value(peek(),'\0');
+				if (ch == '\0'){
+					error("Undefined escape sequence.");
 				}
-
-				deprecate();
 				source[current] = ch;
 			}
 			if (match('"')){
+				// To support concatenation of string literals w/o "+"
 				while (true){
 					switch(peek()){
 						case '\n':
-							line++;
+							NEWLINE();
 						case ' ':
 						case '\r':
 						case '\t':
-							deprecate();
+							advance();
 							continue;
 					}
 					break;
 				}
-				current--;
-				deprecate();
-				if (peek() == '"'){
-					deprecate();
+				//If a quote is found, lex another string lit.
+				if (match('"')){
 					continue;
 				}
+				//If no quote is found, break
 				break;
 			}
 			str += advance();
@@ -115,71 +95,68 @@ namespace mere {
 
 		// Unterminated string.
 		if (is_at_end()) {
-			Core::error(line, "Expected string termination.");
+			error("Expected string termination.");
 			return;
 		}
 		add_token(Tok::l_string, Object(Trait("string"),QVariant(str)));
 	}
 
 	void Tokenizer::character(){
-		current--;
-		deprecate();
 		char c = '\0';
 		if (is_at_end()){
-			Core::error(line,"Expected a character.");
+			error("Expected a character.");
 			return;
 		}
 		if (peek() == '\\'){
-			deprecate();
-			QChar ch = escaped.value(QChar(peek()),QChar('*'));
-			if (ch != QChar('*')){
+			advance();
+			QChar ch = escaped.value(QChar(peek()),QChar('\0'));
+			if (ch != '\0'){
 				source[current] = ch;
 			}
 			else{
-				Core::error(line,"Undefined escape sequence.");
+				error("Undefined escape sequence.");
 			}
 		}
 		c = advance();
 		if (peek() != '\''){
-			Core::error(line,"Expected a closing single quote.");
+			error("Expected a `'`.");
 		}
 		else
-			deprecate();
+			advance();
 
 		add_token(Tok::l_char,Object(c));
 	}
 
 	bool Tokenizer::is_digit(char ch){
-#ifdef RND_NAME//__GNUC__
+#if _ENABLED//__GNUC__
 		return std::isdigit(t_cast<unsigned char>(ch));
-#else
+#elif _ENABLED
 		return ch >= '0' && ch <= '9';
+#else
+		return ((uint32_t)ch - '0') < 10u;
 #endif
 
 	}
 
 	void Tokenizer::number() {
 		LFn;
-		TString num = "";
-		num.push_back(peek(-1)); // Retrieves the digit being advanced.
-		current--;
-		deprecate();
+		QString num = "";
+		MOVE_BACK();
+		num.push_back(advance()); // Retrieves the digit advanced.
 
 		//base prediction
 		int base = 10;
 		if (num[0] == "0" && peek() != '.'){
-			base = 8;
 			if (match('x') || match('X')){
-				current--;
-				deprecate();
 				num.push_back('x');
 				base = 16;
 			}
 			else if (match('b') || match('B')){
-				current--;
-				deprecate();
 				num.push_back('b');
 				base = 2;
+			}
+			else {
+				base = 8;
 			}
 		}
 
@@ -187,23 +164,20 @@ namespace mere {
 		while ((base == 10 && is_digit  (peek())) ||
 			   (base == 16 && is_base_16(peek())) ||
 			   (base ==  8 && is_base_8 (peek())) ||
-			   (base ==  2 && peek() < 2)){
-			num.push_back(QChar(peek()));
-			deprecate();
+			   (base ==  2 && (peek() == '0' || peek() == '1'))){
+			num.push_back(advance());
 		}
 
 		// Look for a fractional part.
-		if (peek() == '.' && is_digit(peek(1)) && base == 10) {
+		if (peek() == '.' && is_digit(peek(true)) && base == 10) {
 			// Consume the "."
-			num.push_back(QChar(peek()));
-			deprecate();
+			num.push_back(advance());
 			while (is_digit(peek())) {
-				num.push_back(QChar(peek()));
-				deprecate();
+				num.push_back(advance());
 			}
 
 			add_token(Tok::l_real,
-					  Object(Trait("real"),num.toDouble()));
+					  Object(Trait("real"),num.toDouble()));//assumes base-10 (decimal)
 			LVd;
 		}
 		bool stat = false;
@@ -213,7 +187,7 @@ namespace mere {
 		Log ls("  Numeral: String:") ls(num);
 		Log ls("           Number:") ls(n);
 		if (!stat){
-			Core::error(line, TString("Invalid base-").append(TString::number(base)).append(" numeral."));
+			error(QString("Invalid base-%1 numeral.").arg(QString::number(base)));
 		}
 		LVd;
 	}
@@ -238,13 +212,13 @@ namespace mere {
 
 	void Tokenizer::identifier(){
 		LFn;
-		current--;
-		TString val = "";
+		MOVE_BACK();
+		QString val = "";
 		val.push_back(peek());
-		if ((val == "R" || val == "r") && peek(1) == '"' && peek(2) == '['){
-			deprecate();
-			deprecate();
-			deprecate();
+		if ((val == "R" || val == "r") && peek(true) == '"' && peek(2) == '['){
+			advance();
+			advance();
+			advance();
 			raw_string();
 			LVd;
 		}
@@ -252,13 +226,13 @@ namespace mere {
 		while (is_alpha_numeric(peek()))
 			val.push_back(advance());
 		Tokty ty = keywords.value(val, Tok::identifier);
-		tokens.push_back(Token(ty,val,Object(),line));
+		tokens.push_back(Token(ty,val,Object(),start_loc));
 		LVd;
 	}
 
 	void Tokenizer::raw_string(){
 		//Assume R"[ was eaten as in Tokenizer::identifier()
-		Core::error(0,"Raw string literal not supported.");
+		error("Raw string literal not supported.");
 	}
 
 	void Tokenizer::scan_token(){
@@ -316,18 +290,18 @@ namespace mere {
 				else if (match('*')){
 					char c = '\0';
 					while ((c = peek())){
-						if (c == '\0'){
-							Core::error(line,"Unterminated multi-line comment.");
-							return;
+						if (c == '\n'){
+							NEWLINE(); //leave this block alone -- if () {stmts}; else if ...
 						}
-						else if (c == '\n')
-							line++;
 						else if (c == '*'){
-							if (peek(1) == '/'){
+							if (peek(true) == '/'){
 								advance();
 								advance();
 								break;
 							}
+						} else if (c == '\0'){
+							error("Unterminated multi-line comment.");
+							return;
 						}
 						advance();
 					}
@@ -341,7 +315,7 @@ namespace mere {
 				}
 				break;
 			case '\n':
-				line++;
+				NEWLINE();
 			case ' ':
 			case '\r':
 			case '\t':
@@ -359,27 +333,28 @@ namespace mere {
 				else if (is_alpha(c))
 					identifier();
 				else
-					Core::error(line, "Unexpected character.");
+					error("Unexpected character.");
 		}
 		LVd;
 	}
 
 	Tokens Tokenizer::scan_tokens(){
 		LFn;
-		line = current = start = 0;
+		current = start = 0;
 		tokens.clear();
 		if(source.isEmpty())
 			LRet tokens;
 		while (!is_at_end()){
 			start = current;
+			start_loc = loc;
 			scan_token();
 		}
-		start = current = 0;
 		add_token(Tok::eof);
+		start = current = 0;
 		LRet tokens;
 	}
 
-	QHash<TString, Tok::tok_type> Tokenizer::keywords{
+	QHash<QString, Tok::tok_type> Tokenizer::keywords{
 		{"struct"	,	Tok::k_struct	},
 		{"for"		,	Tok::k_for		},
 		{"if"		,	Tok::k_if		},

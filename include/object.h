@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef OBJECT_H
 #define OBJECT_H
 
@@ -20,7 +22,7 @@ namespace mere {
 		Function,		//MereCallable
 		Real,			//double
 		Char,			//char
-		String,			//TString
+		String,			//QString
 		Bool,			//bool
 		Array,			//std::vector<Object>
 		Map,			//std::vector<std::pair<Object,Object>>
@@ -46,47 +48,47 @@ namespace mere {
 		private:
 			std::bitset<8> m_traits;
 			Ty m_ty;
-			TString m_id;
+			QString m_id;
 
 			static std::vector<TraitMatcher> type_lookup;
 			static int default_traits;
 
 		public://static fn
-			static Ty type_of(const TString&);
+			static Ty type_of(const QString&);
 
 			Trait();
 			Trait(const Trait& other);
-			Trait(const TString& id);
+			Trait(const QString& id);
 			//setters
 			Trait& set(TraitIndex i, bool val = true);
-			Trait& set(const TString& id, bool searches = true);
+			Trait& set(const QString& id, bool searches = true);
 			Trait& set(Ty t) noexcept;
 			Trait& reset();
 
 			//bit getters
 			bool is(TraitIndex i) const { return m_traits.test(static_cast<size_t>(i));}
-			bool is_obj		() const { return is(TraitIndex::Object		); }
-			bool is_fn		() const { return is(TraitIndex::Function	); }
-			bool is_data	() const { return is(TraitIndex::Data		); }
-			bool is_acsr	() const { return is(TraitIndex::Accessor	); }
-			bool is_ref		() const { return is(TraitIndex::Reference	); }
-			bool is_dynamic	() const { return is(TraitIndex::Dynamic	); }
-			bool is_on_stack() const { return is(TraitIndex::OnStack	); }
+			bool is_object		() const { return is(TraitIndex::Object		); }
+			bool is_function	() const { return is(TraitIndex::Function	); }
+			bool is_data		() const { return is(TraitIndex::Data		); }
+			bool is_accessor	() const { return is(TraitIndex::Accessor	); }
+			bool is_reference	() const { return is(TraitIndex::Reference	); }
+			bool is_dynamic		() const { return is(TraitIndex::Dynamic	); }
+			bool is_on_stack	() const { return is(TraitIndex::OnStack	); }
 
-			//field getters
+			//getters
 			std::bitset<8> traits() const noexcept { return m_traits; }
-			TString id() const noexcept { return m_id; }
+			QString id() const noexcept { return m_id; }
 			Ty type() const noexcept { return m_ty; }
 			bool is(Ty ty) const noexcept { return m_ty == ty; }
-			bool is(const TString& i) const noexcept { return m_id == i; }
+			bool is(const QString& i) const noexcept { return m_id == i; }
 
 			//bit setters
-			Trait& as_obj();
-			Trait& as_fn ();
-			Trait& as_data();
-			Trait& as_acsr();
-			Trait& as_ref();
-			Trait& as_temp();
+			Trait& make_object();
+			Trait& make_function ();
+			Trait& make_data();
+			Trait& make_accessor();
+			Trait& make_reference();
+			Trait& make_temp();
 
 			Trait& set_dynamic(bool val = true);
 			Trait& set_on_stack(bool val = true);
@@ -105,13 +107,13 @@ namespace mere {
 
 	struct TraitMatcher{
 		public:
-			TString type_id;
+			QString type_id;
 			Ty type;
 		public:
 			TraitMatcher();
-			TraitMatcher(const TString& tid, Ty type);
+			TraitMatcher(const QString& tid, Ty type);
 
-			bool match(const TString& id){ return type_id == id; }
+			bool match(const QString& id){ return type_id == id; }
 	};
 
 	class EnvImpl;
@@ -128,11 +130,11 @@ namespace mere {
 			Object();
 			Object(const Object& o);
 			Object(const Trait& trt, const Var& var);
-			Object(const TString& id, const Var& var);
+			Object(const QString& id, const Var& var);
 			Object(bool b);
 			Object(char c);
 			Object(double d);
-			Object(const TString& str);
+			Object(const QString& str);
 			static Object null();
 
 			~Object(){ delete_ptr(); }
@@ -151,7 +153,7 @@ namespace mere {
 			template <typename T> T as() { return data().value<T>(); }
 			template <typename T> T as() const { return m_ptr->value<T>(); }
 
-			TString to_string() const;
+			QString to_string() const;
 			bool to_bool() const;
 
 			Object postfix(int i);

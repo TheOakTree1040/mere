@@ -1,31 +1,37 @@
+#pragma once
+
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 
 #include "token.h"
 #include "core.h"
+#include "src.h"
 
 class QChar;
 
 namespace mere {
+
 	class Tokenizer {
 		private:
-			TString source;
+			QString source;
 			Tokens tokens;
 
-			static QHash<TString, Tokty> keywords;// defined in source
+			static QHash<QString, Tokty> keywords;// defined in source
 			static QHash<QChar,QChar> escaped;
 
-			int start = 0;
-			int current = 0;
-			int line = 0;
+			uint start = 0ul;
+			srcloc_t loc;
+			srcloc_t start_loc;
+			uint current = 0ul;
 		private:
-			bool is_at_end();
+			void error(const QString& errmsg);
+
+			bool is_at_end() const;
 			bool is_digit(char c);
-			char peek(short=0);
-			bool match(char expct);
-			bool match(TString expct);
+			char peek(bool ahead=false) const;//ahead: peeks the next char instead of the current one
+			bool match(char expect);
 			char advance();
-			void deprecate();
+		  //void deprecate();
 
 			void add_token(Tokty);
 			void add_token(Tokty, const Object&);
@@ -43,7 +49,7 @@ namespace mere {
 			void identifier();
 			void scan_token();
 		public:
-			Tokenizer(const TString&);
+			Tokenizer(const QString&);
 			~Tokenizer();
 			Tokens scan_tokens();
 	};

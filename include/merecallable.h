@@ -1,7 +1,11 @@
+#pragma once
+
 #ifndef MERECALLABLE_H
 #define MERECALLABLE_H
 
 #include "stmt.h"
+#include "object.h"
+#include <bitset>
 
 #define CALLABLE [](Interpreter& interpreter, std::vector<Object>& arguments) -> Object
 
@@ -20,7 +24,7 @@ namespace mere{
 		protected:
 			Object obj;
 		public:
-			Return(const Object& obj):std::runtime_error("_mere_return_"),obj(obj){}
+			Return(const Object& obj) : std::runtime_error("_mere_return_"),obj(obj){}
 			Object value() const { return obj; }
 	};
 
@@ -57,7 +61,7 @@ namespace mere{
 			MereCallable(const Stmt& fn_def);
 
 			int arity() const { return m_arity; }
-			bool is(Call ci) const { return m_traits.test(t_cast<size_t>(ci)); }
+			bool is(Call ci) const { return m_traits.test(static_cast<size_t>(ci)); }
 
 			~MereCallable();
 	};
