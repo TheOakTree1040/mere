@@ -38,8 +38,8 @@ void MerePrompt::display_cmds(){
 	hout << ".quit                   Quit\n";
 	hout << ".exit                   The same as above.\n";
 	hout << ".help                   Opens the helper interface.\n";
-	hout << ".cls					 Clears screen.\n";
-	hout << ".clear					 Clears the input.";
+	hout << ".cls                    Clears screen.\n";
+	hout << ".clear                  Clears the input.";
 	hout << ".last                   Add the last piece of code executed to the current input.\n";
 	hout << ".view                   View the code you have typed (The input)\n";
 	hout << ".prompt        [toggle] Print the prompt.\n";
