@@ -67,7 +67,7 @@ Object MereCallable::call(Interpreter& interpreter, std::vector<Object>& argumen
 			for (int i = 0; i != sz; i++){
 				env->define(params[i],arguments[i]);
 			}
-			interpreter.exec_block(m_fn->fn().body(),false,env);
+			interpreter.exec_block(m_fn->fn().body(),env);
 			LRet Object();
 		}
 		else if (is(Call::Nat)){

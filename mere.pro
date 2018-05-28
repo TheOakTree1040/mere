@@ -1,11 +1,12 @@
-#---------------------#
-# 2018-03-21 18:24:44 #
-#---------------------#
 
-QT       += core #
-#QT       += gui
+# Mere Interpreter
+# Project creation: 03/21/2018 18:24:44
+# TheOakCode.
 
-#greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core
+#QT       += gui #define T_GUI
+
+#greaterThan(QT_MAJOR_VERSION, 4): QT += widgets #define T_GUI
 
 macx:TARGET = mere-darwin
 win32:TARGET = mere-win32
@@ -20,8 +21,9 @@ CONFIG += c++14
 CONFIG -= import_plugins
 macx:CONFIG -= app_bundle
 
+INCLUDEPATH += $$PWD/include
+
 SOURCES += \
-    src/core.cpp \
     src/data_storage.cpp \
     src/environment.cpp \
     src/expr.cpp \
@@ -37,10 +39,10 @@ SOURCES += \
     src/tlogger.cpp \
     src/token.cpp \
     src/tokenizer.cpp \
-    src/src.cpp
+    src/src.cpp \
+    src/interpretationunit.cpp
 
 HEADERS += \
-    include/core.h \
     include/data_storage.h \
     include/environment.h \
     include/expr.h \
@@ -59,10 +61,5 @@ HEADERS += \
     include/config.h \
     include/parseerror.h \
     include/sourceeditor.h \
-    include/src.h
-
-INCLUDEPATH += $$PWD/include
-#QTPLUGIN.platforms = qminimal
-
-DISTFILES += \
-    tests/test.mr
+    include/src.h \
+    include/interpretationunit.h

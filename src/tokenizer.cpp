@@ -3,13 +3,14 @@
 #include "tlogger.h"
 
 #define NEWLINE()\
-{loc.line++; loc.col = 1; tokens.newline(current);}
+{loc.line++; loc.col = 1; unit->add_index(current);}
 #define MOVE_BACK() {loc.col--;current--;}
 
 namespace mere {
-	Tokenizer::Tokenizer(const QString& src):
-		source(src),
-		tokens(src){
+	Tokenizer::Tokenizer(IntpUnit unit):
+		unit(unit),
+		source(unit->source()),
+		tokens(unit->tokens()){
 		Log ls("Source: ") ls(source);
 		LIndt;
 	}
@@ -19,7 +20,7 @@ namespace mere {
 	}
 
 	void Tokenizer::error(const QString& errmsg) {
-		Core::error( errloc_t( loc, tokens.last_line() ), errmsg );
+		unit->report(loc, "lex-error", errmsg);
 	}
 
 	bool Tokenizer::is_at_end() const {
@@ -40,7 +41,7 @@ namespace mere {
 	void Tokenizer::add_token(Tokty ty, const Object& lit){
 		LFn;
 		tokens.push_back(Token(ty,source.mid(start,current-start),lit,start_loc));
-		Log ls("Added Token: Lexeme:") ls(tokens[tokens.size()-1].lexeme);
+		Log ls("Added Token: Lexeme:") ls(tokens[tokens.size()-1].lexeme());
 		Log ls("             Type  :") ls((int)tokens[tokens.size()-1].type());
 		LVd;
 	}
@@ -59,17 +60,19 @@ namespace mere {
 		QString str = "";
 		while (!is_at_end()) {
 			if (peek() == '\n') {
-				error("Expected a closing quotation mark to terminate string.");
+				error("expected a closing quotation mark to terminate string.");
 				return;
 			}
-			if (match('\\')){
+			else if (match('\\')){
 				QChar ch = escaped.value(peek(),'\0');
 				if (ch == '\0'){
-					error("Undefined escape sequence.");
+					error("undefined escape sequence.");
 				}
-				source[current] = ch;
+				str += ch;
+				advance();
+				continue;
 			}
-			if (match('"')){
+			else if (match('"')){
 				// To support concatenation of string literals w/o "+"
 				while (true){
 					switch(peek()){
@@ -95,7 +98,7 @@ namespace mere {
 
 		// Unterminated string.
 		if (is_at_end()) {
-			error("Expected string termination.");
+			error("expected string termination");
 			return;
 		}
 		add_token(Tok::l_string, Object(Trait("string"),QVariant(str)));
@@ -104,22 +107,21 @@ namespace mere {
 	void Tokenizer::character(){
 		char c = '\0';
 		if (is_at_end()){
-			error("Expected a character.");
+			error("expected a character");
 			return;
 		}
 		if (peek() == '\\'){
 			advance();
-			QChar ch = escaped.value(QChar(peek()),QChar('\0'));
-			if (ch != '\0'){
-				source[current] = ch;
-			}
-			else{
-				error("Undefined escape sequence.");
-			}
+			auto ch = escaped.value(peek(),'\0');
+			if (ch != '\0')
+				c = ch.toLatin1();
+			else
+				error("undefined escape sequence");
 		}
-		c = advance();
+		else
+			c = advance();
 		if (peek() != '\''){
-			error("Expected a `'`.");
+			error("expected a `'`");
 		}
 		else
 			advance();
@@ -128,14 +130,7 @@ namespace mere {
 	}
 
 	bool Tokenizer::is_digit(char ch){
-#if _ENABLED//__GNUC__
-		return std::isdigit(t_cast<unsigned char>(ch));
-#elif _ENABLED
-		return ch >= '0' && ch <= '9';
-#else
-		return ((uint32_t)ch - '0') < 10u;
-#endif
-
+		return ((uint32_t)ch - '0') < 10u; //optimized is_digit
 	}
 
 	void Tokenizer::number() {
@@ -187,7 +182,7 @@ namespace mere {
 		Log ls("  Numeral: String:") ls(num);
 		Log ls("           Number:") ls(n);
 		if (!stat){
-			error(QString("Invalid base-%1 numeral.").arg(QString::number(base)));
+			error(QString("invalid base-%1 numeral").arg(QString::number(base)));
 		}
 		LVd;
 	}
@@ -232,7 +227,7 @@ namespace mere {
 
 	void Tokenizer::raw_string(){
 		//Assume R"[ was eaten as in Tokenizer::identifier()
-		error("Raw string literal not supported.");
+		error("raw string literal not supported");
 	}
 
 	void Tokenizer::scan_token(){
@@ -300,7 +295,7 @@ namespace mere {
 								break;
 							}
 						} else if (c == '\0'){
-							error("Unterminated multi-line comment.");
+							error("unterminated multi-line comment");
 							return;
 						}
 						advance();
@@ -333,28 +328,26 @@ namespace mere {
 				else if (is_alpha(c))
 					identifier();
 				else
-					error("Unexpected character.");
+					error("unexpected character");
 		}
 		LVd;
 	}
 
-	Tokens Tokenizer::scan_tokens(){
+	void Tokenizer::scan_tokens(){
 		LFn;
-		current = start = 0;
-		tokens.clear();
-		if(source.isEmpty())
-			LRet tokens;
+		if(source.isEmpty() || !unit->success()){
+			LVd;
+		}
 		while (!is_at_end()){
 			start = current;
 			start_loc = loc;
 			scan_token();
 		}
 		add_token(Tok::eof);
-		start = current = 0;
-		LRet tokens;
+		LVd;
 	}
 
-	QHash<QString, Tok::tok_type> Tokenizer::keywords{
+	const QHash<QString, Tok::tok_type> Tokenizer::keywords{
 		{"struct"	,	Tok::k_struct	},
 		{"for"		,	Tok::k_for		},
 		{"if"		,	Tok::k_if		},
@@ -388,7 +381,7 @@ namespace mere {
 		{"run"		,	Tok::k_run		}
 	};
 
-	QHash<QChar,QChar> Tokenizer::escaped{
+	const QHash<QChar,QChar> Tokenizer::escaped{
 		{'0'	,	'\0'},
 		{'"'	,	'"'	},
 		{'n'	,	'\n'},

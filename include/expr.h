@@ -244,10 +244,12 @@ namespace mere {
 			expr_type m_type;
 			mutable expr_fields* m_fields;
 			mutable bool m_handled = false;
+
 		private:
 			void set_handled() const { m_handled = true; }
 			expr_fields* data() const { return m_fields; }
 			void handle() const;
+
 		public:
 			Expr();
 			Expr(const Expr & expr);
@@ -279,27 +281,27 @@ namespace mere {
 	};
 
 
-#define NullExpr()						Expr(Expr::Empty,ptr_cast<Expr::expr_fields*>(new Expr::empty_fields()))
+#define NullExpr()						Expr(Expr::Empty,new Expr::empty_fields())
 
-#define LitExpr(LIT)					Expr(Expr::Literal,ptr_cast<Expr::expr_fields*>(new Expr::lit_fields(LIT)))
-#define BinExpr(LEFT,OP,RIGHT)			Expr(Expr::Binary,ptr_cast<Expr::expr_fields*>(new Expr::binary_fields(LEFT,OP,RIGHT)))
-#define LogicalExpr(LEFT,OP,RIGHT)		Expr(Expr::Logical,ptr_cast<Expr::expr_fields*>(new Expr::logical_fields(LEFT,OP,RIGHT)))
-#define AssignExpr(LEFT,OP,RIGHT)		Expr(Expr::Assign,ptr_cast<Expr::expr_fields*>(new Expr::assign_fields(LEFT,OP,RIGHT)))
-#define GroupExpr(EXPR)					Expr(Expr::Group,ptr_cast<Expr::expr_fields*>(new Expr::group_fields(EXPR)))
-#define PstfxExpr(OPERAND,OP)			Expr(Expr::Postfix,ptr_cast<Expr::expr_fields*>(new Expr::unary_fields(OPERAND,OP)))
-#define PrefxExpr(OPERAND,OP)			Expr(Expr::Prefix,ptr_cast<Expr::expr_fields*>(new Expr::unary_fields(OPERAND,OP)))
-#define CSExpr(EXPRS)					Expr(Expr::CommaEx,ptr_cast<Expr::expr_fields*>(new Expr::cs_fields(EXPRS)))
-#define CndtnlExpr(CONDIT,LFT,RT)		Expr(Expr::Conditional,ptr_cast<Expr::expr_fields*>(new Expr::ternary_fields(CONDIT,LFT,RT)))
+#define LitExpr(LIT)					Expr(Expr::Literal,new Expr::lit_fields(LIT))
+#define BinExpr(LEFT,OP,RIGHT)			Expr(Expr::Binary,new Expr::binary_fields(LEFT,OP,RIGHT))
+#define LogicalExpr(LEFT,OP,RIGHT)		Expr(Expr::Logical,new Expr::logical_fields(LEFT,OP,RIGHT))
+#define AssignExpr(LEFT,OP,RIGHT)		Expr(Expr::Assign,new Expr::assign_fields(LEFT,OP,RIGHT))
+#define GroupExpr(EXPR)					Expr(Expr::Group,new Expr::group_fields(EXPR))
+#define PstfxExpr(OPERAND,OP)			Expr(Expr::Postfix,new Expr::unary_fields(OPERAND,OP))
+#define PrefxExpr(OPERAND,OP)			Expr(Expr::Prefix,new Expr::unary_fields(OPERAND,OP))
+#define CSExpr(EXPRS)					Expr(Expr::CommaEx,new Expr::cs_fields(EXPRS))
+#define CndtnlExpr(CONDIT,LFT,RT)		Expr(Expr::Conditional,new Expr::ternary_fields(CONDIT,LFT,RT))
 
-#define VarAcsrExpr(ACSR)				Expr(Expr::VarAcsr,ptr_cast<Expr::expr_fields*>(new Expr::var_acsr_fields(ACSR)))
+#define VarAcsrExpr(ACSR)				Expr(Expr::VarAcsr,new Expr::var_acsr_fields(ACSR))
 
-#define FnCallExpr(CALLEE,ARGS,PAREN)	Expr(Expr::FuncCall,ptr_cast<Expr::expr_fields*>(new Expr::call_fields(CALLEE,ARGS,PAREN)))
-#define LambdaExpr(CALLABLE)			Expr(Expr::Lambda,ptr_cast<Expr::expr_fields*>(new Expr::lambda_fields(CALLABLE)))
+#define FnCallExpr(CALLEE,ARGS,PAREN)	Expr(Expr::FuncCall,new Expr::call_fields(CALLEE,ARGS,PAREN))
+#define LambdaExpr(CALLABLE)			Expr(Expr::Lambda,new Expr::lambda_fields(CALLABLE))
 
-#define ArrayExpr(ARRAY)				Expr(Expr::Array,ptr_cast<Expr::expr_fields*>(new Expr::array_fields(ARRAY)))
-#define AssocExpr(ASSOC)				Expr(Expr::Assoc,ptr_cast<Expr::expr_fields*>(new Expr::hash_fields(ASSOC)))
-#define HashExpr(HASH)					Expr(Expr::Hash,ptr_cast<Expr::expr_fields*>(new Expr::hash_fields(HASH)))
+#define ArrayExpr(ARRAY)				Expr(Expr::Array,new Expr::array_fields(ARRAY))
+#define AssocExpr(ASSOC)				Expr(Expr::Assoc,new Expr::hash_fields(ASSOC))
+#define HashExpr(HASH)					Expr(Expr::Hash,new Expr::hash_fields(HASH))
 
-#define RefExpr(LEFT,OP,RIGHT)			Expr(Expr::Refer,ptr_cast<Expr::expr_fields*>(new Expr::refer_fields(LEFT,OP,RIGHT)))
+#define RefExpr(LEFT,OP,RIGHT)			Expr(Expr::Refer,new Expr::refer_fields(LEFT,OP,RIGHT))
 }
 #endif // EXPR_H

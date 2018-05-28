@@ -17,6 +17,7 @@ namespace mere {
 		private:
 			EnvPtr enclosing; ///< The enclosing (outer) Environment
 			QHash<QString, Object> values; ///< The values table (Identifier to Object)
+
 		public:
 			EnvImpl();
 			EnvImpl(EnvPtr);
@@ -24,6 +25,7 @@ namespace mere {
 			void define(const QString&, const Object&);
 			Object& access(const Token&);
 			Object& assign(const Token&, const Object&);
+
 	};
 	typedef EnvPtr Environment;
 

@@ -9,13 +9,12 @@ EnvImpl::EnvImpl(EnvPtr encl):enclosing(encl){}
 void EnvImpl::define(const Token& t, const Object& o){
 	LFn;
 	if (values.contains(t.lexeme())){
-		LThw RuntimeError(t,QString("Redefinion of variable '").
-						  append(t.lexeme()).append("'."));
+		LThw RuntimeError(t,QString("redefinion of variable '").
+						  append(t.lexeme()).append("'"));
 	}
-	Log ls("LEXEME SIZE") ls(t.lexeme().size());
-	Log ls("LEXEME CONT") ls(t.lexeme());
+	Log ls("LEXEME") ls(t.lexeme());
 	if (t.lexeme().isEmpty()){
-		LThw RuntimeError(t,"Defining variable with no identifier.");
+		LThw RuntimeError(t,"defining variable with no identifier");
 	}
 	Object& obj = values.insert(t.lexeme(),o).value();
 	obj.trait().set_on_stack();
@@ -25,11 +24,11 @@ void EnvImpl::define(const Token& t, const Object& o){
 void EnvImpl::define(const QString& t, const Object& o){
 	LFn;
 	if (values.contains(t)){
-		LThw RuntimeError(Token(Tok::identifier,t,Object(),srcloc_t()),QString("Redefinion of symbol '").
+		LThw RuntimeError(Token(Tok::identifier,t,Object(),srcloc_t()),QString("redefinion of var '").
 						  append(t).append("'."));
 	}
 	if (t.isEmpty()){
-		LThw RuntimeError(Token(Tok::identifier,t,Object(),srcloc_t()),"Definition without identifier.");
+		LThw RuntimeError(Token(Tok::identifier,t,Object(),srcloc_t()),"definition without identifier");
 	}
 	Object& obj = values.insert(t,o).value();
 	obj.trait().set_on_stack();
@@ -41,23 +40,25 @@ Object& EnvImpl::access(const Token& t){
 	Log1( "VARS = " + QStringList::fromStdList(values.keys().toStdList()).join(QString(", ")));
 	Log1("ACCESSING " + t.lexeme());
 	if (values.contains(t.lexeme())){
-		LRet values[t.lexeme()];
+		Object& o = values[t.lexeme()];
+		Log1("RETURNING...");
+		LRet o;
 	}
 	if (enclosing != nullptr){
 		LRet enclosing->access(t);
 	}
-	LThw RuntimeError(t,QString("Variable '").append(t.lexeme()).append("' undefined."));
+	LThw RuntimeError(t,QString("variable '").append(t.lexeme()).append("' undefined"));
 }
 
 Object& EnvImpl::assign(const Token& t, const Object& o){
 	LFn;
-	Log ls(t.lexeme()) ls("at ln") ls(t.ln);
+	Log ls(t.lexeme()) ls("at ln") ls(t.line());
 	if (values.contains(t.lexeme())){
 		LRet values[t.lexeme()].recv(o);
 	}
 	if (enclosing != nullptr){
 		LRet enclosing->assign(t,o);
 	}
-	LThw RuntimeError(t,QString("Variable '").append(t.lexeme()).append("' undefined."));
+	LThw RuntimeError(t,QString("variable '").append(t.lexeme()).append("' undefined"));
 }
 

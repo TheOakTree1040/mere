@@ -253,7 +253,26 @@ namespace mere {
 			Stmt& operator*=(const Stmt& rhs);
 	};
 
-	typedef std::vector<Stmt> Stmts;
+	class AST : public std::vector<Stmt>{
+		public:
+			AST(const AST&) = delete;
+			AST(AST&& a):std::vector<Stmt>(std::move(a)){}
+			AST(){}
+			AST& operator=(const AST&) = delete;
+			AST& operator=(AST&&) = default;
+//			QString to_string(){
+//				using size_ty = std::vector<Stmt>::size_type;
+//				size_ty s = this->size();
+//				QString str = "";
+//				for (size_ty i = 0ul; i != s; i++){
+//					switch (at(i).type()){
+//						case Stmt::
+//					}
+//				}
+//				return str;
+//			}
+	};
+	//typedef std::vector<Stmt> AST;
 
 #define ExprStmt(EXPR)					Stmt(Stmt::ExprStmt,new Stmt::expr_fields(EXPR))
 #define VarDeclStmt(INIT,NAME)			Stmt(Stmt::VarDecl,new Stmt::var_decl_fields(INIT,NAME))

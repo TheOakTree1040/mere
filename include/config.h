@@ -4,6 +4,7 @@
 #ifndef T_SPECS
 #define T_SPECS
 
+//#define T_DBG 1
 #define T_QT 1
 
 #ifdef _WIN32
@@ -18,11 +19,11 @@
 #define T_CLI 1
 #define App QCoreApplication
 
-#define PROJECT ("Mere Interpreter")
-#define VERSION ("v0.1")
-#define AUTHOR ("TheOakCode")
-#define EMAIL ("theoaktree1040@gmail.com")
-#define DESCRIPTION ("An interpreter for the scripting language Mere.")
-#define BUILD ("7-d (180520)")
+#define PROJECT "Mere Interpreter"
+#define VERSION "v0.1"
+#define AUTHOR "TheOakCode"
+#define EMAIL "theoaktree1040@gmail.com"
+#define DESCRIPTION "An interpreter for the scripting language Mere."
+#define BUILD "7-e-ii (180527)"
 
 #endif // T_SPECS

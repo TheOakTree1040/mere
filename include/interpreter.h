@@ -3,8 +3,8 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
-#include "stmt.h"
 #include "environment.h"
+#include "interpretationunit.h"
 
 #define C_EXPR_REF const Expr&
 #define C_STMT_REF const Stmt&
@@ -36,35 +36,35 @@ namespace mere {
 
 			EnvImpl* global() const { return globals; }
 
-			Object eval_group	(C_EXPR_REF,bool);
-			Object eval_lit		(C_EXPR_REF,bool);
-			Object eval_binary	(C_EXPR_REF,bool);
-			Object eval_prefx	(C_EXPR_REF,bool);
-			Object eval_pstfx	(C_EXPR_REF,bool);
-			Object eval_logical	(C_EXPR_REF,bool);
-			Object eval_var_acsr(C_EXPR_REF,bool);
-			Object eval_asgn	(C_EXPR_REF,bool);
-			Object eval_refer	(C_EXPR_REF,bool);
-			Object eval_call	(C_EXPR_REF,bool);
-			Object eval_ternary	(C_EXPR_REF,bool);
+			Object eval_group	(C_EXPR_REF);
+			Object eval_lit		(C_EXPR_REF);
+			Object eval_binary	(C_EXPR_REF);
+			Object eval_prefx	(C_EXPR_REF);
+			Object eval_pstfx	(C_EXPR_REF);
+			Object eval_logical	(C_EXPR_REF);
+			Object eval_var_acsr(C_EXPR_REF);
+			Object eval_asgn	(C_EXPR_REF);
+			Object eval_refer	(C_EXPR_REF);
+			Object eval_call	(C_EXPR_REF);
+			Object eval_ternary	(C_EXPR_REF);
 
-			void exec_expr		(C_STMT_REF,bool);
-			void exec_print		(C_STMT_REF,bool);
-			void exec_println	(C_STMT_REF,bool);
-			void exec_if		(C_STMT_REF,bool);
-			void exec_block		(C_STMT_REF,bool,EnvImpl* = nullptr);
-			void exec_block		(const std::vector<Ref<Stmt>>&,bool, EnvImpl* = nullptr);
-			void exec_while		(C_STMT_REF,bool);
-			void exec_var_decl	(C_STMT_REF,bool);
-			void exec_fn_decl	(C_STMT_REF,bool);
-			void exec_ret		(C_STMT_REF,bool);
-			void exec_assert	(C_STMT_REF,bool);
-			void exec_run		(C_STMT_REF,bool);
-			void exec_match		(C_STMT_REF,bool);
+			void exec_expr		(C_STMT_REF);
+			void exec_print		(C_STMT_REF);
+			void exec_println	(C_STMT_REF);
+			void exec_if		(C_STMT_REF);
+			void exec_block		(C_STMT_REF,EnvImpl* = nullptr);
+			void exec_block		(const std::vector<Ref<Stmt>>&, EnvImpl* = nullptr);
+			void exec_while		(C_STMT_REF);
+			void exec_var_decl	(C_STMT_REF);
+			void exec_fn_decl	(C_STMT_REF);
+			void exec_ret		(C_STMT_REF);
+			void exec_assert	(C_STMT_REF);
+			void exec_run		(C_STMT_REF);
+			void exec_match		(C_STMT_REF);
 
-			Object evaluate		(C_EXPR_REF,bool);
-			void execute		(C_STMT_REF,bool);
-			bool interpret		(Stmts);
+			Object evaluate		(C_EXPR_REF);
+			void execute		(C_STMT_REF);
+			short interpret(IntpUnit);
 
 	};
 }

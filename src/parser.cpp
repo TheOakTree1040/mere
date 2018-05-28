@@ -1,11 +1,12 @@
 
 #include "parser.h"
-#include "core.h"
 #include "data_storage.h"
 #include "merecallable.h"
 
 namespace mere {
-	Parser::Parser(const Tokens& toks):tokens(toks){
+	Parser::Parser(IntpUnit unit):
+		unit(unit),
+		tokens(unit->tokens()){
 		Logp("Parser()");
 		LIndt;
 	}
@@ -13,16 +14,17 @@ namespace mere {
 		LRst;
 	}
 
-	Stmts Parser::parse(){
+	void Parser::parse(){
 		LFn;
-		if (tokens.empty())
-			LRet Stmts();
-		Stmts stmts;
+		AST& ast = unit->ast();
+		if (tokens.empty() || !unit->success()){
+			LVd;
+		}
 		while(!is_at_end()){
 			Stmt s = stmt();
-			stmts.push_back(s);
+			ast.push_back(s);
 		}
-		LRet stmts;
+		LVd;
 	}
 
 	//Helpers
@@ -88,7 +90,7 @@ namespace mere {
 	}
 
 	void Parser::error(const Token& tok, const QString& errmsg) const {
-		Core::error(errloc_t(tok.loc(),tokens.index_at(tok.line())),errmsg);
+		unit->report(tok.loc(), "parse-error", errmsg);
 	}
 
 	void Parser::synchronize(){
@@ -121,15 +123,18 @@ namespace mere {
 				while(match(Tok::semi_colon));
 				LRet NullStmt();
 			}
-			if (expected_block && check(Tok::l_brace)){
+			else if (expected_block && check(Tok::l_brace)){
 				LRet block(false);
 			}
-			if (!peek().is_keyword()) {
+			else if (!peek().is_keyword()) {
 				LRet
 				(peek().type() == Tok::dollar && peek(1).type() == Tok::l_brace)?
-							block(true):decl_stmt();
+							block(true):expr_stmt();
 			}
-			if (match(Tok::k_if		)){
+			else if (match(Tok::k_var)){
+				LRet var_decl_stmt();
+			}
+			else if (match(Tok::k_if		)){
 				LRet if_stmt();
 			}
 			else if (match(Tok::k_for	)){
@@ -146,13 +151,16 @@ namespace mere {
 			}
 			else if (match(Tok::k_print	)){
 				Stmt s = PrintStmt(expression());
-				expect(Tok::semi_colon,"Expected a ';' [print_sc]");
+				expect(Tok::semi_colon,"expected a ';'");
 				LRet s;
 			}
 			else if (match(Tok::k_println)) {
 				Stmt s = PrintlnStmt(expression());
-				expect(Tok::semi_colon, "Expected a ';' [println_sc]");
+				expect(Tok::semi_colon, "expected a ';'");
 				LRet s;
+			}
+			else if (match(Tok::k_fn)){
+				LRet fn_def_stmt();
 			}
 			else if (match(Tok::k_assert	)){
 				LRet assert_stmt();
@@ -163,10 +171,14 @@ namespace mere {
 		}
 		catch(ParseError&) {}
 		catch(std::exception& ex){
-			error(prev(),QString("Exception caught @ Parser::stmt(): ").append(ex.what()));
+			unit->report(prev().loc(),
+						 "exception (Parser::stmt)",
+						 QString(ex.what()));
 		}
 		catch(...){
-			error(prev(),QString("Exception caught @ Parser::stmt()."));
+			unit->report(prev().loc(),
+						 "exception (Parser::stmt)",
+						 QString("unknown exception"));
 		}
 		synchronize();
 		LRet NullStmt();
@@ -175,17 +187,17 @@ namespace mere {
 	Stmt Parser::block(bool is_unexpected){
 		LFn;
 		if (is_unexpected){
-			expect(Tok::dollar,"Expected a '$'.");
+			expect(Tok::dollar,"expected a '$'");
 		}
-		expect(Tok::l_brace, "Expected a '{'");
-		Stmts blk;
+		expect(Tok::l_brace, "expected a '{'");
+		AST blk;
 		for(;!is_at_end();){
 			if (match(Tok::r_brace)){
 				LRet BlockStmt(blk);
 			}
 			blk.push_back(stmt());
 		}
-		LThw make_error(prev(),"Expected a '}'");
+		LThw make_error(prev(),"expected a '}'");
 	}
 
 	Stmt Parser::decl_stmt(){
@@ -199,18 +211,18 @@ namespace mere {
 	Stmt Parser::var_decl_stmt(bool eaten){
 		LFn;
 		if (!eaten){
-			expect(Tok::k_var,"Expected keyword 'var'.");
+			expect(Tok::k_var,"expected keyword 'var'");
 		}
-		Token& name = expect(Tok::identifier,"Expected an identifier.");
+		Token& name = expect(Tok::identifier,"expected an identifier");
 		Expr initializer = match(Tok::assign)?expression():LitExpr(Object());
-		expect(Tok::semi_colon, "Expected a ';' after declaration.");
+		expect(Tok::semi_colon, "expected a ';' after declaration");
 		LRet VarDeclStmt(initializer,name);
 	}
 
 	Stmt Parser::run_stmt(){
 		LFn;
-		QString str = expect(Tokty::l_string, "Expected a filename.").lexeme();
-		expect(Tokty::semi_colon,"Expected a ';' [run_stmt]");
+		QString str = expect(Tokty::l_string, "expected a filename").lexeme();
+		expect(Tokty::semi_colon,"expected a ';'");
 		LRet RunStmt(str);
 	}
 
@@ -231,14 +243,14 @@ namespace mere {
 
 	Stmt Parser::finish_match(Expr m){
 		LFn;
-		expect(Tok::l_brace, "Expected a '{' [match_lbrace]");
+		expect(Tok::l_brace, "Expected a '{'");
 		std::vector<Branch> br;
 		while(!check(Tok::r_brace)){
 			Expr e = match(Tok::star)?LitExpr(Object()):expression(); // * (wildcard) -> void literal, else call expression()
 			Stmt s = match(Tok::colon)?stmt():block(); // ':'  --  one stmt, else call block()
 			br.push_back(Branch(e,s)); // create a branch
 		}
-		expect(Tok::r_brace, "Expected a '}' [match_rbrace]");
+		expect(Tok::r_brace, "Expected a '}'");
 		LRet MatchStmt(m,br);
 	}
 
@@ -252,21 +264,21 @@ namespace mere {
 	Stmt Parser::expr_stmt(){
 		LFn;
 		Expr expr = expression();
-		expect(Tok::semi_colon,"Expected statement termination with ';'.");
+		expect(Tok::semi_colon,"expected a ';'");
 		LRet ExprStmt(expr);
 	}
 
 	Stmt Parser::for_stmt(){
 		LFn;
-		expect(Tok::l_paren, "Expected a parenthesis.");
+		expect(Tok::l_paren, "expected a '('");
 		Stmt for_init = match(Tok::semi_colon)?NullStmt():
 											   match(Tok::k_var)?var_decl_stmt():
 																 expr_stmt();
 		Expr for_cond = check(Tok::semi_colon)?LitExpr(Object("bool",true)):
 											   expression();
-		expect(Tok::semi_colon,"Expected a ';'.");
+		expect(Tok::semi_colon,"expected a ';'");
 		Expr for_act = check(Tok::r_paren)?NullExpr():expression();
-		expect(Tok::r_paren,"Expected a ')'.");
+		expect(Tok::r_paren,"expected a ')'");
 		Stmt body = stmt(true);
 		if (for_act.type() != Expr::Empty){
 			body *= BlockStmt(std::vector<Stmt>({body,ExprStmt(for_act)}));
@@ -279,15 +291,15 @@ namespace mere {
 	}
 
 	Stmt Parser::fn_def_stmt(){
-		Token& name = expect(Tok::identifier, "Expected an identifier [FnName].");
+		Token& name = expect(Tok::identifier, "expected an identifier");
 		std::vector<Token> params;
-		expect(Tok::l_paren,"Expected a '('. [FnLParen]");
+		expect(Tok::l_paren,"expected a '('");
 		if (!check(Tok::r_paren)){
 			do{
 				params.push_back(advance());
 			} while(match(Tok::comma));
 		}
-		expect(Tok::r_paren,"Expected a ')'. [FnRParen]");
+		expect(Tok::r_paren,"expected a ')'");
 		Stmt body = block(false);
 		return FnStmt(name,params,body);
 	}
@@ -295,15 +307,18 @@ namespace mere {
 	Stmt Parser::ret_stmt(){
 		Token& keywd = prev();
 		Expr expr = check(Tok::semi_colon)?LitExpr(new Object()):expression();
-		expect(Tok::semi_colon,"Expected a ';' [RetSColon]");
+		expect(Tok::semi_colon,"expected a ';'");
 		return RetStmt(expr,keywd);
 	}
 
 	Stmt Parser::assert_stmt(){
-		uint ln = peek(-1).line() + 1;
+		Token& tok = peek(-1);
 		Expr expr = expression();
 		int code = 0xFF;
-		QString msg = "[Ln " + QString::number(ln) + "] ";
+		QString msg = QString("(%2:%3) ")
+					  .arg(unit->filename())
+					  .arg(tok.line())
+					  .arg(tok.col());
 		if (match(Tok::colon)){
 			bool has_code = false;
 			if(match(Tok::l_real)){
@@ -313,16 +328,16 @@ namespace mere {
 					goto WRAP_UP;
 			}
 			if (!has_code){
-				msg += expect(Tok::l_string, "Expected an exit message [AssertMsg]").literal().to_string();
+				msg += expect(Tok::l_string, "expected an exit message").literal().to_string();
 			}
 			else if (match(Tok::l_string)){
 				msg += peek(-1).literal().to_string();
 			}
-			else msg += "Assertion failed.";
+			else msg += "assertion failed";
 		}
-		else msg += "Assertion failed.";
+		else msg += "assertion failed";
 WRAP_UP:
-		expect(Tok::semi_colon, "Expected a ';' [AssertSColon]");
+		expect(Tok::semi_colon, "expected a ';'");
 		return AssertStmt(expr,code,msg);
 	}
 
@@ -351,7 +366,7 @@ WRAP_UP:
 		}
 		else if (match(Tok::ques_mk)){
 			Expr l = logical_or();
-			expect(Tok::colon, "Expected a ':' in a conditional expression.");
+			expect(Tok::colon, "expected a ':'");
 			Expr r = logical_or();
 			expr *= CndtnlExpr(expr,l,r);
 		}
@@ -456,8 +471,8 @@ WRAP_UP:
 		}
 		else if (match(Tok::plus						)){
 			Token& op = prev();
-			error(peek(),QString("Unary operator `+`")
-						.append(" not supported."));
+			error(peek(),QString("unary operator `+`")
+						.append(" not supported"));
 			Expr right = unary();
 			LRet PrefxExpr(right,op);
 		}
@@ -468,8 +483,8 @@ WRAP_UP:
 		}
 		else if (peek().is_bin_op(						)){
 			Token& op = advance();
-			error(peek(),QString("Binary operator")
-						.append(op.lexeme()).append(" requires 2 operands but 1 was found."));
+			error(peek(),QString("binary operator `")
+						.append(op.lexeme()).append("` requires 2 operands"));
 
 			Expr right = unary();
 			LRet PrefxExpr(right,op);
@@ -518,7 +533,7 @@ WRAP_UP:
 				Log ls("FINISH_CALL_ARG_TY") ls(t_cast<int>(arg.type()));
 			} while (match(Tok::comma));
 		}
-		Token& paren = expect(Tok::r_paren, "Expected a ')'.");
+		Token& paren = expect(Tok::r_paren, "expected a ')'");
 		LRet FnCallExpr(callee,args,paren);
 	}
 
@@ -553,7 +568,7 @@ WRAP_UP:
 			LRet ex;
 		}
 		else									  {
-			error(peek(),"Expected an expression.");
+			error(peek(),"expected an expression");
 			LRet NullExpr();
 		}
 	}
@@ -574,7 +589,7 @@ WRAP_UP:
 	Expr Parser::spec_data(){
 		LFn;
 		//assumes '$' is eaten
-		Token& t = expect(Tok::identifier,"Expected an identifier");
+		Token& t = expect(Tok::identifier,"expected an identifier");
 		switch(h(t.lexeme().toStdString().c_str())){
 			case h("a"):
 				LRet assoc();
@@ -582,39 +597,39 @@ WRAP_UP:
 			case h("h"):
 				LRet map();
 			default:
-				LThw make_error(t,"Invalid data specifier.");
+				LThw make_error(t,"invalid data specifier");
 		}
 	}
 
 	Expr Parser::assoc(){
 		LFn;
 		std::vector<pair<Expr,Expr>> inits;
-		expect(Tok::l_brace,"Expected a '{'.");
+		expect(Tok::l_brace,"expected a '{'");
 		if (!check(Tok::r_brace)){
 			do{
 				Expr x = expression(true);
-				expect(Tok::colon,"Expected a ':'.");
+				expect(Tok::colon,"expected a ':'");
 				Expr y = expression(true);
 				inits.push_back(pair<Expr,Expr>(x,y));
 			}while (!is_at_end() && peek().type() != Tok::r_brace && match(Tok::comma));
 		}
-		expect(Tok::r_brace, "Expected a '}'.");
+		expect(Tok::r_brace, "expected a '}'");
 		LRet AssocExpr(inits);
 	}
 
 	Expr Parser::map(){
 		LFn;
 		std::vector<pair<Expr,Expr>> inits;
-		expect(Tok::l_brace,"Expected a '{'.");
+		expect(Tok::l_brace,"expected a '{'");
 		if (!check(Tok::r_brace)){
 			do{
 				Expr x = expression(true);
-				expect(Tok::colon,"Expected a ':'.");
+				expect(Tok::colon,"expected a ':'");
 				Expr y = expression(true);
 				inits.push_back(pair<Expr,Expr>(x,y));
 			}while (!is_at_end() && peek().type() != Tok::r_brace && match(Tok::comma));
 		}
-		expect(Tok::r_brace, "Expected a '}'.");
+		expect(Tok::r_brace, "expected a '}'");
 		LRet HashExpr(inits);
 	}
 
@@ -628,15 +643,15 @@ WRAP_UP:
 		for (;!is_at_end();){
 			if (match(Tok::r_brace))
 				LRet ArrayExpr(inits);
-			inits.push_back((expect(Tok::comma, "Expected a ','."),expression(true)));
+			inits.push_back((expect(Tok::comma, "expected a ','"),expression(true)));
 		}
-		LThw make_error(t,"Expected termination.");
+		LThw make_error(t,"expected a '}'");
 	}
 
 	Expr Parser::group(){
 		LFn;
 		Expr expr = expression();
-		expect(Tok::r_paren, "Expected a ')'.");
+		expect(Tok::r_paren, "expected a ')'");
 		LRet GroupExpr(expr);
 	}
 }

@@ -1,5 +1,4 @@
 #include "token.h"
-#include <iostream>
 using namespace mere;
 
 Token::Token():
@@ -66,8 +65,9 @@ bool Token::is_keyword() const noexcept {
 QString Tokens::to_string(QString delim) const {
 	QString str = "";
 	int s = this->size();
-	for (int i = 0; i != s; i++) {
+	for (int i = 0; i != s - 1; i++) {
 		str.append(this->at(i).to_string()).append(delim);
 	}
+	str.append(this->at(s - 1).to_string());
 	return str;
 }

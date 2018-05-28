@@ -14,26 +14,15 @@
 
 #include "config.h"
 
-typedef std::bitset<8> Options;
-
 namespace mere {
-	enum class Opt{
-		Exc,//mode
-		FFile,
-		ShwSyn,//dbg
-		ShwTok,//dbg
-		Prompt,//mode
-#if T_GUI
-		Edtr,//edtr
-#endif
-		Src
-	};
+	typedef std::bitset<8> Options;
+
 #if T_GUI
 	class SrcEdit : public QDialog {
 			Q_OBJECT
-		private
+			private
 			QTextEdit* editor;
-		public:
+			public:
 			SrcEdit():QDialog(),editor(new QTextEdit()){
 				QVBoxLayout* layout = new QVBoxLayout();
 
@@ -69,7 +58,7 @@ namespace mere {
 			bool ast			= false	;// whether to show the syntax tree
 			bool tok			= false	;// whether to show the token
 			bool single			= false	;// whether single or multiline code is expected
-			bool print_lines			= false	;// whether to print extra lines before and after code execution
+			bool print_lines	= false	;// whether to print extra lines before and after code execution
 			bool calc			= false	;// calculator mode
 		private:
 			void help();
@@ -88,14 +77,10 @@ namespace mere {
 		private:
 			static short status;
 			static void _init();
-			void set(Opt index, bool _val = true);
-			bool test(Opt index) const;
-
 		public:
-			~MereCmder() { clean_up(); }
-			static void clean_up();
-			bool execute();
+			short execute();
 	};
 }
+
 
 #endif // CMDPARSER_H

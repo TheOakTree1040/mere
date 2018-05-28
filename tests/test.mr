@@ -1,1 +1,26 @@
+
+println "stage 1";
+println 1+1;
+println "a" + "b";
+println "stage 2";
+match 1{
+	"1": println "match-incorrect";
+	0:println "match-incorrect";
+	-1:println "match-incorrect";
+	*:println "match-correct";
+}
+if 1 println "WHOO~~~";
+println "stage 3";
+var i = 0;
+println i;
+println "stage 4";
+var ref;
+ref => i;
+ref = 3;
+if i == 3 
+	println "ref-correct!"1;
+else
+	println "ref-incorrect";
+
+
 println "We made it!";

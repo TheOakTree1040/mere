@@ -7,6 +7,7 @@
 #include "src.h"
 
 namespace mere {
+
 	class Token{
 		public:
 			enum tok_type{
@@ -80,38 +81,20 @@ namespace mere {
 			uint col() const noexcept { return m_loc.col; }
 			const srcloc_t& loc() const noexcept { return m_loc; }
 	};
+
 	class Tokens : public std::vector<Token>{
-		private:
-			QString m_source;
-			std::vector<uint> m_line_indices;
 		public:
-			Tokens(const std::vector<Token>& toks,
-				   const QString& src,
-				   const std::vector<uint>& indices) :
-			std::vector<Token>(toks),
-				m_source(src),
-				m_line_indices(indices) {}
+			Tokens(){}
+
+			Tokens(const std::vector<Token>& toks) :
+			std::vector<Token>(toks){}
 
 			Tokens(const Tokens& toks):
-			std::vector<Token>(toks),
-			m_source(toks.m_source),
-			m_line_indices(toks.m_line_indices){}
+			std::vector<Token>(toks){}
 
-			Tokens(const QString& src):
-				std::vector<Token>(),
-				m_source(src),
-				m_line_indices{0ul/*placeholder*/, 0ul/*line 1 starts @ 0*/} {}
-			Tokens():
-				std::vector<Token>(),
-				m_source(),
-				m_line_indices{0ul/*placeholder*/, 0ul/*line 1 starts @ 0*/} {}
-
-			void newline(uint i) { m_line_indices.push_back(i); }
-			uint last_line() const { return *m_line_indices.end(); }
-			uint index_at(uint line) const { return m_line_indices[line]; }
 			QString to_string(QString delim = "") const;
 	};
-	//Q_DECLARE_METATYPE(Token)
+
 	typedef Token Tok;
 	typedef Tok::tok_type Tokty;
 }

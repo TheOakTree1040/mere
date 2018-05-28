@@ -5,7 +5,7 @@
 #include "config.h"
 
 #if T_DBG
-
+#include <QString>
 #ifndef __GNUC__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
@@ -53,17 +53,17 @@ namespace mere {
 #define LOdt	TLogger().outdent()
 #define Log		TLogger()
 #define ls(L)	<< (L)
-#define LFn_	Log.begw(">") << __PRETTY_FUNCTION__ << "started on line" << QString::number((long)__LINE__)
-#define LFn		(LFn_, LIndt)
+#define LFn_	//Log.begw(">") << __PRETTY_FUNCTION__ << "started on line" << QString::number((long)__LINE__)
+#define LFn		//(LFn_, LIndt)
 #define LRet	return \
-	((Log.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdt),
-#define LVd		((Log.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdt);return
-#define LVoid	LVd
+	//((Log.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdt),
+#define LVd		//((Log.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdt);return
+#define LVoid	//LVd
 #define LThw	(Log.begw("<") << __PRETTY_FUNCTION__ << "threw on line" << QString::number((long)__LINE__)), LOdt; throw
 #define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){LThw ex;}
 #define Log1(MSG) TLogger() << MSG
 #define Logp(MSG) TLogger() << MSG
-#define LCtor(MSG) TLogger() << MSG
+#define LCtor(MSG) //TLogger() << MSG
 #else
 #define LRst
 #define LIndt

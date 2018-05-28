@@ -3,26 +3,27 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 
-#include "token.h"
-#include "core.h"
-#include "src.h"
+#include "interpretationunit.h"
 
 class QChar;
 
 namespace mere {
 
 	class Tokenizer {
-		private:
-			QString source;
-			Tokens tokens;
+		public:
+			static const QHash<QString, Tokty> keywords;// defined in source
+			static const QHash<QChar,QChar> escaped;
 
-			static QHash<QString, Tokty> keywords;// defined in source
-			static QHash<QChar,QChar> escaped;
+		private:
+			const IntpUnit unit;
+			const QString& source;
+			Tokens& tokens;
 
 			uint start = 0ul;
+			uint current = 0ul;
+
 			srcloc_t loc;
 			srcloc_t start_loc;
-			uint current = 0ul;
 		private:
 			void error(const QString& errmsg);
 
@@ -49,9 +50,9 @@ namespace mere {
 			void identifier();
 			void scan_token();
 		public:
-			Tokenizer(const QString&);
+			Tokenizer(IntpUnit unit);
 			~Tokenizer();
-			Tokens scan_tokens();
+			void scan_tokens();
 	};
 }
 

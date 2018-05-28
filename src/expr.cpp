@@ -161,7 +161,7 @@ Expr::pair_vector_fields::~pair_vector_fields() {
 	delete m_data;
 }
 
-void Expr::pair_vector_fields::set_data(const std::vector<std::pair<Expr, Expr> >& dat){
+void Expr::pair_vector_fields::set_data(const std::vector<std::pair<Expr, Expr>>& dat){
 	delete m_data;
 	int size = dat.size();
 	m_data = new Data;

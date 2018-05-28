@@ -2,7 +2,6 @@
 
 #ifndef SOURCEEDITOR_H
 #define SOURCEEDITOR_H
-#include "core.h"
 #include "interpreter.h"
 
 #if T_GUI

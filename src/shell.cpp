@@ -7,8 +7,8 @@
 
 #include "tlogger.h"
 #include "shell.h"
-#include "core.h"
 #include "sourceeditor.h"
+#include "interpretationunit.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -24,12 +24,6 @@ using std::getline;
 using std::cout;
 #endif
 
-//For MereCmder init
-#define AS
-#define SET_APP_NAME	App::setApplicationName
-#define SET_APP_VER		App::setApplicationVersion
-#define SET_APP_DESCR	parser.setApplicationDescription
-
 //help_ostream (for MerePrompt)
 #define hout (cout << "    ")
 
@@ -44,7 +38,8 @@ void MerePrompt::display_cmds(){
 	hout << ".quit                   Quit\n";
 	hout << ".exit                   The same as above.\n";
 	hout << ".help                   Opens the helper interface.\n";
-	hout << ".clear                  Clear screen.\n";
+	hout << ".cls					 Clears screen.\n";
+	hout << ".clear					 Clears the input.";
 	hout << ".last                   Add the last piece of code executed to the current input.\n";
 	hout << ".view                   View the code you have typed (The input)\n";
 	hout << ".prompt        [toggle] Print the prompt.\n";
@@ -109,15 +104,17 @@ void MerePrompt::help(){
 
 void MerePrompt::interface(){
 
-	string initial_output = string PROJECT + " " + VERSION + " build " + BUILD + " by " + AUTHOR + "\n\n";
+	string initial_output = string(PROJECT) + " " + VERSION + " build " + BUILD + " by " + AUTHOR + "\n\n";
 	initial_output += "Common commands:\n"
 					  "	.exec	Execute the code you've typed.\n"
 					  "	.help	Display help.\n"
 					  "	.exit	Exit.\n"
 					  "\n";
 	cout << initial_output;
-
+	Interpreter intp;
+	IntpUnit unit = nullptr;
 	forever{
+		delete unit;
 		input = temp = "";
 		ast = tok = false;
 		forever{
@@ -141,7 +138,7 @@ void MerePrompt::interface(){
 				else if (temp == ".help"){
 					help();
 				}
-				else if (temp == ".clear"){
+				else if (temp == ".cls"){
 #if T_DARWIN
 					system("clear");
 #elif T_WIN32
@@ -183,9 +180,12 @@ void MerePrompt::interface(){
 					cout << "  > tok = " << ((tok = !tok)?"on":"off") << "\n";
 				}
 				else if	(temp == ".quit" || temp == ".exit") return;
+				else if (temp == ".clear"){
+					input = "";
+				}
 				else if (temp == "._rst"){
 					cout << "  > Resetting the interpreter...\n";
-					Core::reset_intp();
+					intp.reset();
 					cout << "  > Done resetting.\n";
 				}
 				else {
@@ -206,7 +206,18 @@ EXEC:
 				}
 			}
 		}
-		Core::run(QString::fromStdString(input),tok,ast);
+		unit = InterpretationUnit::from_source(QString::fromStdString(input));
+		if (unit->success()){
+			if (tok){
+				unit->print_tokens();
+			}
+			if (intp.interpret(unit))
+				unit->print_issues();
+
+		}
+		else {
+			unit->print_issues();
+		}
 		if(print_lines)
 			cout << "\n";
 		if(input.size() && temp != ".last"){
@@ -223,56 +234,22 @@ short MereCmder::status = 0;
 void MereCmder::_init(){
 	LFn;
 	if (!status){
-		status = 2;
-		//					Core::init_once();
+		Log1("Setting up parser...");
+		status = 1;
 
-		SET_APP_NAME AS PROJECT;
-		SET_APP_VER AS VERSION;
-		SET_APP_DESCR AS DESCRIPTION;
+		App::setApplicationName(PROJECT);
+		App::setApplicationVersion(VERSION " " BUILD);
+		parser.setApplicationDescription(DESCRIPTION);
 
 		parser.addHelpOption();
 		parser.addVersionOption();
 
-		QCommandLineOption mode_opt({"mode","m"},"The output mode","mode","exec");//handled
-		QCommandLineOption dbg_opt({"dbg","d"},"The debugging tools.","tool-name");//handled
-#if T_GUI
-		QCommandLineOption edtr_opt({"editor","edtr","e"},"Opens the inbuilt editor.");//handled
-#endif
-		QCommandLineOption ff_opt({"file","f"},"File input.","filename");//handled
-		QCommandLineOption src_opt({"src","s"},"The source that you want to execute directly.","code");
+		parser.addOption({{"p","prompt"},"Enter the prompt mode (filename not needed)"});
 
-		parser.addOptions({
-							  mode_opt,
-							  dbg_opt,
-					  #if T_GUI
-							  edtr_opt,
-					  #endif
-							  ff_opt,
-							  src_opt
-						  });
+		parser.addPositionalArgument("filename","File to interpret", "[filename]");
 
-	}
-	else {
-		status++;
-		Core::interpreter = new Interpreter();
 	}
 	LVd;
-}
-
-void MereCmder::set(Opt index, bool _val){
-	options.set(t_cast<size_t>(index),_val);
-}
-
-bool MereCmder::test(Opt index) const {
-	return options.test(t_cast<size_t>(index));
-}
-
-void MereCmder::clean_up() {
-	if (status) {
-		status--;
-		delete Core::interpreter;
-		Core::interpreter = nullptr;
-	}
 }
 
 constexpr qulonglong
@@ -288,106 +265,19 @@ h(const char* string)
 	return hash;
 }
 
-bool MereCmder::execute(){
+short MereCmder::execute(){
 	LFn;
 	_init();
 	parser.process(App::arguments());
-	if (parser.unknownOptionNames().size()){
-		parser.showHelp(EXIT_FAILURE);
-	}
-	if (parser.isSet("mode")){
-		if (parser.isSet("dbg")){
-			QStringList tools({"tok","tree","syn"});
-			QStringList opts = parser.values("dbg");
-			for (int i = 0; i != opts.size(); i++){
-				switch(tools.indexOf(opts[i])){
-					case 0:
-						set(Opt::ShwTok);
-						break;
-					case 1:
-					case 2:
-						set(Opt::ShwSyn);
-						break;
-					default:
-						parser.showHelp(EXIT_FAILURE);
-				}
-			}
-		}
-		switch(h(parser.value("mode").toStdString().c_str())){
-			case h("exec"):
-				set(Opt::Exc);
-#if T_GUI
-				if (parser.isSet("editor")){
-					set(Opt::Edtr);
-				} else
-#endif
-					if (parser.isSet("file")){
-						set(Opt::FFile);
-					}
-					else if (parser.isSet("src")){
-						set(Opt::Src);
-					}
-#if T_GUI
-					else {
-						set(Opt::Edtr);
-					}
-#else
-					else {
-						set(Opt::Prompt);
-						set(Opt::Exc,false);
-					}
-#endif
-				break;
-			case h("prompt"):
-				set(Opt::Prompt);
-				break;
-			default:
-				std::cout << "  > Unrecognized mode; showing help.\n";
-				parser.showHelp(EXIT_FAILURE);
-		}
-	}
-	else {
-#if T_CLI
-		set(Opt::Prompt);
-#else
-		set(Opt::Edtr);
-#endif
-	}
-	//execution
-
-	//setup
-	bool tok = test(Opt::ShwTok), syn = test(Opt::ShwSyn);
-	if (test(Opt::Exc)) {
-		QString source = "";
-#if T_GUI
-		if (test(Opt::Edtr)) {
-			SrcEdit* edt = new SrcEdit;
-			edt->exec();
-			source = edt->text();
-			delete edt;
-		}
-		else
-#endif
-			if (test(Opt::FFile)) {
-				QFile file(parser.value("file"));
-				if (file.open(QIODevice::ReadOnly)) {
-					source = file.readAll();
-					file.close();
-				}
-				else {
-					source = "println \"mere: failed to open file.\";";
-				}
-			}
-			else if (test(Opt::Src)){
-				source = parser.value("src");
-			}
-			else parser.showHelp(EXIT_FAILURE);
-		return source.size()?Core::run(source, tok, syn):false;
-	}
-	else if (test(Opt::Prompt)) {
+	if (parser.isSet("prompt")){
 		MerePrompt().interface();
+		LRet 0;
 	}
-	LRet false;
+	IntpUnit unit = new InterpretationUnit(parser.positionalArguments()[0]);
+	Interpreter().interpret(unit);
+	if (!unit->success()) unit->print_issues();
+	delete unit;
+	LRet 0;
 }
 
 

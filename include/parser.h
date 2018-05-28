@@ -6,6 +6,7 @@
 #include "token.h"
 #include "parseerror.h"
 #include "stmt.h"
+#include "interpretationunit.h"
 
 #define T_ true
 #define F_ false
@@ -13,7 +14,8 @@
 namespace mere {
 	class Parser {
 		private:
-			Tokens tokens;
+			IntpUnit unit;
+			Tokens& tokens;
 			int current = 0;
 		private:
 			bool match			(const std::vector<Tokty>&		);
@@ -66,9 +68,9 @@ namespace mere {
 			Expr rvalue		(		);
 			Expr group		(		);
 		public:
-			Parser		(const Tokens&		);
+			Parser		(IntpUnit			);
 			~Parser		(					);
-			Stmts parse	(					);
+			void parse(					);
 	};
 }
 

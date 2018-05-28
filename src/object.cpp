@@ -250,11 +250,11 @@ Object& Object::referenced() {
 Object& Object::as_ref_of(Object& dest){
 	delete_ptr();//if acsr, deletes the stackvar's ptr, else deletes
 				 //this->ptr in [1] (as m_onstack is init'd w/ *this)
-	referenced().trait().as_ref_of(dest.trait());//[3]
-	referenced().m_onstack = dest.referenced();
-	//Equivalent to:
-	//(trait().is_accessor()?referenced():*this).trait().as_ref_of(dest.trait());
-	//(trait().is_accessor()?referenced().m_onstack:m_onstack) = dest.referenced();
+//	referenced().trait().as_ref_of(dest.trait());//[3]
+//	referenced().m_onstack = dest.referenced();
+	//NOT equivalent to: (because of the condition in referenced())
+	(trait().is_accessor()?referenced():*this).trait().as_ref_of(dest.trait());
+	(trait().is_accessor()?referenced().m_onstack:m_onstack) = dest.referenced();
 	m_ptr = dest.ptr();// [2]
 	if (trait().is_accessor()){
 		//Delete the pointer of the referenced.
@@ -273,7 +273,9 @@ Object& Object::as_ref_of(Object& dest){
 }
 
 Object& Object::as_acsr_of(Object& stk_var){
+	Log1("Setting traits...");
 	as_ref_of(stk_var).trait().make_accessor();
+	Log1("Done");
 	return *this;
 }
 
