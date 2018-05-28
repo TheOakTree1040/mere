@@ -24,6 +24,6 @@
 #define AUTHOR "TheOakCode"
 #define EMAIL "theoaktree1040@gmail.com"
 #define DESCRIPTION "An interpreter for the scripting language Mere."
-#define BUILD "7-e-ii (180527)"
+#define BUILD "7-e-iii (180527)"
 
 #endif // T_SPECS

@@ -273,7 +273,12 @@ short MereCmder::execute(){
 		MerePrompt().interface();
 		LRet 0;
 	}
-	IntpUnit unit = new InterpretationUnit(parser.positionalArguments()[0]);
+	auto arg = parser.positionalArguments();
+	if (arg.empty()){
+		std::cerr << "error: filename unspecified (enter '-p' for prompt mode)\n\n";
+		parser.showHelp(EXIT_FAILURE);
+	}
+	IntpUnit unit = new InterpretationUnit(arg[0]);
 	Interpreter().interpret(unit);
 	if (!unit->success()) unit->print_issues();
 	delete unit;
