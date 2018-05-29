@@ -48,12 +48,12 @@ namespace mere {
 	}
 
 	bool Parser::check(Tokty ty){
-		if (done() || is_at_end())
+		if (done() || eof())
 			return false;
 		return peek().type() == ty;
 	}
 
-	bool Parser::is_at_end(){
+	bool Parser::eof(){
 		return current >= unit->source().size();
 	}
 
@@ -68,7 +68,7 @@ namespace mere {
 	}
 
 	Token& Parser::advance(){
-		if (!is_at_end()){
+		if (!eof()){
 			Log ls("adv: Type") ls((int)peek().type());
 			current++;
 		}
@@ -191,7 +191,7 @@ namespace mere {
 		}
 		expect(Tok::l_brace, "expected a '{' [blk-beg]");
 		AST blk;
-		for(;!is_at_end();){
+		for(;!eof();){
 			if (match(Tok::r_brace)){
 				LRet BlockStmt(blk);
 			}
@@ -611,7 +611,7 @@ WRAP_UP:
 				expect(Tok::colon,"expected a ':' [assoc-pair]");
 				Expr y = expression(true);
 				inits.push_back(pair<Expr,Expr>(x,y));
-			}while (!is_at_end() && peek().type() != Tok::r_brace && match(Tok::comma));
+			}while (!eof() && peek().type() != Tok::r_brace && match(Tok::comma));
 		}
 		expect(Tok::r_brace, "expected a '}' [assoc-tm]");
 		LRet AssocExpr(inits);
@@ -627,7 +627,7 @@ WRAP_UP:
 				expect(Tok::colon,"expected a ':' [map-pair]");
 				Expr y = expression(true);
 				inits.push_back(pair<Expr,Expr>(x,y));
-			}while (!is_at_end() && peek().type() != Tok::r_brace && match(Tok::comma));
+			}while (!eof() && peek().type() != Tok::r_brace && match(Tok::comma));
 		}
 		expect(Tok::r_brace, "expected a '}' [map-tm]");
 		LRet HashExpr(inits);
@@ -640,7 +640,7 @@ WRAP_UP:
 		if (match(Tok::r_brace))
 			LRet ArrayExpr(inits);
 		inits.push_back(expression(true));
-		for (;!is_at_end();){
+		for (;!eof();){
 			if (match(Tok::r_brace))
 				LRet ArrayExpr(inits);
 			inits.push_back((expect(Tok::comma, "expected a ',' [arr-sep]"),expression(true)));

@@ -27,7 +27,7 @@ namespace mere{
 					text.append("\t");
 				text.append(ln).append("\n");
 			}
-			void print_conditional(int lvls, Expr expr){
+			void print_conditional(int lvls, const Expr& expr){
 				write_ln(lvls,"Conditional:");
 				print(lvls+1,expr.ternary().condition());
 				write_ln(lvls,"If True  :");
@@ -35,13 +35,13 @@ namespace mere{
 				write_ln(lvls,"If False :");
 				print(lvls+1,expr.ternary().right());
 			}
-			void print_assign(int lvls, Expr expr){
+			void print_assign(int lvls, const Expr& expr){
 				write_ln(lvls,"Assign:");
 				print(++lvls,expr.assign().right());
 				write_ln(lvls,"To:");
 				print(lvls,expr.assign().left());
 			}
-			void print_binary(int lvls, Expr expr){
+			void print_binary(int lvls, const Expr& expr){
 				QString s = "BinExpr ";
 				s.append(expr.bin().op().lexeme).append(":");
 				write_ln(lvls,s);
@@ -50,13 +50,13 @@ namespace mere{
 				write_ln(lvls+1,"Right:");
 				print(lvls+2,expr.bin().right());
 			}
-			void print_literal(int lvls, Expr expr){
+			void print_literal(int lvls, const Expr& expr){
 				QString s = "[";
 				s.append(expr.lit().lit().trait().id()).append("] Literal:");
 				write_ln(lvls,s);
 				write_ln(lvls+1,expr.lit().lit().to_string());
 			}
-			void print_arr(int lvls, Expr expr){
+			void print_arr(int lvls, const Expr& expr){
 				write_ln(lvls,"array {\n");
 				auto arr = expr.array().array();
 				for (int i = 0; i != arr.size(); i++){
@@ -64,37 +64,37 @@ namespace mere{
 				}
 				write_ln(lvls,"}\n");
 			}
-			void print_group(int lvls, Expr expr){
+			void print_group(int lvls, const Expr& expr){
 				write_ln(lvls,"GroupExpr:");
 				print(lvls+1,expr->expr);
 			}
-			void print_prefx(int lvls, Expr expr){
+			void print_prefx(int lvls, const Expr& expr){
 				QString s = "UnaryExpr [";
 				s.append(expr->op->lexeme).append("var]:");
 				write_ln(lvls,s);
 				print(lvls+1,expr->expr);
 			}
-			void print_pstfx(int lvls, Expr expr){
+			void print_pstfx(int lvls, const Expr& expr){
 				QString s = "UnaryExpr [var";
 				s.append(expr->op->lexeme).append("]:");
 				write_ln(lvls,s);
 				print(lvls+1,expr->expr);
 			}
-			void print_var(int lvls, Expr expr){
+			void print_var(int lvls, const Expr& expr){
 				QString s = "[Variable ";
 				s.append(expr->var_acsr->lexeme).append("]");
 				write_ln(lvls,s);
 			}
 
-			void print_expr_stmt(int lvls, Stmt stmt){
+			void print_expr_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls,"ExprStmt");
 				print(lvls+1,stmt->expr);
 			}
-			void print_var_decl_stmt(int lvls, Stmt stmt){
+			void print_var_decl_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls,"create var " + stmt->var_name->lexeme + " with value:");
 				print(lvls+1,stmt->init);
 			}
-			void print_block_stmt(int lvls, Stmt stmt){
+			void print_block_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls++,"{");
 				int sz = stmt->block->size();
 				for (int i = 0; i != sz; i++){
@@ -102,14 +102,14 @@ namespace mere{
 				}
 				write_ln(--lvls,"}");
 			}
-			void print_while_stmt(int lvls, Stmt stmt){
+			void print_while_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls,"{\n   While:");
 				print(lvls+2,stmt->cont_condit);
 				write_ln(lvls+1,"Do:");
 				print(lvls+2,stmt->while_block);
 				write_ln(lvls, "}");
 			}
-			void print_if_stmt(int lvls, Stmt stmt){
+			void print_if_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls,"if:");
 				print(lvls+1,stmt->condition);
 				write_ln(lvls,"[then]");
@@ -119,24 +119,24 @@ namespace mere{
 					print(lvls+1,stmt->else_block);
 				}
 			}
-			void print_print_stmt(int lvls, Stmt stmt){
+			void print_print_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls, "print:");
 				print(lvls+1,stmt->expr);
 			}
-			void print_println_stmt(int lvls, Stmt stmt){
+			void print_println_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls, "println:");
 				print(lvls+1,stmt->expr);
 			}
-			void print_ret_stmt(int lvls, Stmt stmt){
+			void print_ret_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls, "return:");
 				print(lvls+1,stmt->retval);
 			}
-			void print_assert_stmt(int lvls, Stmt stmt){
+			void print_assert_stmt(int lvls, const Stmt& stmt){
 				write_ln(lvls,"Assert:");
 				print(lvls+1,stmt->assertion);
 			}
 
-			void print(int lvls, Expr expr){
+			void print(int lvls, const Expr& expr){
 				if (!expr)
 					return;
 				switch (expr->type()) {
@@ -178,7 +178,7 @@ namespace mere{
 				}
 			}
 
-			void print(int lvls, Stmt stmt){
+			void print(int lvls, const Stmt& stmt){
 				if (!stmt)
 					return;
 				switch(stmt->type()){

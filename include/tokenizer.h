@@ -27,7 +27,7 @@ namespace mere {
 		private:
 			void error(const QString& errmsg);
 
-			bool is_at_end() const;
+			bool eof() const;
 			bool is_digit(char c);
 			char peek(bool ahead=false) const;//ahead: peeks the next char instead of the current one
 			bool match(char expect);

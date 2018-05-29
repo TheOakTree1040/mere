@@ -23,7 +23,7 @@ namespace mere {
 			bool match			(const std::vector<Tokty>&		);
 			bool match			(Tokty							);
 			bool check			(Tokty							);
-			bool is_at_end		(								);
+			bool eof		(								);
 			Token& peek			(short=0						);
 			Token& prev			(								);
 			Token& advance		(								);

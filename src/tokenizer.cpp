@@ -23,7 +23,7 @@ namespace mere {
 		unit->report(loc, "lex-error", errmsg);
 	}
 
-	bool Tokenizer::is_at_end() const {
+	bool Tokenizer::eof() const {
 		return current >= source.size() || source.isEmpty();
 	}
 
@@ -47,19 +47,19 @@ namespace mere {
 	}
 
 	char Tokenizer::peek(bool ahead) const {
-		if (is_at_end() || (ahead && (current + 1 >= source.size())))
+		if (eof() || (ahead && (current + 1 >= source.size())))
 			return '\0';
 		return (ahead?source[current+1]:source[current]).toLatin1();
 	}
 
 	bool Tokenizer::match(char expect) {
-		return (!is_at_end() && source[current] == expect)?(advance(), true):false;
+		return (!eof() && source[current] == expect)?(advance(), true):false;
 	}
 
 	void Tokenizer::string(){
 		QString str = "";
 		bool terminated = false;
-		while (!is_at_end()) {
+		while (!eof()) {
 			if (peek() == '\n') {
 				error("expected a closing quotation mark to terminate string.");
 				return;
@@ -101,7 +101,7 @@ namespace mere {
 		}
 
 		// Unterminated string.
-		if (is_at_end() && !terminated) {
+		if (eof() && !terminated) {
 			error("expected string termination");
 			return;
 		}
@@ -110,7 +110,7 @@ namespace mere {
 
 	void Tokenizer::character(){
 		char c = '\0';
-		if (is_at_end()){
+		if (eof()){
 			error("expected a character");
 			return;
 		}
@@ -288,7 +288,7 @@ namespace mere {
 			case '/':
 				if (match('/')) {
 					// A comment goes until the end of the line.
-					while (peek() != '\n' && !is_at_end()) advance();
+					while (peek() != '\n' && !eof()) advance();
 				}
 				else if (match('*')){
 					char c = '\0';
@@ -346,7 +346,7 @@ namespace mere {
 		if(source.isEmpty() || !unit->success()){
 			LVd;
 		}
-		while (!is_at_end()){
+		while (!eof()){
 			start = current;
 			start_loc = loc;
 			scan_token();
