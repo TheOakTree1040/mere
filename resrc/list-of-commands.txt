@@ -1,0 +1,25 @@
+    ===========================List of Commands===========================
+    | .                       Execute the code you have typed.           |
+    | .exec                   The same as above.                         |
+    | .quit                   Quit                                       |
+    | .exit                   The same as above.                         |
+    | .help                   Opens the helper interface.                |
+    | .cls                    Clears screen.                             |
+    | .clear                  Clears the input.                          |
+    | .last                   Add the last piece of code executed        |
+    |                         to the current input.                      |
+    | .view                   View the code you have typed (The          |
+    |                         input)                                     |
+    | .set_prompt             Sets the prompt. You will be prompt        |
+    |                         -ed to enter on the second line.           |
+    | .prompt        [toggle] Print the prompt.                          |
+    | .ln            [toggle] Print extra lines before & after           |
+    |                         the execution.                             |
+    | .multi         [toggle] Multi-line / Single-line.                  |
+    | .calc          [toggle] Calculator mode; switches into             |
+    |                         single-line mode; 'print (INPUT)'          |
+    | .ast           [toggle] Display the AST before the execution.      |
+    |                         It will be turned off after execution.     |
+    | .tok           [toggle] Display the tokens before the execution.   |
+    |                         It will be turned off after execution.     |
+    ======================================================================

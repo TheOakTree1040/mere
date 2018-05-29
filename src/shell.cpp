@@ -30,51 +30,33 @@ using std::cout;
 // ================== MerePrompt ==================
 
 void MerePrompt::display_cmds(){
-	hout << "\n\n";
-	hout << "==============================================>\n";
-	hout << "List of Commands:\n";
-	hout << ".                       Execute the code you have typed.\n";
-	hout << ".exec                   The same as above.\n";
-	hout << ".quit                   Quit\n";
-	hout << ".exit                   The same as above.\n";
-	hout << ".help                   Opens the helper interface.\n";
-	hout << ".cls                    Clears screen.\n";
-	hout << ".clear                  Clears the input.";
-	hout << ".last                   Add the last piece of code executed to the current input.\n";
-	hout << ".view                   View the code you have typed (The input)\n";
-	hout << ".prompt        [toggle] Print the prompt.\n";
-	hout << ".ln            [toggle] Print extra lines before & after the execution.\n";
-	hout << ".multi         [toggle] Multi-line / Single-line.\n";
-	hout << ".calc          [toggle] Calculator mode; switches into single-line mode; same thing as 'print (INPUT);'\n";
-	hout << ".set_prompt             Sets the prompt. You will be prompted to enter on the second line.\n";
-	hout << ".ast           [toggle] Display the AST before the execution. It will be turned off after execution.\n";
-	hout << ".tok           [toggle] Display the tokens before the execution. It will be turned off after execution.\n";
-	hout << "==============================================>\n";
-	hout << "\n\n";
+	std::cout << "\n" << list_of_commands << "\n";
 }
 
 void MerePrompt::tutor(){
-	hout << "\n\n";
-	hout << "===============================>\n";
-	hout << "Quick tutorial (Too lazy)\n";
-	hout << "Data types: real, string, bool, char, null, void\n";
+	std::cout << "\n" << tutorial << "\n";
+}
 
-	hout << "To print something:       print \"foo\";\n";
-	hout << "To create a variable:     var bar = 1;\n";
-	hout << "Loops:\n";
-	hout << "    for loop:             for (var i = 0; i != 3; i++){}\n";
-	hout << "    while loop:           while (false){}\n";
-	hout << "Conditional:\n";
-	hout << "    if statement:         if true print true else print false;\n";
-	hout << "    ternary operator:     bar = 3<5?3:5;\n";
-	hout << "Assert:                   assert 1 : \"Assertion failed.\";\n";
-	hout << "    with code:            assert 1 : 0xFF;\n";
-	hout << "    with both:            assert 1 : 0xFF, \"Assertion failed.\";\n";
-	hout << "Function:                 fn a(){ return \"Howdy!\"; }\n";
-	hout << "Reference (=>):           var ref; ref => bar;\n";
+MerePrompt::MerePrompt(){
+	QFile resrc_list_cmds(":/help/list-of-commands.txt");
 
-	hout << "===============================>\n";
-	hout << "\n\n";
+	if (!resrc_list_cmds.open(QIODevice::ReadOnly | QIODevice::Text)){
+		std::cout << "  > failure: failed to load resource: list of commands\n";
+		list_of_commands = "[failure: failed to load resource: list of commands]\n";
+	}
+	else {
+		list_of_commands = resrc_list_cmds.readAll().toStdString();
+	}
+
+	QFile resrc_tutor(":/help/tutorial.txt");
+
+	if (!resrc_tutor.open(QIODevice::ReadOnly | QIODevice::Text)){
+		std::cout << "  > failure: failed to load resource: tutorial\n";
+		tutorial = "[failure: failed to load resource: tutorial]\n";
+	}
+	else {
+		tutorial = resrc_tutor.readAll().toStdString();
+	}
 }
 
 void MerePrompt::help(){
@@ -113,11 +95,13 @@ void MerePrompt::interface(){
 	cout << initial_output;
 	Interpreter intp;
 	IntpUnit unit = nullptr;
-	forever{
+	forever{ // prompt
+
 		delete unit;
 		input = temp = "";
 		ast = tok = false;
-		forever{
+
+		forever{ // get input
 			if(print_prompt)
 				cout << prompt;
 			std::getline(cin,temp);
@@ -235,6 +219,8 @@ void MereCmder::_init(){
 	LFn;
 	if (!status){
 		Log1("Setting up parser...");
+
+
 		status = 1;
 
 		App::setApplicationName(PROJECT);
@@ -244,9 +230,10 @@ void MereCmder::_init(){
 		parser.addHelpOption();
 		parser.addVersionOption();
 
-		parser.addOption({{"p","prompt"},"Enter the prompt mode (filename not needed)"});
+		parser.addOption({{"p","prompt"},"Enters the prompt mode."});
+		parser.addOption({{"s","show-snippet"},"Opt to add a code snippet when printing issues."});
 
-		parser.addPositionalArgument("filename","File to interpret", "[filename]");
+		parser.addPositionalArgument("filename","File to interpret.", "[filename]");
 
 	}
 	LVd;
@@ -269,6 +256,8 @@ short MereCmder::execute(){
 	LFn;
 	_init();
 	parser.process(App::arguments());
+	if (parser.isSet("show-snippet"))
+		InterpretationUnit::show_snippet(true);
 	if (parser.isSet("prompt")){
 		MerePrompt().interface();
 		LRet 0;

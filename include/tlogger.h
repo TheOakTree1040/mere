@@ -47,23 +47,40 @@ namespace mere {
 	template<> TLogger& TLogger::operator<<(const QString& s);
 	template<> TLogger& TLogger::operator<<(const char& ch);
 }
+#define LRstImpl	TLogHelper::reset()
+#define LIndtImpl	TLogger().indent()
+#define LOdtImpl	TLogger().outdent()
+#define LogImpl		TLogger()
+#define lsImpl(L)	<< (L)
+#define LFn_Impl	LogImpl.begw(">") << __PRETTY_FUNCTION__ << "started on line" << QString::number((long)__LINE__)
+#define LFnImpl		(LFn_Impl, LIndtImpl)
+#define LRetImpl	return \
+	((LogImpl.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdtImpl),
+#define LVdImpl		((LogImpl.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdtImpl);return
+#define LVoidImpl	LVdImpl
+#define LThwImpl	(LogImpl.begw("<") << __PRETTY_FUNCTION__ << "threw on line" << QString::number((long)__LINE__)), LOdtImpl; throw
+#define LCThwImpl	(STMTS,EX) try { STMTS } catch( EX & ex ){LThw ex;}
+#define Log1Impl(MSG) TLogger() << MSG
+#define LogpImpl(MSG) TLogger() << MSG
+#define LCtorImpl(MSG) TLogger() << MSG
 
-#define LRst	TLogHelper::reset()
-#define LIndt	TLogger().indent()
-#define LOdt	TLogger().outdent()
-#define Log		TLogger()
-#define ls(L)	<< (L)
-#define LFn_	//Log.begw(">") << __PRETTY_FUNCTION__ << "started on line" << QString::number((long)__LINE__)
-#define LFn		//(LFn_, LIndt)
-#define LRet	return \
-	//((Log.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdt),
-#define LVd		//((Log.begw("<") << __PRETTY_FUNCTION__ << "returned on line" << QString::number((long)__LINE__)),LOdt);return
-#define LVoid	//LVd
-#define LThw	(Log.begw("<") << __PRETTY_FUNCTION__ << "threw on line" << QString::number((long)__LINE__)), LOdt; throw
-#define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){LThw ex;}
-#define Log1(MSG) TLogger() << MSG
-#define Logp(MSG) TLogger() << MSG
-#define LCtor(MSG) //TLogger() << MSG
+
+
+#define LRst		LRstImpl
+#define LIndt		LIndtImpl
+#define LOdt		LOdtImpl
+#define Log			LogImpl
+#define ls(L)		lsImpl(L)
+#define LFn_		LFn_Impl
+#define LFn			LFnImpl
+#define LRet		LRetImpl
+#define LVd			LVdImpl
+#define LVoid		LVoidImpl
+#define LThw		LThwImpl
+#define LCThw		LCThwImpl
+#define Log1(MSG)	Log1Impl(MSG)
+#define Logp(MSG)	Logp(MSG)
+#define LCtor(MSG)	LCtorImpl(MSG)
 #else
 #define LRst
 #define LIndt
@@ -72,11 +89,11 @@ namespace mere {
 #define ls(L)
 #define LFn_
 #define LFn
-#define LRet	return
-#define LVd		return;
-#define LVoid	LVd
-#define LThw	throw
-#define LCThw	(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
+#define LRet		return
+#define LVd			return
+#define LVoid		return
+#define LThw		throw
+#define LCThw		(STMTS,EX) try { STMTS } catch( EX & ex ){throw ex;}
 #define Log1(MSG)
 #define Logp(MSG)
 #define LCtor(MSG)

@@ -167,7 +167,7 @@ Stmt::block_fields::~block_fields() {
 	delete m_block;
 }
 
-std::vector<Ref<Stmt> > Stmt::block_fields::block() const {
+std::vector<Ref<Stmt> > Stmt::block_fields::stmts() const {
 	int size = m_block->size();
 	std::vector<Ref<Stmt>> stmts;
 	for (int i = 0; i != size; i++){

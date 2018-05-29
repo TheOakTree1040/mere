@@ -8,9 +8,9 @@
 #define T_QT 1
 
 #ifdef _WIN32
-#define T_WIN32 1
+#  define T_WIN32 1
 #else
-#define T_DARWIN 1
+#  define T_DARWIN 1
 #endif
 
 #define t_cast static_cast
@@ -24,6 +24,6 @@
 #define AUTHOR "TheOakCode"
 #define EMAIL "theoaktree1040@gmail.com"
 #define DESCRIPTION "An interpreter for the scripting language Mere."
-#define BUILD "7-e-iii (180527)"
+#define BUILD "7-e-v (180528)"
 
 #endif // T_SPECS

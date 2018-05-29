@@ -98,14 +98,14 @@ namespace mere {
 					eptr m_condition;
 					sptr m_block;
 				public:
-					while_stmt_fields(const Expr& condit, const Stmt& block);
+					while_stmt_fields(const Expr& condit, const Stmt& body);
 					~while_stmt_fields() override;
 
 					Expr& condition() const { return *m_condition; }
-					Stmt& block() const { return *m_block; }
+					Stmt& body() const { return *m_block; }
 
 					void set_condition(const Expr& condit);
-					void set_block(const Stmt& block);
+					void set_block(const Stmt& body);
 			};
 			class block_fields : public stmt_fields {
 				private:
@@ -114,7 +114,7 @@ namespace mere {
 					block_fields(const std::vector<Stmt>& b);
 					~block_fields() override;
 
-					std::vector<Ref<Stmt>> block() const;
+					std::vector<Ref<Stmt>> stmts() const;
 					void set_block(const std::vector<Stmt>& b);
 			};
 			class expr_fields : public stmt_fields {

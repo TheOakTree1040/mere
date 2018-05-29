@@ -5,6 +5,7 @@
 
 #include "environment.h"
 #include "interpretationunit.h"
+#include <QHash>
 
 #define C_EXPR_REF const Expr&
 #define C_STMT_REF const Stmt&
@@ -27,12 +28,17 @@ namespace mere {
 		private:
 			EnvImpl* globals = new EnvImpl();
 			EnvImpl* environment = globals;
+			QHash<uint,uint> locals;
+
+		private:
+			Object search_variable(const Token& name, const Expr& expr);
 
 		public:
 			Interpreter	();
 			~Interpreter();
 
 			void reset(EnvImpl* = new EnvImpl());
+			void resolve(C_EXPR_REF expr, uint depth);
 
 			EnvImpl* global() const { return globals; }
 

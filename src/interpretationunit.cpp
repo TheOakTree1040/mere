@@ -9,6 +9,8 @@
 
 using namespace mere;
 
+bool InterpretationUnit::_show_snippet = false;
+
 InterpretationUnit:: InterpretationUnit(const QString& filename):
 	m_filename(filename){
 	QFile f(filename);
@@ -46,18 +48,47 @@ void InterpretationUnit::print_tokens() const {
 }
 
 void InterpretationUnit::print_issues() const {
-	std::cout << "  > Issues\n";
-	if (!issues.size()){
-		std::cout << "    > 0 issues recorded.\n";
-		return;
-	}
+	if (!issues.size()){ return; }
+	std::cout << "  > " << issues.size() << " issue";
+	std::cout << (issues.size() == 1? "\n":"s\n");
 
 	QString error_text = "";
-	for (uint i = 0u; i != issues.size(); i++){
-		error_text.append(QString("    > ") + issues.at(i).msg);
-		error_text.append("\n");
+	for (uint i = 0u; i != issues.size(); i++) {
+		const Issue& issue = issues[i];
+		QString str = QString("    > (%1) ").arg(i+1);
+		int indent = str.size();
+		error_text.append(
+					(str + QString("%1\n%2\n"))
+					.arg(issue.msg)
+					.arg(snippet_at(indent,issue.loc))
+					);
 	}
 	std::cout << error_text.toStdString();
+}
+
+QString InterpretationUnit::snippet_at(int indent, const srcloc_t& loc) const {
+	LFn;
+	using std::cout;
+
+	if (loc.line == 0 || !_show_snippet || m_source.isEmpty())
+		return "";
+	QString indent_str = "";
+	QString string =  "";
+	for (int i = 0; i != indent; i++)
+		indent_str += " ";
+	string += indent_str + "snippet: ";
+	int bound = m_line_indices[loc.line + 1] - 1;
+	for (uint i = m_line_indices[loc.line]; i <= bound; i++){
+		string += m_source[i];
+	}
+
+	if (!string.endsWith('\n')) string += "\n";
+	string += indent_str + "         ";
+	for (uint i = 1u; i != loc.col; i++){
+		string += ' ';
+	}
+	string += "^";
+	LRet string;
 }
 
 void InterpretationUnit::report(const srcloc_t& loc, const QString& type, const QString& msg) {
@@ -67,7 +98,7 @@ void InterpretationUnit::report(const srcloc_t& loc, const QString& type, const 
 				.arg(QString::number(loc.col))
 				.arg(type)
 				.arg(msg);
-	issues.push_back(m);
+	issues.push_back({loc,m});
 	//std::cout << " !> " << m << "\n";
 }
 
@@ -76,6 +107,6 @@ void InterpretationUnit::report(const QString& type, const QString& msg) {
 				.arg(m_filename)
 				.arg(type)
 				.arg(msg);
-	issues.push_back(m);//TODO
+	issues.push_back({srcloc_t(0,0),m});//TODO
 	//std::cout << " !> " << m << "\n";
 }

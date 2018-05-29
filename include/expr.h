@@ -264,6 +264,8 @@ namespace mere {
 			Expr& operator=(const Expr&) = delete;
 			Expr& operator*=(const Expr& rhs);
 
+			unsigned int hash() const;
+
 			FieldsGetter(lit_fields,lit)
 			FieldsGetter(binary_fields,bin)
 			FieldsGetter(logical_fields,logical)
@@ -276,7 +278,7 @@ namespace mere {
 			FieldsGetter(call_fields,call)
 			FieldsGetter(lambda_fields,lambda)
 			FieldsGetter(array_fields,array)
-			FieldsGetter(hash_fields,hash)
+			FieldsGetter(hash_fields,hashmap)
 			FieldsGetter(refer_fields,ref)
 	};
 

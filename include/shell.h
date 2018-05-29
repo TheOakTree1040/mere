@@ -49,6 +49,9 @@ namespace mere {
 #endif
 	class MerePrompt{
 		private:
+			std::string list_of_commands = "";
+			std::string tutorial = "";
+
 			std::string prompt	= " >> ";// The prompt
 			std::string input	= ""	;// The input (accumulated temps)
 			std::string last	= ""	;// The last piece of code executed
@@ -60,13 +63,14 @@ namespace mere {
 			bool single			= false	;// whether single or multiline code is expected
 			bool print_lines	= false	;// whether to print extra lines before and after code execution
 			bool calc			= false	;// calculator mode
+
 		private:
 			void help();
 			void display_cmds();
 			void tutor();
 
 		public:
-			MerePrompt(){}
+			MerePrompt();
 			void interface();
 	};
 
@@ -74,9 +78,11 @@ namespace mere {
 		private:
 			Options options = 0;
 			static QCommandLineParser parser;
+
 		private:
 			static short status;
 			static void _init();
+
 		public:
 			short execute();
 	};

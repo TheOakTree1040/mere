@@ -1,26 +1,33 @@
 
-println "stage 1";
+println "stage 1 - expressions";
+print "  ";
 println 1+1;
-println "a" + "b";
-println "stage 2";
+println "  a" + "b";
+println "stage 2 - match & if";
 match 1{
-	"1": println "match-incorrect";
-	0:println "match-incorrect";
-	-1:println "match-incorrect";
-	*:println "match-correct";
+	"1": println "  match-incorrect";
+	0:println "  match-incorrect";
+	-1:println "  match-incorrect";
+	*:println "  match-correct";
 }
-if 1 println "WHOO~~~";
-println "stage 3";
+if 1 println "  WHOO~~~";
+println "stage 3 - variable";
 var i = 0;
 println i;
-println "stage 4";
+println "stage 4 - reference";
 var ref;
 ref => i;
 ref = 3;
 if i == 3 
-	println "ref-correct!"1;
+	println "ref-correct!";
 else
 	println "ref-incorrect";
+println "stage 5 - scopes & resolving"
+var i = 0;
+${
+    var i = 3;
+    print i==3?"  shadowing-correct":"  shadowing-incorrect";
+}
+var c = 0;
 
-
-println "We made it!";
+println "We made it!"

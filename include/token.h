@@ -52,7 +52,7 @@ namespace mere {
 				t_char, t_string, t_real, t_bool,
 				__type_end__,
 
-				eof // End of file
+				done, eof // End of file
 			};
 		private:
 			tok_type m_ty;

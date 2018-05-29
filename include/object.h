@@ -160,10 +160,11 @@ namespace mere {
 			Object prefix(int i);
 
 			Object& referenced();
+			const Object& referenced() const;
 
-			Object& as_ref_of(Object& dest);
-			Object& as_acsr_of(Object& stk_var);
-			Object& recv(const Object& obj);
+			Object& make_reference_of(Object& dest);
+			Object& make_accessor_of(Object& stk_var);
+			Object& receive_from(const Object& obj);
 
 			bool match(const Object& other);
 

@@ -58,6 +58,7 @@ namespace mere {
 
 	void Tokenizer::string(){
 		QString str = "";
+		bool terminated = false;
 		while (!is_at_end()) {
 			if (peek() == '\n') {
 				error("expected a closing quotation mark to terminate string.");
@@ -77,12 +78,14 @@ namespace mere {
 				while (true){
 					switch(peek()){
 						case '\n':
-							NEWLINE();
+							advance();
+							NEWLINE(); continue;
 						case ' ':
 						case '\r':
 						case '\t':
 							advance();
 							continue;
+						default:;
 					}
 					break;
 				}
@@ -91,13 +94,14 @@ namespace mere {
 					continue;
 				}
 				//If no quote is found, break
+				terminated = true;
 				break;
 			}
 			str += advance();
 		}
 
 		// Unterminated string.
-		if (is_at_end()) {
+		if (is_at_end() && !terminated) {
 			error("expected string termination");
 			return;
 		}
@@ -141,7 +145,7 @@ namespace mere {
 
 		//base prediction
 		int base = 10;
-		if (num[0] == "0" && peek() != '.'){
+		if (num[0] == QLatin1Char('0') && peek() != '.'){
 			if (match('x') || match('X')){
 				num.push_back('x');
 				base = 16;
@@ -210,7 +214,11 @@ namespace mere {
 		MOVE_BACK();
 		QString val = "";
 		val.push_back(peek());
-		if ((val == "R" || val == "r") && peek(true) == '"' && peek(2) == '['){
+		if ((val == QLatin1String("R")
+			 || val == QLatin1String("r")
+			 )
+			&& peek(true) == '"'
+			&& peek(2) == '['){
 			advance();
 			advance();
 			advance();
@@ -343,7 +351,9 @@ namespace mere {
 			start_loc = loc;
 			scan_token();
 		}
-		add_token(Tok::eof);
+		tokens.push_back(Token(Tok::done," ",Object(),loc));
+		tokens.push_back(Token(Tok::eof,"",Object(),loc));
+		unit->add_index(source.size()); // eof line index
 		LVd;
 	}
 

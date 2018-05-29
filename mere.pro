@@ -40,7 +40,8 @@ SOURCES += \
     src/token.cpp \
     src/tokenizer.cpp \
     src/src.cpp \
-    src/interpretationunit.cpp
+    src/interpretationunit.cpp \
+    src/resolver.cpp
 
 HEADERS += \
     include/data_storage.h \
@@ -62,4 +63,8 @@ HEADERS += \
     include/parseerror.h \
     include/sourceeditor.h \
     include/src.h \
-    include/interpretationunit.h
+    include/interpretationunit.h \
+    include/resolver.h
+
+RESOURCES += \
+    resrc/resources.qrc

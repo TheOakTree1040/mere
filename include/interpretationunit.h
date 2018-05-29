@@ -12,16 +12,22 @@ namespace mere {
 	class Tokenizer;
 	class Parser;
 	class Interpreter;
+	class Resolver;
 
 	typedef class InterpretationUnit {
 			friend class Tokenizer;
 			friend class Parser;
 			friend class Interpreter;
+			friend class Resolver;
+
+		private:
+			static bool _show_snippet;
 
 		public:
 			struct Issue{
-					Issue():msg(""){}
-					Issue(const QString& m):msg(m){}
+					Issue():loc(),msg(""){}
+					Issue(const srcloc_t loc, const QString& m):loc(loc),msg(m){}
+					srcloc_t loc;
 					QString msg;///< \brief The error message
 			};
 
@@ -39,6 +45,11 @@ namespace mere {
 			InterpretationUnit(){}
 			InterpretationUnit (const InterpretationUnit&) = delete;
 
+#if TEST
+		public:
+#else
+		private:
+#endif
 			QString& source() noexcept { return m_source; }
 			Tokens& tokens() noexcept { return m_toks; }
 			AST& ast() noexcept { return m_ast; }
@@ -55,11 +66,16 @@ namespace mere {
 			uint index_at(uint line) const { return m_line_indices[line]; }
 			void print_tokens() const;
 			void print_issues() const;
+			QString snippet_at(int, const srcloc_t&) const;
 
 			void report(const srcloc_t& loc, const QString& type, const QString& msg);
 			void report(const QString& type, const QString & msg);
 
 			bool success() const { return issues.empty(); }
+
+			static void show_snippet(bool b){
+				_show_snippet = b;
+			}
 	} * IntpUnit;
 }
 

@@ -23,6 +23,10 @@ Expr& Expr::operator*=(const Expr& rhs){
 	return *this;
 }
 
+unsigned int Expr::hash() const{
+	return qHash(m_fields);
+}
+
 void Expr::handle() const {
 	//LFn;
 	if (!m_handled){

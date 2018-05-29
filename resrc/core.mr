@@ -1,0 +1,14 @@
+// mlib v0.0.1 20180528
+
+var __Crtr__ = "TheOakCode"; // By TheOakCode
+var __MajorBuild__ = 7;      // Major build
+var __MinorBuild__ = "e";    // Minor build
+
+var __LibVer__ = 0.01;       // Library ver.
+var __LibBuild__ = 7;        // The build last edited in
+
+var Pi = 3.141592653;        // Pi constant
+
+fn cir_area(rad){            // circle of area
+    return Pi*rad^2;
+}

@@ -18,6 +18,8 @@ namespace mere {
 			Tokens& tokens;
 			int current = 0;
 		private:
+			bool done() { return peek().type() >= Tok::done; }
+
 			bool match			(const std::vector<Tokty>&		);
 			bool match			(Tokty							);
 			bool check			(Tokty							);

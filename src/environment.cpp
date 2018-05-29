@@ -50,11 +50,19 @@ Object& EnvImpl::access(const Token& t){
 	LThw RuntimeError(t,QString("variable '").append(t.lexeme()).append("' undefined"));
 }
 
+EnvImpl*EnvImpl::ancestor(int dist){
+	EnvImpl* env = this;
+	for (int i = 0; i < dist; i++){
+		env = env->enclosing;
+	}
+	return env;
+}
+
 Object& EnvImpl::assign(const Token& t, const Object& o){
 	LFn;
 	Log ls(t.lexeme()) ls("at ln") ls(t.line());
 	if (values.contains(t.lexeme())){
-		LRet values[t.lexeme()].recv(o);
+		LRet values[t.lexeme()].receive_from(o);
 	}
 	if (enclosing != nullptr){
 		LRet enclosing->assign(t,o);

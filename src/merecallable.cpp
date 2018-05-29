@@ -10,7 +10,7 @@ MereCallable::MereCallable(const MereCallable& mc):
 	m_arity(mc.m_arity){
 	LFn;
 	if (mc.is(Call::Reg)){
-		m_fn = mc.m_fn;
+		m_impl = mc.m_impl;
 	}
 	else {
 		m_callable = mc.m_callable;
@@ -20,7 +20,8 @@ MereCallable::MereCallable(const MereCallable& mc):
 
 MereCallable::MereCallable():
 	m_traits(default_traits),
-	m_fn(new NullStmt()){}
+	m_impl(new NullStmt()),
+	m_closure(nullptr){}
 
 MereCallable::MereCallable(const Callable& clb):
 	m_traits(default_traits),
@@ -28,9 +29,10 @@ MereCallable::MereCallable(const Callable& clb):
 	as_nat();
 }
 
-MereCallable::MereCallable(const Stmt& fn_def):
+MereCallable::MereCallable(const Stmt& fn_def, EnvImpl* closure):
 	m_traits(default_traits),
-	m_fn(new Stmt(fn_def)),
+	m_impl(new Stmt(fn_def)),
+	m_closure(closure),
 	m_arity(fn_def.fn().params().size()){
 	as_reg();
 }
@@ -40,7 +42,7 @@ MereCallable::~MereCallable(){
 	if (is(Call::OnStack)){
 		if (is(Call::Reg)){
 			Logp("<---== deleting m_fn ==--->");
-			delete m_fn;
+			delete m_impl;
 		}
 		else if (is(Call::Nat)){
 			Logp("<---== deleting m_callable ==--->");
@@ -61,13 +63,13 @@ Object MereCallable::call(Interpreter& interpreter, std::vector<Object>& argumen
 	LFn;
 	try{
 		if (is(Call::Reg)){
-			Environment env = new EnvImpl(interpreter.global());
-			auto params = m_fn->fn().params();
+			Environment env = new EnvImpl(m_closure);
+			auto params = m_impl->fn().params();
 			int sz = params.size();
 			for (int i = 0; i != sz; i++){
 				env->define(params[i],arguments[i]);
 			}
-			interpreter.exec_block(m_fn->fn().body(),env);
+			interpreter.exec_block(m_impl->fn().body(),env);
 			LRet Object();
 		}
 		else if (is(Call::Nat)){
@@ -75,7 +77,7 @@ Object MereCallable::call(Interpreter& interpreter, std::vector<Object>& argumen
 		}
 		LThw RuntimeError(Token(),"Invalid function call.");
 	} catch(Return& ret){
-		return ret.value();
+		LRet ret.value();
 	}
 }
 

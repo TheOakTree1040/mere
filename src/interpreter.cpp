@@ -1,5 +1,5 @@
 
-#include "interpreter.h"
+#include "resolver.h"
 #include "natives.h"
 #include "runtimeerror.h"
 
@@ -18,6 +18,17 @@
 #define define_native_function(NAME,NAT) globals->define(NAME,Object(Trait("function").make_function(),Var::fromValue(NAT)))
 
 using namespace mere;
+
+Object Interpreter::search_variable(const Token& name, const Expr& expr) {
+	LFn;
+	Object o;
+	int dist = locals.value(expr.hash(),-1);
+	Object& ref = (dist >= 0)?environment->access_at(dist,name.lexeme()):
+							  globals->access(name);
+	o.make_accessor_of(ref);
+	LRet o;
+}
+
 Interpreter::Interpreter(){
 	LFn;
 	define_native_function("sin", MereCallable(CALLABLE{
@@ -52,7 +63,13 @@ Interpreter::Interpreter(){
 													CHECK("time", std::vector<QString>{});
 													return Object(QDateTime::currentDateTime().toString("yyyy-MM-hndl hh:mm:ss"));
 												}));
-
+	IntpUnit core = new InterpretationUnit(":/mlib/core.mr");
+	this->interpret(core);
+	if (!core->success()){
+		std::cout << " !> fatal error: failed to import mlib.core\n";
+		core->print_issues();
+	}
+	delete core;
 	LVd;
 }
 
@@ -210,19 +227,14 @@ Object Interpreter::eval_logical(C_EXPR_REF expr){
 }
 Object Interpreter::eval_var_acsr(C_EXPR_REF expr){
 	LFn;
-	Object o;
-	Object& ref = environment->access(expr.var().accessor());//DO NOT TOUCH! Keep this line for catching exceptions
-	o.as_acsr_of(ref);
-	LRet o;
+	LRet search_variable(expr.var().accessor(),expr);
 }
 Object Interpreter::eval_asgn(C_EXPR_REF expr){
 	LFn;
 	Token& op = expr.assign().op();
-	Expr& l = expr.assign().left();
-	Expr& r = expr.assign().right();
 	Tokty ty = op.type();
-	Object ref(evaluate(l));
-	Object right(evaluate(r));
+	Object ref(evaluate(expr.assign().left()));
+	Object right(evaluate(expr.assign().right()));
 
 	if (!ref.trait().is_lvalue()){
 		LThw RuntimeError(op,"expected an lvalue");
@@ -233,7 +245,7 @@ Object Interpreter::eval_asgn(C_EXPR_REF expr){
 	Tokty right_val_op = Tok::invalid;
 	switch(ty){
 		case Tok::assign:
-			ref.recv(right);
+			ref.receive_from(right);
 			LRet ref;
 		case Tok::mult_asgn:
 			GOTO_OP_ASGN(Tok::star);
@@ -251,7 +263,7 @@ Object Interpreter::eval_asgn(C_EXPR_REF expr){
 RET_OP_ASGN:;
 	Expr lex = LitExpr(ref);
 	Expr rex = LitExpr(right);
-	LRet ref.recv(evaluate(BinExpr(lex,Token(right_val_op,op.lexeme(),Object(),op.loc()),rex)));
+	LRet ref.receive_from(evaluate(BinExpr(lex,Token(right_val_op,op.lexeme(),Object(),op.loc()),rex)));
 }
 Object Interpreter::eval_refer(C_EXPR_REF expr){
 	LFn;
@@ -263,7 +275,7 @@ Object Interpreter::eval_refer(C_EXPR_REF expr){
 	if (!rr.trait().is_lvalue()){
 		LThw RuntimeError(expr.ref().op(), "expected an lvalue (right)");
 	}
-	LRet rl.as_ref_of(rr);
+	LRet rl.make_reference_of(rr);
 }
 Object Interpreter::eval_call(C_EXPR_REF expr){
 	LFn;
@@ -392,7 +404,7 @@ void Interpreter::exec_if(C_STMT_REF stmt){
 }
 void Interpreter::exec_block(C_STMT_REF stmt, EnvImpl* env){
 	LFn;
-	exec_block(stmt.block().block(),env);
+	exec_block(stmt.block().stmts(),env);
 	LVoid;
 }
 void Interpreter::exec_block(const std::vector<Ref<Stmt>>& stmts, EnvImpl* env){
@@ -409,7 +421,7 @@ void Interpreter::exec_block(const std::vector<Ref<Stmt>>& stmts, EnvImpl* env){
 void Interpreter::exec_while(C_STMT_REF stmt){
 	LFn;
 	while (evaluate(stmt.while_loop().condition()).to_bool()){
-		execute(stmt.while_loop().block());
+		execute(stmt.while_loop().body());
 	}
 	LVd;
 }
@@ -421,7 +433,7 @@ void Interpreter::exec_var_decl(C_STMT_REF stmt){
 }
 void Interpreter::exec_fn_decl(C_STMT_REF stmt){
 	LFn;
-	MereCallable mc(stmt);
+	MereCallable mc(stmt,environment);
 	//		mc.set_onstack(false);
 	environment->define(stmt.fn().name(),Object(Trait("function").make_function(),Var::fromValue(mc)));
 	LVd;
@@ -429,6 +441,7 @@ void Interpreter::exec_fn_decl(C_STMT_REF stmt){
 void Interpreter::exec_ret(C_STMT_REF stmt){
 	LFn;
 	Object obj = evaluate(stmt.ret().value());
+	obj.trait().make_temp();
 	LThw Return(obj);
 }
 void Interpreter::exec_assert(C_STMT_REF stmt){
@@ -530,15 +543,12 @@ void Interpreter::execute(C_STMT_REF stmt){
 
 short Interpreter::interpret(IntpUnit unit){
 	LFn;
+	Resolver(this).resolve(unit);
 	if (!unit->success())
-		return 1;
-	AST& ast = unit->ast();
-	if (ast.empty())
-		LRet false;
+		LRet 1;
 	try{
-		int size = ast.size();
-		for (int i = 0; i != size; i++){
-			execute(ast[i]);
+		for (const Stmt& stmt : unit->ast()){
+			execute(stmt);
 		}
 		LRet 0;
 	}
@@ -565,7 +575,6 @@ short Interpreter::interpret(IntpUnit unit){
 					  .arg(ame.callee).arg(ame.expect).arg(ame.received);
 		unit->report("for-art-mism-err",msg);
 	}
-
 	catch(std::runtime_error& re){
 		unit->report("intl-rt-error",re.what());
 	}
@@ -580,7 +589,11 @@ short Interpreter::interpret(IntpUnit unit){
 }
 
 Interpreter::~Interpreter(){
-	reset(nullptr);
+	reset();
+}
+
+void Interpreter::resolve(const Expr& expr, uint depth){
+	locals[expr.hash()] = depth;
 }
 
 void Interpreter::reset(Environment envptr){

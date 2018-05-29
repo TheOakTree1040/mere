@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/help">
+        <file>list-of-commands.txt</file>
+        <file>tutorial.txt</file>
+    </qresource>
+    <qresource prefix="/mlib">
+        <file>core.mr</file>
+    </qresource>
+</RCC>

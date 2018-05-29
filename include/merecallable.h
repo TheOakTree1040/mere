@@ -36,14 +36,15 @@ namespace mere{
 			static int default_traits; // [REG:1][REF:0][NAT:0][___:0]
 			union {
 					Callable* m_callable;
-					sptr m_fn;
+					struct{
+							sptr m_impl;
+							EnvImpl* m_closure;
+					};
 			};
 			int m_arity = 0;
 
 		private:
 			MereCallable& set_arity(int i);
-			Stmt& function() const { return *m_fn; }
-
 			Object call(Interpreter&, std::vector<Object>&);
 
 		public:// return type at 0;
@@ -58,7 +59,7 @@ namespace mere{
 
 			MereCallable();
 			MereCallable(const Callable& clb);
-			MereCallable(const Stmt& fn_def);
+			MereCallable(const Stmt& fn_def, EnvImpl*);
 
 			int arity() const { return m_arity; }
 			bool is(Call ci) const { return m_traits.test(static_cast<size_t>(ci)); }

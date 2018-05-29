@@ -1,7 +1,7 @@
 
-#define NO_TEST 1
+#define TEST 0
 
-#if NO_TEST
+#if !TEST
 #include "shell.h"
 
 int main(int argc, char* argv[]){
@@ -9,20 +9,16 @@ int main(int argc, char* argv[]){
 	return mere::MereCmder().execute();
 }
 #else
-#include "shell.h"
+#include "interpreter.h"
 #include <iostream>
 
 int main(int argc, char *argv[]) {
 	using namespace mere;
 
-	IntpUnit unit = new InterpretationUnit(
+	InterpretationUnit* unit = new InterpretationUnit(
 							"/Users/TheOakTree/mere/mere-interpreter/tests/test.mr"
 						);
-	if (unit->success()){
-		Interpreter intp;
-		intp.interpret(unit);
-	}
-	unit->print_issues();
+	unit->print_tokens();
 	delete unit;
 	return 0;
 }

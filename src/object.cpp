@@ -233,7 +233,7 @@ Object& Object::operator=(const Object& other){
 	return *this;
 }
 
-Object& Object::recv(const Object& obj){
+Object& Object::receive_from(const Object& obj){
 	LFn;
 	data() = obj.data();
 	trait().recv(obj.trait());
@@ -243,11 +243,15 @@ Object& Object::recv(const Object& obj){
 	LRet *this;
 }
 
+const Object& Object::referenced() const {
+	return trait().is_on_stack()?*this:m_onstack.get().referenced();
+}
+
 Object& Object::referenced() {
 	return trait().is_on_stack()?*this:m_onstack.get().referenced();
 }
 
-Object& Object::as_ref_of(Object& dest){
+Object& Object::make_reference_of(Object& dest){
 	delete_ptr();//if acsr, deletes the stackvar's ptr, else deletes
 				 //this->ptr in [1] (as m_onstack is init'd w/ *this)
 //	referenced().trait().as_ref_of(dest.trait());//[3]
@@ -272,9 +276,9 @@ Object& Object::as_ref_of(Object& dest){
 	return *this;
 }
 
-Object& Object::as_acsr_of(Object& stk_var){
+Object& Object::make_accessor_of(Object& stk_var){
 	Log1("Setting traits...");
-	as_ref_of(stk_var).trait().make_accessor();
+	make_reference_of(stk_var).trait().make_accessor();
 	Log1("Done");
 	return *this;
 }

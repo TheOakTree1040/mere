@@ -1,0 +1,34 @@
+    /*
+     * Quick tutorial on mere
+     *           --TheOakCode
+     *
+     * Primitives: real, string, bool, char, null, void ()
+     */
+
+    var a;                          // create a variable 'i'
+    a = 0;                          // or var i = 0;
+
+    print "a = ";                   // print without new line '\n'
+    println a;                      //print line
+
+    for (var i = 0; i <= 100; i++){ // for loop
+        println i;                  // print 1..100
+    }
+
+    while (0){                      // while loop
+        println "Unreachable";
+    }
+
+    i = true?++i:--i;              // ternary operator
+                                   // syntax: (boolean?is-true-value:is-false-value)
+
+    fn f(){                        // function: fn identifier([params]){[stmts]}
+        println "Howdy!";
+    }
+
+    i = f;                         // functions are objects
+                                   // and can be assigned to vars
+
+    var b;
+    b => a;                        // reference: b 'refers' to a
+    assert b == a : 1, "failed";   // syntax: assert expr : exit-code, err-message;
